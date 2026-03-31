@@ -1,91 +1,114 @@
 'use client'
 
-import { useState } from 'react';
-import { FileUpload } from './components/fileUploader';
-import { CheckCircle2, Loader2 } from 'lucide-react';
+import { useState } from "react";
+import axios from "axios"
 
-export default function App() {
-  const [bankFile, setBankFile] = useState<File | null>(null);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false);
+export default function Home() {
 
-  const handleProcess = () => {
-    if (bankFile) {
-      setIsProcessing(true);
-      setTimeout(() => {
-        setIsProcessing(false);
-        setShowSuccess(true);
-        setTimeout(() => setShowSuccess(false), 3000);
-      }, 1500);
+  const [fileWorkbank, setFileWorkbank] = useState<File | null>(null)
+  const [fileBank, setFileBank] = useState<File | null>(null)
+  const [bank, setBank] = useState<string>()
+  const [message, setMessage] = useState<string>()
+  const [loading, setLoading] = useState<boolean>(false)
+
+  async function sendToQueue(e) {
+    e.preventDefault()
+
+    setLoading(true)
+
+    const url = process.env.API_URL_QUEUE
+    const form = new FormData()
+
+    form.append('fileWork', fileWorkbank!)
+    form.append('fileBank', fileBank!)
+    form.append("bank", bank!)
+
+    try {
+      const response = await axios.post(`${url}/pricing`, form)
+
+      if (response.status >= 200 && response.status < 300) {
+        setMessage(response.data);
+      }
+
+      console.log("Finalizado o input")
+
+    } catch(e) {
+      console.error("Erro na requisição:", e);
+    } finally {
+      setLoading(false)
     }
-  };
-
-  const canProcess = bankFile;
+  }
 
   return (
-    <div className="min-h-screen bg-black">
-      <header className="border-b border-neutral-800 bg-black/50 backdrop-blur-sm">
-        <div className="mx-auto px-6 py-4">
-          <div className="flex items-center gap-2.5">
-            <div className="w-0.5 h-10 bg-linear-to-b from-cyan-400 to-purple-500"></div>
-            <div>
-              <h1 className="text-xl font-semibold tracking-tight bg-linear-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent">LEV NEGÓCIOS</h1>
-              <p className="text-sm text-neutral-500">Pricing</p>
-            </div>
+    <section className="flex flex-col justify-center items-center h-screen w-screen bg-gray-50 p-4">
+      <div className="w-full max-w-md bg-white p-8 rounded-xl shadow-md border border-gray-100">
+
+        <h1 className="text-2xl font-bold text-gray-800 mb-6 text-center">
+          Upload de Relatórios
+        </h1>
+
+        <div className="space-y-6">
+          {/* Campo Workbank */}
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-medium text-gray-700">Arquivo Workbank</label>
+            <input
+              className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 border border-gray-300 rounded-md cursor-pointer focus:outline-none"
+              type="file"
+              onChange={(e) => {
+                const selectedFile = e.target.files?.[0];
+                if (selectedFile) setFileWorkbank(selectedFile);
+              }}
+            />
           </div>
-        </div>
-      </header>
 
-      <main className="max-w-5xl mx-auto px-6 py-8">
-        <div className="mb-8">
-          <h2 className="text-3xl font-semibold mb-1 tracking-tight text-white">
-            Análise de Planilhas
-          </h2>
-          <div className="w-32 h-0.5 bg-linear-to-r from-cyan-500 to-purple-500 mb-2"></div>
-          <p className="text-sm text-neutral-400">
-            Upload dos arquivos Excel para Fila de Processamento
-          </p>
-        </div>
+          {/* Campo Bank */}
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-medium text-gray-700">Arquivo Bank</label>
+            <input
+              className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 border border-gray-300 rounded-md cursor-pointer focus:outline-none"
+              type="file"
+              onChange={(e) => {
+                const selectedFile = e.target.files?.[0];
+                if (selectedFile) setFileBank(selectedFile);
+              }}
+            />
+          </div>
 
-        <div className="grid gap-6 mb-8">
-          <FileUpload
-            title="Arquivo do Banco"
-            description="Planilha recebida do banco"
-            onFileSelect={setBankFile}
-          />
-        </div>
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-medium text-gray-700">Arquivo Bank</label>
+            <select
+              className="w-full py-2 px-1 text-sm text-gray-500  border border-gray-300 rounded-md cursor-pointer"
+              onChange={(e) => {
+                const selectedBank = e.target.value;
+                setBank(selectedBank);
+              }}
+            >
+              <option className="hidden" value="">Selecione um banco</option>
+              <option value="Capital Consig">Capital Consig</option>
+            </select>
+          </div>
 
-        <div className="flex flex-col items-center gap-3">
+          {/* Botão de Envio */}
           <button
-            onClick={handleProcess}
-            disabled={!canProcess || isProcessing}
-            className={`
-              px-8 py-2.5 text-xs rounded-xl font-medium tracking-wide uppercase
-              transition-all duration-150 ease-in-out
-              ${canProcess && !isProcessing
-                ? 'bg-linear-to-r from-blue-600 to-purple-500 text-white border border-transparent hover:shadow-[0_0_30px_rgba(34,211,238,0.6)] hover:scale-105'
-                : 'bg-neutral-800 text-neutral-500 cursor-not-allowed border border-neutral-700'
-              }
-            `}
+            type="button"
+            disabled={loading}
+            onClick={(e) => sendToQueue(e)}
+            className={`w-full py-3 px-4 rounded-md font-semibold text-white transition-colors
+              ${loading
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-blue-600 hover:bg-blue-700 active:bg-blue-800"}`}
           >
-            {isProcessing ? (
-              <span className="flex items-center gap-2">
-                <Loader2 className="animate-spin"/>
-                Processando
-              </span>
-            ) : (
-              'Processar'
-            )}
+            {loading ? "Processando..." : "Enviar para Fila"}
           </button>
 
-          {showSuccess && (
-            <div className="flex rounded-xl items-center gap-2 bg-linear-to-r from-cyan-500 to-purple-500 text-white px-4 py-2 text-xs animate-in fade-in slide-in-from-bottom-2 duration-200 shadow-[0_0_30px_rgba(34,211,238,0.5)]">
-              <CheckCircle2 className="w-3.5 h-3.5" />
-              <span>Enviado com sucesso</span>
+          {/* Mensagem de Sucesso */}
+          {message && (
+            <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-md">
+              <p className="text-green-700 text-center font-medium">✅ Arquivos enviados com sucesso!</p>
             </div>
           )}
         </div>
-      </main>
-    </div>
+      </div>
+    </section>
   );
 }
