@@ -29,6 +29,10 @@ class CapitalConsigMapper(Bank):
     def compare_archive(self, df_work, df_bank):
 
         df_bank["prazo_formatado"] = df_bank["PRAZO "].astype(str) + "-" + df_bank["PRAZO "].astype(str)
+        df_bank["NOMENCLATURA FUNÇÃO"] = df_bank["NOMENCLATURA FUNÇÃO"].astype(str).str.strip()
+        df_bank["prazo_formatado"] = df_bank["prazo_formatado"].astype(str).str.strip()
+        df_work["Produto"] = df_work["Produto"].astype(str).str.strip()
+        df_work["Parc. Atual"] = df_work["Parc. Atual"].astype(str).str.strip()
 
         df_result = pd.merge(
             df_bank,
@@ -40,14 +44,6 @@ class CapitalConsigMapper(Bank):
         )
 
         df_open = df_result[df_result["_merge"] == "left_only"]
-        pd.set_option('display.max_columns', None)
-
-        # Opcional: Configura para não ocultar o conteúdo dentro das células (caso o texto seja longo)
-        pd.set_option('display.max_colwidth', None)
-
-        # Opcional: Configura para não quebrar a linha se o DF for muito largo
-        pd.set_option('display.width', None)
-        print(df_open)
         list_of_close_tables = df_result[df_result["_merge"] == "right_only"]
         list_to_close_and_open = []
         list_of_open_tables = []
@@ -284,12 +280,6 @@ class CapitalConsigMapper(Bank):
 
         return model
 
-    def unified_df(self, df, df2, df3, df4):
-
-        df_unified = pd.concat([df, df2], ignore_index=True)
-
-        return df_unified
-
     def run(self, df_work, file_Bank):
 
         print("Lendo arquivo enviado pelo banco...")
@@ -323,9 +313,10 @@ class CapitalConsigMapper(Bank):
 
         print("Conversão realizada com sucesso!")
         print("Iniciando processo de junção dos arquivos...")
-        dfs_para_juntar = [df for df in [df_open, df_close, df_close2, df_open2] if df is not None and not df.empty]
+        dfs_para_juntar = [df for df in [df_close, df_close2, df_open, df_open2] if df is not None and not df.empty]
         if dfs_para_juntar:
             df_final = pd.concat(dfs_para_juntar, axis=0, ignore_index=True, sort=False)
+            df_final = df_final.drop(['BONUS'], axis=1)
             print(f"Sucesso! Total de linhas: {len(df_final)}")
         else:
             print("Nenhum dado encontrado para juntar.")
