@@ -13,6 +13,12 @@ def convertValues(value):
 
     return valor_str
 
+import unicodedata
+
+def remover_acentos(texto):
+    processado = unicodedata.normalize('NFD', str(texto))
+    return "".join(c for c in processado if unicodedata.category(c) != 'Mn').upper().strip()
+
 def get_payload_events(events, client):
 
     import logging

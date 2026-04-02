@@ -2,15 +2,29 @@ from .Bank import Bank
 from datetime import datetime
 import pandas as pd
 import io
-from ..utils.utils import convertValues
+from ..utils.utils import convertValues, remover_acentos
 from ..config.bank.CapitalConsigVariables import family_product, group_convenio
-from ..config.citys_uf import citys
+from ..config.citys_uf import citys, citys_uf, states
 
 class CapitalConsigMapper(Bank):
 
     def read_archive(self, file):
         df = pd.read_excel(io.BytesIO(file))
         return df
+
+    def get_retencao(self, value):
+
+        if value <= 10:
+            bonus = 2
+            resultado = value - 2
+        elif value <= 20:
+            bonus = 3
+            resultado = value - 3
+        else:
+            bonus = 4
+            resultado = value - 4
+
+        return resultado / 100, bonus
 
     def compare_archive(self, df_work, df_bank):
 
@@ -25,16 +39,40 @@ class CapitalConsigMapper(Bank):
             indicator=True
         )
 
-        list_of_open_tables = df_result[df_result["_merge"] == "left_only"]
+        df_open = df_result[df_result["_merge"] == "left_only"]
+        pd.set_option('display.max_columns', None)
+
+        # Opcional: Configura para não ocultar o conteúdo dentro das células (caso o texto seja longo)
+        pd.set_option('display.max_colwidth', None)
+
+        # Opcional: Configura para não quebrar a linha se o DF for muito largo
+        pd.set_option('display.width', None)
+        print(df_open)
         list_of_close_tables = df_result[df_result["_merge"] == "right_only"]
         list_to_close_and_open = []
+        list_of_open_tables = []
 
         df_matches = df_result[df_result["_merge"] == "both"]
 
         if not df_matches.empty:
             print(f"Encontrados {len(df_matches)} correspondências!")
 
+        for index, row in df_open.iterrows():
+
+            retencao, bonus = self.get_retencao(convertValues(row["% PROMOTORA"] * 100))
+
+            row["% PROMOTORA"] = retencao
+            row["BONUS"] = bonus
+
+            list_of_open_tables.append(row)
+
         for index, row in df_matches.iterrows():
+
+            retencao, bonus = self.get_retencao(convertValues(row["% PROMOTORA"] * 100))
+
+            row["% PROMOTORA"] = retencao
+            row["BONUS"] = bonus
+
             percent = convertValues(row["% PROMOTORA"] * 100)
             percent_work = convertValues(row["% Comissão"])
             if percent != percent_work:
@@ -47,57 +85,46 @@ class CapitalConsigMapper(Bank):
 
         cidade = rest_of_product.split("_")[0]
 
-        if "PREV " in cidade:
-            cidade = cidade.split(" ")[-1]
+        if cidade in ["CAMPINA", "PORTO", "SANTA", "SAO"]:
+            cidade = rest_of_product.split("_")[0] + " " + rest_of_product.split("_")[1]
 
-        print(cidade)
+        cidade = remover_acentos(cidade)
 
-    def extract_of_uf(self, rest_of_product, convenio):
+        if cidade.startswith("PREV "):
+            cidade = cidade.split(" ")[1]
+            city = "DE " + citys.get(cidade, "")
+            return city
+
+        if cidade == "IPAM":
+            return ""
+
+        city = citys.get(cidade, "")
+
+        return city
+
+    def extract_uf_of_city(self, city):
+        city = str(city).upper().strip()
+
+        if city.startswith("DE "):
+            city = city.split(" ")[1]
+
+        uf = " " + citys_uf.get(city, "")
+
+        return uf
+
+    def extract_uf_of_state(self, rest_of_product):
         rest_of_product = str(rest_of_product).upper().strip()
 
-        cidade = rest_of_product.split("_")[0]
+        state = rest_of_product.split("_")[0]
 
-        print(rest_of_product)
-        print(cidade)
+        state = remover_acentos(state)
 
+        if len(state) == 2:
+            return state
 
+        uf = states.get(state, "")
 
-        # mapeamento_especifico = {
-        #     "SPPREV": "SP", "MACAÉ": "RJ", "MACAE": "RJ", "CONTAGEM": "MG",
-        #     "PREVICON": "MG", "FUNEC": "MG", "TRANSCON": "MG", "ARAGUAÍNA": "TO",
-        #     "ARAGUAINA": "TO", "BAURU": "SP", "RECIFE": "PE", "ÁGUAS LINDAS": "GO",
-        #     "AGUAS LINDAS": "GO", "ANANINDEUA": "PA", "BH": "MG", "ALAGOINHAS": "BA",
-        #     "CAMPINA_GRANDE": "PB", "CAMPO GRANDE": "MS", "SOROCABA": "SP",
-        #     "SOBRAL": "CE", "SAO_LUIS": "MA", "SAO LUIS": "MA", "PICOS": "PI",
-        #     "PREV PALMAS": "TO", "PALMAS": "TO", "ESP_SANTO": "ES",
-        #     "JUAZEIRO": "CE", "TAUBATÉ": "SP", "TAUBATE": "SP", "DQ DE CAXIAS": "RJ",
-        #     "IPMDC": "RJ", "IMPERATRIZ": "MA", "PLANALTINA": "GO", "PORTO_VELHO": "RO",
-        #     "SANTA_RITA": "PB", "TERESINA": "PI", "CAMPINAS": "SP", "PARAIBA": "PB",
-        #     "PBPREV": "PB", "UEPB": "PB", "MARANHAO": "MA", "NATAL": "RN",
-        #     "SANTOS": "SP", "ALAGOAS": "AL", "PIAUI": "PI", "PARANA": "PR",
-        #     "GUARULHOS": "SP", "RIBEIRAO PRETO": "SP", "S J RIO PRETO": "SP",
-        #     "IPAM": "RO", "PE": "PE"
-        # }
-
-        # for cidade_ou_orgao, uf in mapeamento_especifico.items():
-        #     if rest_of_product.startswith(cidade_ou_orgao):
-
-        #         if convenio == "PREF. ":
-        #             return f"{convenio} {cidade_ou_orgao.replace('_', ' ')} {uf}"
-
-        #         return f"{convenio}{uf}"
-
-        # prefixo = rest_of_product[:3]
-        # if len(prefixo) >= 3 and prefixo[2] == "_":
-        #     possivel_uf = prefixo[:2]
-        #     ufs_validas = ["AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", 
-        #                 "MA", "MT", "MS", "MG", "PA", "PB", "PR", "PE", "PI", 
-        #                 "RJ", "RN", "RS", "RO", "RR", "SC", "SP", "SE", "TO"]
-
-        #     if possivel_uf in ufs_validas:
-        #         return f"{convenio}{possivel_uf}"
-
-        # return convenio
+        return uf
 
     def get_convenio(self, product):
         product = str(product).upper()
@@ -115,22 +142,33 @@ class CapitalConsigMapper(Bank):
                 partes = product.split(prefixo_encontrado, 1)
                 rest_of_product = partes[1].strip() if len(partes) > 1 else ""
                 convenio = categoria
-                return convenio
 
-                # if convenio == "FEDERAL SIAPE":
-                #     return convenio
+                if convenio == "FEDERAL SIAPE":
+                    return convenio
 
-                # city = self.extract_city(rest_of_product)
+
+                if convenio == "PREF. ":
+                    city = self.extract_city(rest_of_product)
+                    uf = self.extract_uf_of_city(city)
+
+                    if city == "":
+                        return ""
+
+                    convenio = convenio + city + uf
+                    return convenio
+
+                if convenio in ["GOV-", "TJ | "]:
+                    uf = self.extract_uf_of_state(rest_of_product)
+                    convenio = convenio + uf
+                    return convenio
 
         return "CONVENIO DESCONHECIDO"
 
-    def convert_to_work_model(self, list_of_open_tables, list_of_close_tables, list_to_close_and_open, model):
+    def create_open_tables(self, list_of_open_tables, model):
 
         list_of_convert_rows = []
 
-        print(list_of_open_tables)
-
-        for index, row in list_of_open_tables.iterrows():
+        for row in list_of_open_tables:
 
             product = row["NOMENCLATURA FUNÇÃO"]
 
@@ -139,7 +177,7 @@ class CapitalConsigMapper(Bank):
             agreement = row[" CONVENIO"].strip().split(" ")[0]
             family = family_product[agreement]
             group = group_convenio[family]
-            percent = convertValues(row["% PROMOTORA"])
+            percent = convertValues(row["% PROMOTORA"] * 100)
 
             new_row = model.copy()
 
@@ -157,12 +195,73 @@ class CapitalConsigMapper(Bank):
             new_row["% Intermediária"] = percent * 0.95
             new_row["% Máxima"] = percent
             new_row["% Comissão"] = percent
+            new_row["Vigência"] = datetime.now().strftime("%d/%m/%Y")
+            new_row["Complemento"] = int(row["CÓD  "])
+            new_row["Id Tabela Banco"] = int(row["CÓD  "])
+            new_row["BONUS VIP"] = f"{row["BONUS"]},00 | LIQUIDO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
 
             list_of_convert_rows.append(new_row)
 
         df = pd.DataFrame(list_of_convert_rows)
 
-        df.to_excel("debug.xlsx", index=False)
+        return df
+
+    def create_close_tables(self, list_of_close_tables):
+
+        list_of_convert_rows = []
+
+        for index, row in list_of_close_tables.iterrows():
+
+            row["Término"] = datetime.now().strftime("%d/%m/%Y")
+
+            list_of_convert_rows.append(row)
+
+        df = pd.DataFrame(list_of_convert_rows)
+
+        df = df.drop(['CÓD  ', 'NOMENCLATURA FUNÇÃO', 'Unnamed: 2', ' CONVENIO', 'PRAZO ', '% PROMOTORA', 'prazo_formatado', '_merge'], axis=1)
+
+        return df
+
+    def create_close_open_tables(self, list_of_close_open):
+
+        list_of_convert_open_rows = []
+        list_of_convert_close_rows = []
+
+        for row in list_of_close_open:
+
+            percent = convertValues(row["% PROMOTORA"] * 100)
+
+            row_close = row.copy()
+
+            row_close["Término"] = datetime.now().strftime("%d/%m/%Y")
+
+            list_of_convert_close_rows.append(row_close)
+
+            row_open = row.copy()
+
+            row_open["Término"] = ""
+            row_open["Vigência"] = datetime.now().strftime("%d/%m/%Y")
+            row_open["ID"] = ''
+            row_open["% Comissão"] = convertValues(row["% PROMOTORA"] * 100)
+            row_open["% Mínima"] = percent * 0.70
+            row_open["% Intermediária"] = percent * 0.95
+            row_open["% Máxima"] = percent
+
+            list_of_convert_open_rows.append(row_open)
+
+        df = pd.DataFrame(list_of_convert_close_rows)
+        df2 = pd.DataFrame(list_of_convert_open_rows)
+
+        colunas_remover = [
+            'CÓD  ', 'NOMENCLATURA FUNÇÃO', 'Unnamed: 2',
+            ' CONVENIO', 'PRAZO ', '% PROMOTORA',
+            'prazo_formatado', '_merge'
+        ]
+
+        df = df.drop(colunas_remover, axis=1)
+        df2 = df2.drop(colunas_remover, axis=1)
+
+        return df, df2
 
     def input_standard_values(self, model):
 
@@ -185,9 +284,11 @@ class CapitalConsigMapper(Bank):
 
         return model
 
+    def unified_df(self, df, df2, df3, df4):
 
-    def set_closing_date():
-        pass
+        df_unified = pd.concat([df, df2], ignore_index=True)
+
+        return df_unified
 
     def run(self, df_work, file_Bank):
 
@@ -204,5 +305,37 @@ class CapitalConsigMapper(Bank):
         list_of_open_tables, list_of_close_tables, list_to_close_and_open = self.compare_archive(df_work, df_bank)
         print("Tabelas comparadas com sucesso...")
 
+        df_open = None
+        df_close = None
+        df_close2 = None
+        df_open2 = None
+
         print("Iniciando a conversão para o modelo Workbank...")
-        list_of_convert_rows = self.convert_to_work_model(list_of_open_tables, list_of_close_tables, list_to_close_and_open, model)
+        if len(list_of_open_tables) > 0:
+            print(f"Foram encontradas {len(list_of_open_tables)} tabelas para abrir.")
+            df_open = self.create_open_tables(list_of_open_tables, model)
+        if len(list_of_close_tables) > 0:
+            print(f"Foram encontradas {len(list_of_close_tables)} tabelas para fechar.")
+            df_close = self.create_close_tables(list_of_close_tables)
+        if len(list_to_close_and_open) > 0:
+            print(f"Foram encontradas {len(list_to_close_and_open)} tabelas para fechar e abrir.")
+            df_close2, df_open2 = self.create_close_open_tables(list_to_close_and_open)
+
+        print("Conversão realizada com sucesso!")
+        print("Iniciando processo de junção dos arquivos...")
+        dfs_para_juntar = [df for df in [df_open, df_close, df_close2, df_open2] if df is not None and not df.empty]
+        if dfs_para_juntar:
+            df_final = pd.concat(dfs_para_juntar, axis=0, ignore_index=True, sort=False)
+            print(f"Sucesso! Total de linhas: {len(df_final)}")
+        else:
+            print("Nenhum dado encontrado para juntar.")
+            df_final = pd.DataFrame()
+        print("Processo de junção finalizado!")
+
+        print("Exportando resultado para Excel...")
+        df_final.to_excel("capital_consig_resultado.xlsx", index=False)
+        print("Resultado exportado com sucesso!")
+
+        print("Processo concluído!")
+
+
