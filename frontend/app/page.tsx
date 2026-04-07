@@ -85,6 +85,7 @@ export default function Home() {
             >
               <option className="hidden" value="">Selecione um banco</option>
               <option value="Capital Consig">Capital Consig</option>
+              <option value="Safra">Safra</option>
             </select>
           </div>
 

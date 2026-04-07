@@ -5294,6 +5294,7 @@ citys_uf = {
     "ESP": "ES"
 }
 citys = {
+    "IPREM": "SAO PAULO",
     "PORTO": "PORTO VELHO",
     "CAMPINA": "CAMPINA GRANDE",
     "BH": "BELO HORIZONTE",

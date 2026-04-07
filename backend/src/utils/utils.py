@@ -1,3 +1,5 @@
+import pandas as pd
+
 def convertValues(value):
     valor_str = value
 
@@ -81,3 +83,8 @@ def agroup_payload_in_excel(all_payloads):
     df = pd.DataFrame(list_payload)
 
     return df
+
+def formatar_br(valor):
+    if pd.isna(valor) or valor == "" or valor is None:
+        return "0,00"
+    return f"{float(valor):,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")

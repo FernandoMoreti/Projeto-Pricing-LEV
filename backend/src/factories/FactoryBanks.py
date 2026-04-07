@@ -1,8 +1,10 @@
+from ..services.Safra import SafraMapper
 from ..services.CapitalConsig import CapitalConsigMapper
 
 class FactoryBank:
     _factoryBanksMapper = {
         "capitalconsig": CapitalConsigMapper(),
+        "safra": SafraMapper(),
     }
 
     @staticmethod

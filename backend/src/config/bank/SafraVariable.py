@@ -1,0 +1,44 @@
+prazo_convenio = {
+    "AERONAUTICA": 96,
+    "FGTS": 132,
+    "GOV BA": 120,
+    "GOV GO": 144,
+    "GOV MS": 120,
+    "GOV PR": 96,
+    "GOV SC": 120,
+    "GOV SP  POLICIA MILITAR": 96,
+    "GOV SP  SEFAZ": 96,
+    "GOV SP SPPREV": 96,
+    "INSS": 96,
+    "IPREM - APOSENTADO": 120,
+    "IPREM - ATIVO": 120,
+    "IPREM - PENSIONISTA": 120,
+    "MARINHA": 72,
+    "PREF BELO HORIZONTE": 120,
+    "PREF SAO PAULO": 120,
+    "SIAPE": 96,
+}
+
+family_product = {
+    "AERONAUTICA": "FORCAS ARMADAS",
+    "MARINHA": "FORCAS ARMADAS",
+    "FGTS": "FGTS",
+    "INSS": "INSS",
+    "SIAPE": "FEDERAIS",
+    "PREFEITURA": "PREFEITURAS",
+    "IPREM": "PREFEITURAS",
+    "PREF": "PREFEITURAS",
+    "GOVERNO": "GOVERNOS",
+    "GOV": "GOVERNOS",
+    "T.J": "TRIBUNAIS",
+}
+
+group_convenio = {
+    "FORCAS ARMADAS": "FORCAS ARMADAS",
+    "FGTS": "FGTS",
+    "INSS": "INSS",
+    "GOVERNOS": "ESTADUAL",
+    "FEDERAIS": "FEDERAL",
+    "TRIBUNAIS": "TRIBUNAIS",
+    "PREFEITURAS": "PREFEITURAS",
+}

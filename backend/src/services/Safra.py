@@ -2,14 +2,15 @@ from .Bank import Bank
 from datetime import datetime
 import pandas as pd
 import io
-from ..utils.utils import convertValues, remover_acentos
-from ..config.bank.CapitalConsigVariables import family_product, group_convenio
+from ..utils.utils import convertValues, formatar_br, remover_acentos
+from ..config.bank.SafraVariable import family_product, group_convenio, prazo_convenio
 from ..config.citys_uf import citys, citys_uf, states
 
-class CapitalConsigMapper(Bank):
+class SafraMapper(Bank):
 
     def read_archive(self, file):
-        df = pd.read_excel(io.BytesIO(file))
+        df = pd.read_excel(io.BytesIO(file)) # header=3
+        print(df)
         return df
 
     def get_retencao(self, value):
@@ -28,17 +29,31 @@ class CapitalConsigMapper(Bank):
 
     def compare_archive(self, df_work, df_bank):
 
-        df_bank["prazo_formatado"] = df_bank["PRAZO "].astype(str) + "-" + df_bank["PRAZO "].astype(str)
-        df_bank["NOMENCLATURA FUNÇÃO"] = df_bank["NOMENCLATURA FUNÇÃO"].astype(str).str.strip()
-        df_bank["prazo_formatado"] = df_bank["prazo_formatado"].astype(str).str.strip()
-        df_work["Produto"] = df_work["Produto"].astype(str).str.strip()
+        filtro_legenda = df_bank["Atualizações"].str.contains("Legenda", na=False, case=False)
+
+        if filtro_legenda.any():
+            indice_corte = df_bank[filtro_legenda].index[0] - 1
+            df_bank = df_bank.iloc[:indice_corte].copy()
+
+        df_bank["PrazoDe"] = pd.to_numeric(df_bank["PrazoDe"], errors='coerce').fillna(0).astype(int)
+        df_bank["PrazoAte"] = pd.to_numeric(df_bank["PrazoAte"], errors='coerce').fillna(0).astype(int)
+
+        df_bank.loc[df_bank["Produto"] == "PORTABILIDADE", "PrazoDe"] = 1
+
+        df_bank.loc[df_bank["Produto"] == "PORTABILIDADE", "PrazoAte"] = (
+            df_bank["Convenio"].str.strip().map(prazo_convenio).fillna(0).astype(int)
+        )
+
+        df_bank["prazo_formatado"] = (
+            df_bank["PrazoDe"].astype(str) + "-" + df_bank["PrazoAte"].astype(str)
+        )
         df_work["Parc. Atual"] = df_work["Parc. Atual"].astype(str).str.strip()
 
         df_result = pd.merge(
             df_bank,
             df_work,
-            left_on=["NOMENCLATURA FUNÇÃO", "prazo_formatado"],
-            right_on=["Produto", "Parc. Atual"],
+            left_on=["Id Tabela Nova", "prazo_formatado"],
+            right_on=["Id Tabela Banco", "Parc. Atual"],
             how="outer",
             indicator=True
         )
@@ -55,44 +70,37 @@ class CapitalConsigMapper(Bank):
 
         for index, row in df_open.iterrows():
 
-            retencao, bonus = self.get_retencao(convertValues(row["% PROMOTORA"] * 100))
-
-            row["% PROMOTORA"] = retencao
-            row["BONUS"] = bonus
+            row["Diferido"] = row["CdvpDiferidoFuturo"]
+            print(row["Diferido"])
 
             list_of_open_tables.append(row)
 
         for index, row in df_matches.iterrows():
 
-            retencao, bonus = self.get_retencao(convertValues(row["% PROMOTORA"] * 100))
+            row["Diferido"] = row["CdvpDiferidoFuturo"]
 
-            row["% PROMOTORA"] = retencao
-            row["BONUS"] = bonus
-
-            percent = convertValues(row["% PROMOTORA"] * 100)
+            percent = convertValues(row["ComissaoAto"] * 100)
             percent_work = convertValues(row["% Comissão"])
             if percent != percent_work:
                 list_to_close_and_open.append(row)
 
         return list_of_open_tables, list_of_close_tables, list_to_close_and_open
 
-    def extract_city(self, rest_of_product):
-        rest_of_product = str(rest_of_product).upper().strip()
+    def extract_city(self, product):
+        product = str(product).upper().strip()
 
-        cidade = rest_of_product.split("_")[0]
+        print(product)
+
+        if product.split(" ")[0] in ["IPREM"]:
+            print(product)
+            return citys.get(product.split(" ")[0], "")
+
+        cidade = product.split(" ")[1]
 
         if cidade in ["CAMPINA", "PORTO", "SANTA", "SAO", "BELO"]:
-            cidade = rest_of_product.split("_")[0] + " " + rest_of_product.split("_")[1]
+            cidade = product.split(" ")[1] + " " + product.split(" ")[2]
 
         cidade = remover_acentos(cidade)
-
-        if cidade.startswith("PREV "):
-            cidade = cidade.split(" ")[1]
-            city = "DE " + citys.get(cidade, "")
-            return city
-
-        if cidade == "IPAM":
-            return ""
 
         city = citys.get(cidade, "")
 
@@ -125,11 +133,13 @@ class CapitalConsigMapper(Bank):
     def get_convenio(self, product):
         product = str(product).upper()
         categorias = {
-            "GOV-": ["GOV ", "GOV_", "GOV.", "SPPREV_"],
-            "FEDERAL SIAPE": ["SIAPE ", "SIAPE_", "SIAPE."],
-            "PREF. ": ["PREF ", "PREF_", "PREF."],
-            "TJ | ": ["TJ ", "TJ_", "TJ."]
+            "GOV-": ["GOV", "GOV_", "GOV.", "SPPREV_"],
+            "FEDERAL SIAPE": ["SIAPE"],
+            "PREF. ": ["PREF", "PREF_", "PREF.", "IPREM"],
         }
+
+        if product in ["AERONAUTICA", "MARINHA", "FGTS", "INSS"]:
+            return product
 
         for categoria, prefixos in categorias.items():
             prefixo_encontrado = next((p for p in prefixos if p in product), None)
@@ -142,9 +152,8 @@ class CapitalConsigMapper(Bank):
                 if convenio == "FEDERAL SIAPE":
                     return convenio
 
-
                 if convenio == "PREF. ":
-                    city = self.extract_city(rest_of_product)
+                    city = self.extract_city(product)
                     uf = self.extract_uf_of_city(city)
 
                     if city == "":
@@ -153,8 +162,8 @@ class CapitalConsigMapper(Bank):
                     convenio = convenio + city + uf
                     return convenio
 
-                if convenio in ["GOV-", "TJ | "]:
-                    uf = self.extract_uf_of_state(rest_of_product)
+                if convenio == "GOV-":
+                    uf = product.split(" ")[1]
                     convenio = convenio + uf
                     return convenio
 
@@ -166,23 +175,22 @@ class CapitalConsigMapper(Bank):
 
         for row in list_of_open_tables:
 
-            product = row["NOMENCLATURA FUNÇÃO"]
+            product = row["Convenio"]
 
             convenio = self.get_convenio(product)
 
-            agreement = row[" CONVENIO"].strip().split(" ")[0]
+            agreement = row["Convenio"].strip().split(" ")[0]
             family = family_product[agreement]
             group = group_convenio[family]
-            percent = convertValues(row["% PROMOTORA"] * 100)
+            percent = convertValues(row["ComissaoAto"] * 100)
+            tkt_min = formatar_br(row["TktmMin"])
+            tkt_max = formatar_br(row["TktmMax"])
+            diferido = formatar_br(row['Diferido'] * 100 if row['Diferido'] != None else '0,00')
 
             new_row = model.copy()
 
-            if "_EMP_" in product:
-                new_row["Operação"] = "NOVO"
-            else:
-                new_row["Operação"] = "CARTÃO"
-
-            new_row["Produto"] = product
+            new_row["Operação"] = row["Produto_x"]
+            new_row["Produto"] = row["Tabela"]
             new_row["Família Produto"] = family
             new_row["Grupo Convênio"] = group
             new_row["Convênio"] = convenio
@@ -192,13 +200,19 @@ class CapitalConsigMapper(Bank):
             new_row["% Máxima"] = percent
             new_row["% Comissão"] = percent
             new_row["Vigência"] = datetime.now().strftime("%d/%m/%Y")
-            new_row["Complemento"] = int(row["CÓD  "])
-            new_row["Id Tabela Banco"] = int(row["CÓD  "])
-            new_row["BONUS VIP"] = f"{row["BONUS"]},00 | LIQUIDO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
+            new_row["Complemento"] = int(row["Id Tabela Nova"])
+            new_row["Id Tabela Banco"] = int(row["Id Tabela Nova"])
+            new_row["DIFERIMENTO"] = f"{diferido} | LIQUIDO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
+            new_row["Faixa Val. Contrato"] = f"{tkt_min}-{tkt_max}-LÍQUIDO"
+
+            if new_row["DIFERIMENTO"] != "":
+                new_row["REPASSE DIFERIMENTO"] = "0,00 | 0,00 | 0,00"
 
             list_of_convert_rows.append(new_row)
 
         df = pd.DataFrame(list_of_convert_rows)
+
+        df.to_excel("tabelas_para_abrir.xlsx", index=False)  # Exporta as tabelas para abrir em um arquivo Excel
 
         return df
 
