@@ -1,10 +1,18 @@
-from fastapi import FastAPI, File, UploadFile, Form
+from fastapi import FastAPI, File, UploadFile, Form, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 import pandas as pd
 import io
-from .services.CapitalConsig import CapitalConsigMapper
 from .factories.FactoryBanks import FactoryBank
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"], # URL do seu Frontend React
+    allow_credentials=True,
+    allow_methods=["*"], # Permite todos os métodos (GET, POST, etc.)
+    allow_headers=["*"], # Permite todos os headers
+)
 
 @app.post("/pricing")
 async def edit_pricing(
@@ -12,15 +20,36 @@ async def edit_pricing(
     fileWork: UploadFile = File(...),
     bank: str = Form(...)
 ):
-    content_bank = await fileBank.read()
-    content_work = await fileWork.read()
+    try:
+        content_bank = await fileBank.read()
+        content_work = await fileWork.read()
 
-    bank = bank.strip().lower().replace(" ", "")
+        bank = bank.strip().lower().replace(" ", "")
 
-    bankMapper = FactoryBank.getMapperBank(bank)
+        bankMapper = FactoryBank.getMapperBank(bank)
 
-    df_work = pd.read_excel(io.BytesIO(content_work))
+        df_work = pd.read_excel(io.BytesIO(content_work))
 
-    bankMapper.run(df_work, content_bank)
+        response = bankMapper.run(df_work, content_bank)
 
-    return 200
+        if type(response) == str:
+            return {
+                "success": False,
+                "message": "O Excel não foi gerado com sucesso.",
+            }
+
+        return {
+            "success": True,
+            "message": f"Processamento do banco {bank} concluído com sucesso!",
+            "details": "Os arquivos foram unidos e o Excel foi gerado."
+        }
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "success": False,
+                "message": "Erro ao processar os arquivos.",
+                "error": str(e)
+            }
+        )

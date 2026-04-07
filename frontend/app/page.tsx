@@ -8,10 +8,11 @@ export default function Home() {
   const [fileWorkbank, setFileWorkbank] = useState<File | null>(null)
   const [fileBank, setFileBank] = useState<File | null>(null)
   const [bank, setBank] = useState<string>()
-  const [message, setMessage] = useState<string>()
+  const [message, setMessage] = useState<string>("")
   const [loading, setLoading] = useState<boolean>(false)
+  const [isSuccess, setIsSuccess] = useState<boolean>(false)
 
-  async function sendToQueue(e) {
+  async function sendToQueue(e: React.FormEvent) {
     e.preventDefault()
 
     setLoading(true)
@@ -26,11 +27,12 @@ export default function Home() {
     try {
       const response = await axios.post(`${url}/pricing`, form)
 
-      if (response.status >= 200 && response.status < 300) {
-        setMessage(response.data);
-      }
+      console.log(response.data)
 
-      console.log("Finalizado o input")
+      if (response.status >= 200 && response.status < 300) {
+        setMessage(response.data.message);
+        setIsSuccess(response.data.success)
+      }
 
     } catch(e) {
       console.error("Erro na requisição:", e);
@@ -104,8 +106,8 @@ export default function Home() {
 
           {/* Mensagem de Sucesso */}
           {message && (
-            <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-md">
-              <p className="text-green-700 text-center font-medium">✅ Arquivos enviados com sucesso!</p>
+            <div className={`mt-4 p-3 rounded-md ${isSuccess ? "bg-green-50 border border-green-200" : "bg-red-50 border border-red-200"}`}>
+              <p className={isSuccess ? "text-green-700 text-center font-medium" : "text-red-700 text-center font-medium"}>{isSuccess ? "✅" : "❌"} {message}</p>
             </div>
           )}
         </div>

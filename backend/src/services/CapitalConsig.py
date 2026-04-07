@@ -281,52 +281,55 @@ class CapitalConsigMapper(Bank):
         return model
 
     def run(self, df_work, file_Bank):
+        try:
 
-        print("Lendo arquivo enviado pelo banco...")
-        df_bank = self.read_archive(file_Bank)
-        print("Arquivo lido com sucesso!")
+            print("Lendo arquivo enviado pelo banco...")
+            df_bank = self.read_archive(file_Bank)
+            print("Arquivo lido com sucesso!")
 
-        print("Criando modelo nulo...")
-        model = self.createNullModel()
-        model = self.input_standard_values(model)
-        print("Modelo criado com sucesso!")
+            print("Criando modelo nulo...")
+            model = self.createNullModel()
+            model = self.input_standard_values(model)
+            print("Modelo criado com sucesso!")
 
-        print("Comparando tabelas...")
-        list_of_open_tables, list_of_close_tables, list_to_close_and_open = self.compare_archive(df_work, df_bank)
-        print("Tabelas comparadas com sucesso...")
+            print("Comparando tabelas...")
+            list_of_open_tables, list_of_close_tables, list_to_close_and_open = self.compare_archive(df_work, df_bank)
+            print("Tabelas comparadas com sucesso...")
 
-        df_open = None
-        df_close = None
-        df_close2 = None
-        df_open2 = None
+            df_open = None
+            df_close = None
+            df_close2 = None
+            df_open2 = None
 
-        print("Iniciando a conversão para o modelo Workbank...")
-        if len(list_of_open_tables) > 0:
-            print(f"Foram encontradas {len(list_of_open_tables)} tabelas para abrir.")
-            df_open = self.create_open_tables(list_of_open_tables, model)
-        if len(list_of_close_tables) > 0:
-            print(f"Foram encontradas {len(list_of_close_tables)} tabelas para fechar.")
-            df_close = self.create_close_tables(list_of_close_tables)
-        if len(list_to_close_and_open) > 0:
-            print(f"Foram encontradas {len(list_to_close_and_open)} tabelas para fechar e abrir.")
-            df_close2, df_open2 = self.create_close_open_tables(list_to_close_and_open)
+            print("Iniciando a conversão para o modelo Workbank...")
+            if len(list_of_open_tables) > 0:
+                print(f"Foram encontradas {len(list_of_open_tables)} tabelas para abrir.")
+                df_open = self.create_open_tables(list_of_open_tables, model)
+            if len(list_of_close_tables) > 0:
+                print(f"Foram encontradas {len(list_of_close_tables)} tabelas para fechar.")
+                df_close = self.create_close_tables(list_of_close_tables)
+            if len(list_to_close_and_open) > 0:
+                print(f"Foram encontradas {len(list_to_close_and_open)} tabelas para fechar e abrir.")
+                df_close2, df_open2 = self.create_close_open_tables(list_to_close_and_open)
 
-        print("Conversão realizada com sucesso!")
-        print("Iniciando processo de junção dos arquivos...")
-        dfs_para_juntar = [df for df in [df_close, df_close2, df_open, df_open2] if df is not None and not df.empty]
-        if dfs_para_juntar:
-            df_final = pd.concat(dfs_para_juntar, axis=0, ignore_index=True, sort=False)
-            df_final = df_final.drop(['BONUS'], axis=1)
-            print(f"Sucesso! Total de linhas: {len(df_final)}")
-        else:
-            print("Nenhum dado encontrado para juntar.")
-            df_final = pd.DataFrame()
-        print("Processo de junção finalizado!")
+            print("Conversão realizada com sucesso!")
+            print("Iniciando processo de junção dos arquivos...")
+            dfs_para_juntar = [df for df in [df_close, df_close2, df_open, df_open2] if df is not None and not df.empty]
+            if dfs_para_juntar:
+                df_final = pd.concat(dfs_para_juntar, axis=0, ignore_index=True, sort=False)
+                df_final = df_final.drop(['BONUS'], axis=1)
+                print(f"Sucesso! Total de linhas: {len(df_final)}")
+            else:
+                print("Nenhum dado encontrado para juntar.")
+                df_final = pd.DataFrame()
+            print("Processo de junção finalizado!")
 
-        print("Exportando resultado para Excel...")
-        df_final.to_excel("capital_consig_resultado.xlsx", index=False)
-        print("Resultado exportado com sucesso!")
+            print("Exportando resultado para Excel...")
+            df_final.to_excel("capital_consig_resultado.xlsx", index=False)
+            print("Resultado exportado com sucesso!")
 
-        print("Processo concluído!")
+            print("Processo concluído!")
 
-
+        except Exception as e:
+            print(f"Erro durante o processamento: {str(e)}")
+            return "error"
