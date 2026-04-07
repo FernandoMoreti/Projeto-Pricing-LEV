@@ -1,117 +1,176 @@
 'use client'
 
 import { useState } from "react";
-import axios from "axios"
+import axios from "axios";
+import {
+  Upload,
+  FileCheck,
+  Loader2,
+  CheckCircle2,
+  AlertCircle,
+  BarChart3,
+  ArrowRight,
+} from "lucide-react";
 
 export default function Home() {
-
-  const [fileWorkbank, setFileWorkbank] = useState<File | null>(null)
-  const [fileBank, setFileBank] = useState<File | null>(null)
-  const [bank, setBank] = useState<string>()
-  const [message, setMessage] = useState<string>("")
-  const [loading, setLoading] = useState<boolean>(false)
-  const [isSuccess, setIsSuccess] = useState<boolean>(false)
+  const [fileWorkbank, setFileWorkbank] = useState<File | null>(null);
+  const [fileBank, setFileBank] = useState<File | null>(null);
+  const [bank, setBank] = useState<string>("");
+  const [message, setMessage] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(false);
+  const [isSuccess, setIsSuccess] = useState<boolean>(false);
 
   async function sendToQueue(e: React.FormEvent) {
-    e.preventDefault()
+    e.preventDefault();
+    if (!fileWorkbank || !fileBank || !bank) {
+      setMessage("Preencha todos os parâmetros antes de iniciar.");
+      setIsSuccess(false);
+      return;
+    }
 
-    setLoading(true)
+    setLoading(true);
+    setMessage("");
 
-    const url = process.env.API_URL_QUEUE
-    const form = new FormData()
-
-    form.append('fileWork', fileWorkbank!)
-    form.append('fileBank', fileBank!)
-    form.append("bank", bank!)
+    const url = process.env.API_URL_QUEUE;
+    const form = new FormData();
+    form.append('fileWork', fileWorkbank);
+    form.append('fileBank', fileBank);
+    form.append("bank", bank);
 
     try {
-      const response = await axios.post(`${url}/pricing`, form)
-
-      console.log(response.data)
-
+      const response = await axios.post(`${url}/pricing`, form);
       if (response.status >= 200 && response.status < 300) {
-        setMessage(response.data.message);
-        setIsSuccess(response.data.success)
+        setMessage(response.data.message || "Lote enviado para processamento!");
+        setIsSuccess(response.data.success);
       }
-
-    } catch(e) {
-      console.error("Erro na requisição:", e);
+    } catch (err) {
+      setMessage("Falha na comunicação com o serviço de fila.");
+      setIsSuccess(false);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }
 
   return (
-    <section className="flex flex-col justify-center items-center h-screen w-screen bg-gray-50 p-4">
-      <div className="w-full max-w-md bg-white p-8 rounded-xl shadow-md border border-gray-100">
+    <main className="min-h-screen w-full bg-[#020617] text-slate-200 flex flex-col font-sans">
 
-        <h1 className="text-2xl font-bold text-gray-800 mb-6 text-center">
-          Upload de Relatórios
-        </h1>
+      {/* Header Estendido */}
+      <nav className="w-full border-b border-slate-800 bg-slate-900/20 backdrop-blur-md px-8 py-4 flex justify-between items-center">
+        <div className="flex items-center gap-3">
+          <div className="bg-blue-600 p-2 rounded-lg">
+            <BarChart3 className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold tracking-tight">Edição Pricing </h1>
+          </div>
+        </div>
+      </nav>
 
-        <div className="space-y-6">
-          {/* Campo Workbank */}
-          <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-gray-700">Arquivo Workbank</label>
+      <div className="flex-1 p-8 grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-400 mx-auto w-full">
+
+        <div className="group relative bg-slate-900/40 border border-slate-800 rounded-2xl p-6 hover:border-blue-500/30 transition-all flex flex-col">
+          <div className="mb-6">
+            <h2 className="text-xl font-semibold mt-1">Origem Workbank</h2>
+            <p className="text-slate-500 text-sm">Suba o relatório extraído do sistema core.</p>
+          </div>
+
+          <div className="flex-1 flex flex-col justify-center border-2 border-dashed border-slate-800 rounded-xl p-3 transition-colors group-hover:bg-slate-950/50">
             <input
-              className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 border border-gray-300 rounded-md cursor-pointer focus:outline-none"
               type="file"
-              onChange={(e) => {
-                const selectedFile = e.target.files?.[0];
-                if (selectedFile) setFileWorkbank(selectedFile);
-              }}
+              className="hidden"
+              id="fileWork"
+              onChange={(e) => setFileWorkbank(e.target.files?.[0] || null)}
             />
+            <label htmlFor="fileWork" className="cursor-pointer flex flex-col items-center text-center">
+              <div className="p-4 bg-slate-800 rounded-full mb-4 group-hover:bg-blue-600/10 group-hover:text-blue-500 transition-all">
+                <Upload className="w-8 h-8" />
+              </div>
+              <p className="text-sm font-medium">
+                {fileWorkbank ? fileWorkbank.name : "Arraste ou clique para selecionar"}
+              </p>
+              <span className="text-xs text-slate-500 mt-2">Formato: .xlsx, .csv</span>
+            </label>
+          </div>
+          <div className="mb-6">
+            <h2 className="text-xl font-semibold mt-1">Dados Bancários</h2>
+            <p className="text-slate-500 text-sm">Importe o arquivo fornecido pela instituição.</p>
           </div>
 
-          {/* Campo Bank */}
-          <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-gray-700">Arquivo Bank</label>
+          <div className="flex-1 flex flex-col justify-center border-2 border-dashed border-slate-800 rounded-xl p-3 transition-colors group-hover:bg-slate-950/50">
             <input
-              className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 border border-gray-300 rounded-md cursor-pointer focus:outline-none"
               type="file"
-              onChange={(e) => {
-                const selectedFile = e.target.files?.[0];
-                if (selectedFile) setFileBank(selectedFile);
-              }}
+              className="hidden"
+              id="fileBank"
+              onChange={(e) => setFileBank(e.target.files?.[0] || null)}
             />
+            <label htmlFor="fileBank" className="cursor-pointer flex flex-col items-center text-center">
+              <div className="p-4 bg-slate-800 rounded-full mb-4 group-hover:bg-blue-600/10 group-hover:text-blue-500 transition-all">
+                <FileCheck className="w-8 h-8" />
+              </div>
+              <p className="text-sm font-medium">
+                {fileBank ? fileBank.name : "Clique para selecionar o banco"}
+              </p>
+              <span className="text-xs text-slate-500 mt-2">Tamanho máximo: 50MB</span>
+            </label>
+          </div>
+        </div>
+
+        <div className="space-y-6 flex flex-col">
+          <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-6 flex-1">
+            <div className="mb-6">
+              <h2 className="text-xl font-semibold mt-1">Parâmetros</h2>
+              <p className="text-slate-500 text-sm">Defina o destino e execute a rotina.</p>
+            </div>
+
+            <div className="space-y-4">
+                <label className="block text-xs uppercase font-bold text-slate-500 tracking-widest ml-1">Instituição Alvo</label>
+                <select
+                    value={bank}
+                    onChange={(e) => setBank(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl py-4 px-4 text-sm text-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
+                >
+                    <option value="" disabled>Selecione uma opção...</option>
+                    <option value="Capital Consig">Capital Consig</option>
+                    <option value="Safra">Safra</option>
+                </select>
+
+                <div className="pt-4 border-t border-slate-800 mt-6">
+                    <button
+                        onClick={sendToQueue}
+                        disabled={loading}
+                        className={`w-full py-4 rounded-xl font-bold flex items-center justify-center gap-3 transition-all
+                            ${loading
+                                ? "bg-slate-800 text-slate-500" 
+                                : "bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-500/20 active:scale-95"}`}
+                    >
+                        {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <ArrowRight className="w-5 h-5" />}
+                        {loading ? "Processando..." : "DISPARAR FILA"}
+                    </button>
+                </div>
+            </div>
           </div>
 
-          <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-gray-700">Arquivo Bank</label>
-            <select
-              className="w-full py-2 px-1 text-sm text-gray-500  border border-gray-300 rounded-md cursor-pointer"
-              onChange={(e) => {
-                const selectedBank = e.target.value;
-                setBank(selectedBank);
-              }}
-            >
-              <option className="hidden" value="">Selecione um banco</option>
-              <option value="Capital Consig">Capital Consig</option>
-              <option value="Safra">Safra</option>
-            </select>
-          </div>
-
-          {/* Botão de Envio */}
-          <button
-            type="button"
-            disabled={loading}
-            onClick={(e) => sendToQueue(e)}
-            className={`w-full py-3 px-4 rounded-md font-semibold text-white transition-colors
-              ${loading
-                ? "bg-gray-400 cursor-not-allowed"
-                : "bg-blue-600 hover:bg-blue-700 active:bg-blue-800"}`}
-          >
-            {loading ? "Processando..." : "Enviar para Fila"}
-          </button>
-
-          {/* Mensagem de Sucesso */}
           {message && (
-            <div className={`mt-4 p-3 rounded-md ${isSuccess ? "bg-green-50 border border-green-200" : "bg-red-50 border border-red-200"}`}>
-              <p className={isSuccess ? "text-green-700 text-center font-medium" : "text-red-700 text-center font-medium"}>{isSuccess ? "✅" : "❌"} {message}</p>
+            <div className={`p-4 rounded-xl border flex items-start gap-3 animate-in fade-in zoom-in duration-300
+              ${isSuccess
+                ? "bg-emerald-500/5 border-emerald-500/20 text-emerald-400" 
+                : "bg-red-500/5 border-red-500/20 text-red-400"}`}>
+              {isSuccess ? <CheckCircle2 className="w-5 h-5 mt-0.5" /> : <AlertCircle className="w-5 h-5 mt-0.5" />}
+              <div>
+                  <p className="font-bold text-sm">{isSuccess ? "Sucesso" : "Atenção"}</p>
+                  <p className="text-xs opacity-80">{message}</p>
+              </div>
             </div>
           )}
         </div>
+
       </div>
-    </section>
+
+      {/* Footer Minimalista */}
+      <footer className="w-full px-8 py-4 border-t border-slate-800 bg-slate-900/10 flex justify-between items-center text-[10px] text-slate-600">
+        <p>© 2026 RPA DEVELOPMENT ANALYST - INTERNAL USE ONLY</p>
+        <p>REQUISITION ID: {loading ? "GENERATING..." : "STDBY-001"}</p>
+      </footer>
+    </main>
   );
 }
