@@ -10,22 +10,7 @@ class SafraMapper(Bank):
 
     def read_archive(self, file):
         df = pd.read_excel(io.BytesIO(file)) # header=3
-        print(df)
         return df
-
-    def get_retencao(self, value):
-
-        if value <= 10:
-            bonus = 2
-            resultado = value - 2
-        elif value <= 20:
-            bonus = 3
-            resultado = value - 3
-        else:
-            bonus = 4
-            resultado = value - 4
-
-        return resultado / 100, bonus
 
     def compare_archive(self, df_work, df_bank):
 
@@ -71,7 +56,6 @@ class SafraMapper(Bank):
         for index, row in df_open.iterrows():
 
             row["Diferido"] = row["CdvpDiferidoFuturo"]
-            print(row["Diferido"])
 
             list_of_open_tables.append(row)
 
@@ -89,10 +73,7 @@ class SafraMapper(Bank):
     def extract_city(self, product):
         product = str(product).upper().strip()
 
-        print(product)
-
         if product.split(" ")[0] in ["IPREM"]:
-            print(product)
             return citys.get(product.split(" ")[0], "")
 
         cidade = product.split(" ")[1]
@@ -145,8 +126,6 @@ class SafraMapper(Bank):
             prefixo_encontrado = next((p for p in prefixos if p in product), None)
 
             if prefixo_encontrado:
-                partes = product.split(prefixo_encontrado, 1)
-                rest_of_product = partes[1].strip() if len(partes) > 1 else ""
                 convenio = categoria
 
                 if convenio == "FEDERAL SIAPE":
@@ -176,6 +155,9 @@ class SafraMapper(Bank):
         for row in list_of_open_tables:
 
             product = row["Convenio"]
+
+            if row["Produto_x"] == "PORTABILIDADE":
+                row["Tabela"] = row["Convenio"] + " " + row["Tabela"]
 
             convenio = self.get_convenio(product)
 
@@ -212,8 +194,6 @@ class SafraMapper(Bank):
 
         df = pd.DataFrame(list_of_convert_rows)
 
-        df.to_excel("tabelas_para_abrir.xlsx", index=False)  # Exporta as tabelas para abrir em um arquivo Excel
-
         return df
 
     def create_close_tables(self, list_of_close_tables):
@@ -228,7 +208,7 @@ class SafraMapper(Bank):
 
         df = pd.DataFrame(list_of_convert_rows)
 
-        df = df.drop(['CÓD  ', 'NOMENCLATURA FUNÇÃO', 'Unnamed: 2', ' CONVENIO', 'PRAZO ', '% PROMOTORA', 'prazo_formatado', '_merge'], axis=1)
+        df = df.drop(['Atualizações', 'Convenio', 'Tabela', 'Produto_x', 'DataInicioVigencia', 'PrazoDe', 'PrazoAte', 'TktmMin', 'TktmMax', 'Taxa', 'TaxaMaxima', 'CalculoComissao', 'Id Tabela Nova', 'IdConvenio', 'ComissaoAto', 'CdvpDiferidoVp', 'CdvpDiferidoMensal', 'CdvpDiferidoFuturo', 'CintDiferidoVp', 'CintDiferidoMensal', 'CintDiferidoFuturo', 'CprodDiferidoVp', 'CprodDiferidoMensal', 'CprodDiferidoFuturo', 'CmutDiferidoVp', 'CmutDiferidoMensal', 'CmutDiferidoFuturo', 'TotalDiferidoVp', 'TotalDiferidoMensal', 'TotalDiferidoFuturo', 'prazo_formatado', '_merge'], axis=1)
 
         return df
 
@@ -239,7 +219,7 @@ class SafraMapper(Bank):
 
         for row in list_of_close_open:
 
-            percent = convertValues(row["% PROMOTORA"] * 100)
+            percent = convertValues(row["ComissaoAto"] * 100)
 
             row_close = row.copy()
 
@@ -252,7 +232,7 @@ class SafraMapper(Bank):
             row_open["Término"] = ""
             row_open["Vigência"] = datetime.now().strftime("%d/%m/%Y")
             row_open["ID"] = ''
-            row_open["% Comissão"] = convertValues(row["% PROMOTORA"] * 100)
+            row_open["% Comissão"] = convertValues(row["ComissaoAto"] * 100)
             row_open["% Mínima"] = percent * 0.70
             row_open["% Intermediária"] = percent * 0.95
             row_open["% Máxima"] = percent
@@ -262,11 +242,7 @@ class SafraMapper(Bank):
         df = pd.DataFrame(list_of_convert_close_rows)
         df2 = pd.DataFrame(list_of_convert_open_rows)
 
-        colunas_remover = [
-            'CÓD  ', 'NOMENCLATURA FUNÇÃO', 'Unnamed: 2',
-            ' CONVENIO', 'PRAZO ', '% PROMOTORA',
-            'prazo_formatado', '_merge'
-        ]
+        colunas_remover = ['Atualizações', 'Convenio', 'Tabela', 'Produto_x', 'DataInicioVigencia', 'PrazoDe', 'PrazoAte', 'TktmMin', 'TktmMax', 'Taxa', 'TaxaMaxima', 'CalculoComissao', 'Id Tabela Nova', 'IdConvenio', 'ComissaoAto', 'CdvpDiferidoVp', 'CdvpDiferidoMensal', 'CdvpDiferidoFuturo', 'CintDiferidoVp', 'CintDiferidoMensal', 'CintDiferidoFuturo', 'CprodDiferidoVp', 'CprodDiferidoMensal', 'CprodDiferidoFuturo', 'CmutDiferidoVp', 'CmutDiferidoMensal', 'CmutDiferidoFuturo', 'TotalDiferidoVp', 'TotalDiferidoMensal', 'TotalDiferidoFuturo', 'prazo_formatado', '_merge', 'Diferido']
 
         df = df.drop(colunas_remover, axis=1)
         df2 = df2.drop(colunas_remover, axis=1)
@@ -314,7 +290,11 @@ class SafraMapper(Bank):
         df_close2 = None
         df_open2 = None
 
-        print("Iniciando a conversão para o modelo Workbank...")
+        print("""
+=======================================================
+Tabelas alteradas
+=======================================================
+        """)
         if len(list_of_open_tables) > 0:
             print(f"Foram encontradas {len(list_of_open_tables)} tabelas para abrir.")
             df_open = self.create_open_tables(list_of_open_tables, model)
@@ -325,12 +305,16 @@ class SafraMapper(Bank):
             print(f"Foram encontradas {len(list_to_close_and_open)} tabelas para fechar e abrir.")
             df_close2, df_open2 = self.create_close_open_tables(list_to_close_and_open)
 
-        print("Conversão realizada com sucesso!")
+        print("""
+=======================================================
+Conversão realizada com sucesso!
+=======================================================
+        """)
+
         print("Iniciando processo de junção dos arquivos...")
         dfs_para_juntar = [df for df in [df_close, df_close2, df_open, df_open2] if df is not None and not df.empty]
         if dfs_para_juntar:
             df_final = pd.concat(dfs_para_juntar, axis=0, ignore_index=True, sort=False)
-            df_final = df_final.drop(['BONUS'], axis=1)
             print(f"Sucesso! Total de linhas: {len(df_final)}")
         else:
             print("Nenhum dado encontrado para juntar.")
@@ -342,5 +326,3 @@ class SafraMapper(Bank):
         print("Resultado exportado com sucesso!")
 
         print("Processo concluído!")
-
-
