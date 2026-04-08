@@ -132,6 +132,7 @@ export default function Home() {
                     <option value="" disabled>Selecione uma opção...</option>
                     <option value="Capital Consig">Capital Consig</option>
                     <option value="Safra">Safra</option>
+                    <option value="Santander">Santander</option>
                 </select>
 
                 <div className="pt-4 border-t border-slate-800 mt-6">
@@ -166,10 +167,8 @@ export default function Home() {
 
       </div>
 
-      {/* Footer Minimalista */}
       <footer className="w-full px-8 py-4 border-t border-slate-800 bg-slate-900/10 flex justify-between items-center text-[10px] text-slate-600">
-        <p>© 2026 RPA DEVELOPMENT ANALYST - INTERNAL USE ONLY</p>
-        <p>REQUISITION ID: {loading ? "GENERATING..." : "STDBY-001"}</p>
+        <p>FEITO POR: FERNANDO MORETI BOLELA E SILVA</p>
       </footer>
     </main>
   );
