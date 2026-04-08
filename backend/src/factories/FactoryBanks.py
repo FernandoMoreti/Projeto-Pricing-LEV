@@ -1,10 +1,12 @@
 from ..services.Safra import SafraMapper
 from ..services.CapitalConsig import CapitalConsigMapper
+from ..services.Santander import SantanderMapper
 
 class FactoryBank:
     _factoryBanksMapper = {
         "capitalconsig": CapitalConsigMapper(),
         "safra": SafraMapper(),
+        "santander": SantanderMapper(),
     }
 
     @staticmethod

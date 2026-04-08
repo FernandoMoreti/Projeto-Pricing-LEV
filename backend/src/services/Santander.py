@@ -2,43 +2,37 @@ from .Bank import Bank
 from datetime import datetime
 import pandas as pd
 import io
-from ..utils.utils import convertValues, formatar_br, remover_acentos
-from ..config.bank.SafraVariable import family_product, group_convenio, prazo_convenio
+from ..utils.utils import convertValues, remover_acentos
+from ..config.bank.SantanderVariables import family_product, group_convenio
 from ..config.citys_uf import citys, citys_uf, states
 
-class SafraMapper(Bank):
+class SantanderMapper(Bank):
 
     def read_archive(self, file):
-        df = pd.read_excel(io.BytesIO(file)) # header=3
+        df = pd.read_excel(io.BytesIO(file), sheet_name="Condições_comerciais")
         return df
 
+    def get_retencao(self, value):
+
+        if value <= 10:
+            bonus = 2
+            resultado = value - 2
+        elif value <= 20:
+            bonus = 3
+            resultado = value - 3
+        else:
+            bonus = 4
+            resultado = value - 4
+
+        return resultado / 100, bonus
+
     def compare_archive(self, df_work, df_bank):
-
-        filtro_legenda = df_bank["Atualizações"].str.contains("Legenda", na=False, case=False)
-
-        if filtro_legenda.any():
-            indice_corte = df_bank[filtro_legenda].index[0] - 1
-            df_bank = df_bank.iloc[:indice_corte].copy()
-
-        df_bank["PrazoDe"] = pd.to_numeric(df_bank["PrazoDe"], errors='coerce').fillna(0).astype(int)
-        df_bank["PrazoAte"] = pd.to_numeric(df_bank["PrazoAte"], errors='coerce').fillna(0).astype(int)
-
-        df_bank.loc[df_bank["Produto"] == "PORTABILIDADE", "PrazoDe"] = 1
-
-        df_bank.loc[df_bank["Produto"] == "PORTABILIDADE", "PrazoAte"] = (
-            df_bank["Convenio"].str.strip().map(prazo_convenio).fillna(0).astype(int)
-        )
-
-        df_bank["prazo_formatado"] = (
-            df_bank["PrazoDe"].astype(str) + "-" + df_bank["PrazoAte"].astype(str)
-        )
-        df_work["Parc. Atual"] = df_work["Parc. Atual"].astype(str).str.strip()
 
         df_result = pd.merge(
             df_bank,
             df_work,
-            left_on=["Id Tabela Nova", "prazo_formatado"],
-            right_on=["Id Tabela Banco", "Parc. Atual"],
+            left_on=["codigo_regra"],
+            right_on=["Id Tabela Banco"],
             how="outer",
             indicator=True
         )
@@ -55,98 +49,126 @@ class SafraMapper(Bank):
 
         for index, row in df_open.iterrows():
 
-            row["Diferido"] = row["CdvpDiferidoFuturo"]
+            row["Diferido"] = row["percentual_comissao_diferido"]
 
             list_of_open_tables.append(row)
 
-        for index, row in df_matches.iterrows():
+        df_matches["percent_converted"] = df_matches["percentual_comissao_a_vista"].apply(convertValues)
+        df_matches["percent_work_converted"] = df_matches["% Comissão"].apply(convertValues)
 
-            row["Diferido"] = row["CdvpDiferidoFuturo"]
+        df_matches["Diferido"] = df_matches["percentual_comissao_diferido"]
 
-            percent = convertValues(row["ComissaoAto"] * 100)
-            percent_work = convertValues(row["% Comissão"])
-            if percent != percent_work:
-                list_to_close_and_open.append(row)
+        mask_diff = df_matches["percent_converted"] != df_matches["percent_work_converted"]
+        df_diff = df_matches[mask_diff]
+
+        list_to_close_and_open.extend(df_diff.to_dict('records'))
+
+        df_matches.drop(columns=["percent_converted", "percent_work_converted"], inplace=True)
 
         return list_of_open_tables, list_of_close_tables, list_to_close_and_open
 
     def extract_city(self, product):
         product = str(product).upper().strip()
 
-        if product.split(" ")[0] in ["IPREM"]:
-            return citys.get(product.split(" ")[0], "")
+        product_limpo = remover_acentos(str(product).upper().strip())
 
-        cidade = product.split(" ")[1]
+        key_city = next((cidade for cidade in citys if cidade in product_limpo), None)
 
-        if cidade in ["CAMPINA", "PORTO", "SANTA", "SAO", "BELO"]:
-            cidade = product.split(" ")[1] + " " + product.split(" ")[2]
+        cidade = citys.get(key_city) if key_city else None
 
-        cidade = remover_acentos(cidade)
+        if cidade == None:
+            if product == "PREFEITURA MUNICIPAL DE ITU":
+                return "ITU"
+            return ""
 
-        city = citys.get(cidade, "")
-
-        return city
+        return cidade
 
     def extract_uf_of_city(self, city):
         city = str(city).upper().strip()
-
-        if city.startswith("DE "):
-            city = city.split(" ")[1]
 
         uf = " " + citys_uf.get(city, "")
 
         return uf
 
-    def extract_uf_of_state(self, rest_of_product):
-        rest_of_product = str(rest_of_product).upper().strip()
+    def extract_uf_of_state(self, product):
+        product = str(product).upper().strip()
 
-        state = rest_of_product.split("_")[0]
+        if product == "PROCURADORIA GERAL DO ESTADO DE SP":
+            return "SP"
 
-        state = remover_acentos(state)
+        if product == "PROCURADORIA GERAL DE JUSTICA DO ES":
+            return "ES"
 
-        if len(state) == 2:
-            return state
+        product_limpo = remover_acentos(str(product).upper().strip())
 
-        uf = states.get(state, "")
+        key_state = next((state for state in states if state in product_limpo), None)
+
+        uf = states.get(key_state, "")
+
+        if uf == "":
+            key_city = next((city for city in citys if city in product_limpo), None)
+
+            uf = citys_uf.get(key_city, "")
+
+            if uf == "":
+                return ""
 
         return uf
 
     def get_convenio(self, product):
         product = str(product).upper()
         categorias = {
-            "GOV-": ["GOV", "GOV_", "GOV.", "SPPREV_"],
+            "CGI - IMOB": ["CGI", "USECASA"],
+            "": ["CREMESP"],
+            "AERONAUTIICA": ["AERONAUTICA"],
             "FEDERAL SIAPE": ["SIAPE"],
-            "PREF. ": ["PREF", "PREF_", "PREF.", "IPREM"],
+            "TJ | ": ["TRIB"],
+            "GOV-": ["ASSEMB", "ESTADO", "AMAPA" "PROCURADORIA", "IPSEMG", "JUSTICA", "UNIVERSITARIO", "CORPO", "DEFENSORIA", "UNIVERSIDADE", "GOVERNO", "MINISTERIO", "POLICIA", "SANESUL"],
+            "PREF. ": ["PREF", "PREV", "MUNICIP", "MUNIC", "AUTARQUIA", "INST", "ARAPREV", "ASPMI", "CARAGUAPREV", "COMPANHIA", "DEPART", "FUND", "IPASLUZ", "IPREM", "SECRETARIA", "SAAE", "SAEMAS", "SAMAE", "SAME", "SANEAMENTO", "SANEBAVI", "SEPREM", "SERV", "SUPERINTENDENCIA", "UNITAU"],
         }
 
-        if product in ["AERONAUTICA", "MARINHA", "FGTS", "INSS"]:
-            return product
-
         for categoria, prefixos in categorias.items():
-            prefixo_encontrado = next((p for p in prefixos if p in product), None)
 
+            if product in ["SAO PAULO PREVIDENCIA", "CAMARA DOS DEPUTADOS", "FUND PRO SANGUE HEMOCENTRO SAO PAULO"]:
+                convenio = "GOV-"
+                prefixo_encontrado = True
+            else:
+                prefixo_encontrado = next((p for p in prefixos if p in product), None)
             if prefixo_encontrado:
                 convenio = categoria
 
-                if convenio == "FEDERAL SIAPE":
+                if convenio in ["FEDERAL SIAPE", "AERONAUTIICA", "CGI - IMOB", ""]:
                     return convenio
 
                 if convenio == "PREF. ":
                     city = self.extract_city(product)
-                    uf = self.extract_uf_of_city(city)
 
                     if city == "":
                         return ""
 
+                    uf = self.extract_uf_of_city(city)
+
                     convenio = convenio + city + uf
                     return convenio
 
-                if convenio == "GOV-":
-                    uf = product.split(" ")[1]
+                if convenio in ["GOV-", "TJ | "]:
+                    uf = self.extract_uf_of_state(product)
+
+                    if uf == "":
+                        return ""
+
                     convenio = convenio + uf
                     return convenio
 
         return "CONVENIO DESCONHECIDO"
+
+    def get_seguro(self, texto):
+        texto = str(texto).upper()
+        if any(termo in texto for termo in ["C SEGURO", "COM SEGURO", "C SEG"]):
+            return " - C/ SEGURO - "
+        if any(termo in texto for termo in ["S SEGURO", "SEM SEGURO", "S SEG"]):
+            return " - S/ SEGURO - "
+        return " - S/ SEGURO - "
 
     def create_open_tables(self, list_of_open_tables, model):
 
@@ -154,42 +176,38 @@ class SafraMapper(Bank):
 
         for row in list_of_open_tables:
 
-            product = row["Convenio"]
-
-            if row["Produto_x"] == "PORTABILIDADE":
-                row["Tabela"] = row["Convenio"] + " " + row["Tabela"]
+            product = row["nome_convenio"]
 
             convenio = self.get_convenio(product)
 
-            agreement = row["Convenio"].strip().split(" ")[0]
-            family = family_product[agreement]
-            group = group_convenio[family]
-            percent = convertValues(row["ComissaoAto"] * 100)
-            tkt_min = formatar_br(row["TktmMin"])
-            tkt_max = formatar_br(row["TktmMax"])
-            diferido = formatar_br(row['Diferido'] * 100 if row['Diferido'] != None else '0,00')
+            agreement = convenio.strip().split(" ")[0]
+            family = family_product.get(agreement, "")
+            group = group_convenio.get(family, "")
+            percent = convertValues(row["percentual_comissao_a_vista"])
+            seguro = self.get_seguro(row["descricao_regra"])
+
+            if seguro == " - C/ SEGURO - ":
+                row["SEGURO"] = "0,56 | LIQUIDO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
+                row["REPASSE SEGURO"] = "0,40 | 0,50 | 0,56"
+
+            codigo_str = str(row["codigo_regra"]).strip()
+            complement = f"{codigo_str[4:]}{seguro}{row["codigo_regra"]}"
 
             new_row = model.copy()
 
-            new_row["Operação"] = row["Produto_x"]
-            new_row["Produto"] = row["Tabela"]
-            new_row["Base Comissão"] = row["CalculoComissao"]
+            new_row["Produto"] = product
             new_row["Família Produto"] = family
             new_row["Grupo Convênio"] = group
             new_row["Convênio"] = convenio
-            new_row["Parc. Atual"] = row["prazo_formatado"]
+            new_row["Parc. Atual"] = row["faixa_parcela"]
             new_row["% Mínima"] = percent * 0.70
             new_row["% Intermediária"] = percent * 0.95
             new_row["% Máxima"] = percent
             new_row["% Comissão"] = percent
             new_row["Vigência"] = datetime.now().strftime("%d/%m/%Y")
-            new_row["Complemento"] = int(row["Id Tabela Nova"])
-            new_row["Id Tabela Banco"] = int(row["Id Tabela Nova"])
-            new_row["DIFERIMENTO"] = f"{diferido} | LIQUIDO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
-            new_row["Faixa Val. Contrato"] = f"{tkt_min}-{tkt_max}-LÍQUIDO"
-
-            if new_row["DIFERIMENTO"] != "":
-                new_row["REPASSE DIFERIMENTO"] = "0,00 | 0,00 | 0,00"
+            new_row["Complemento"] = complement
+            new_row["Id Tabela Banco"] = row["codigo_regra"]
+            new_row["DIFERIMENTO"] = f"{int(row["Diferido"])},00 | LIQUIDO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
 
             list_of_convert_rows.append(new_row)
 
@@ -209,8 +227,9 @@ class SafraMapper(Bank):
 
         df = pd.DataFrame(list_of_convert_rows)
 
-        df = df.drop(['Atualizações', 'Convenio', 'Tabela', 'Produto_x', 'DataInicioVigencia', 'PrazoDe', 'PrazoAte', 'TktmMin', 'TktmMax', 'Taxa', 'TaxaMaxima', 'CalculoComissao', 'Id Tabela Nova', 'IdConvenio', 'ComissaoAto', 'CdvpDiferidoVp', 'CdvpDiferidoMensal', 'CdvpDiferidoFuturo', 'CintDiferidoVp', 'CintDiferidoMensal', 'CintDiferidoFuturo', 'CprodDiferidoVp', 'CprodDiferidoMensal', 'CprodDiferidoFuturo', 'CmutDiferidoVp', 'CmutDiferidoMensal', 'CmutDiferidoFuturo', 'TotalDiferidoVp', 'TotalDiferidoMensal', 'TotalDiferidoFuturo', 'prazo_formatado', '_merge'], axis=1)
+        df = df.drop(["codigo_convenio", "nome_convenio", "rede", "regional", "status_convenio", "codigo_regra", "descricao_regra", "data_inicio_validade", "data_fim_validade", "tipo_conta_corrente", "sequencia_faixa", "range_faixa_taxa", "faixa_parcela", "taxa_juros_sem_seguro", "taxa_juros_com_seguro", "categoria_corban_para_comissao", "percentual_comissao_a_vista", "percentual_comissao_diferido", "percentual_comissao_total", "produto_regra", "canal_regra", '_merge'], axis=1)
 
+        df.to_excel("tabelafechada.xlsx", index=False)
         return df
 
     def create_close_open_tables(self, list_of_close_open):
@@ -220,7 +239,7 @@ class SafraMapper(Bank):
 
         for row in list_of_close_open:
 
-            percent = convertValues(row["ComissaoAto"] * 100)
+            percent = convertValues(row["percentual_comissao_a_vista"])
 
             row_close = row.copy()
 
@@ -233,7 +252,7 @@ class SafraMapper(Bank):
             row_open["Término"] = ""
             row_open["Vigência"] = datetime.now().strftime("%d/%m/%Y")
             row_open["ID"] = ''
-            row_open["% Comissão"] = convertValues(row["ComissaoAto"] * 100)
+            row_open["% Comissão"] = convertValues(row["percentual_comissao_a_vista"])
             row_open["% Mínima"] = percent * 0.70
             row_open["% Intermediária"] = percent * 0.95
             row_open["% Máxima"] = percent
@@ -243,7 +262,7 @@ class SafraMapper(Bank):
         df = pd.DataFrame(list_of_convert_close_rows)
         df2 = pd.DataFrame(list_of_convert_open_rows)
 
-        colunas_remover = ['Atualizações', 'Convenio', 'Tabela', 'Produto_x', 'DataInicioVigencia', 'PrazoDe', 'PrazoAte', 'TktmMin', 'TktmMax', 'Taxa', 'TaxaMaxima', 'CalculoComissao', 'Id Tabela Nova', 'IdConvenio', 'ComissaoAto', 'CdvpDiferidoVp', 'CdvpDiferidoMensal', 'CdvpDiferidoFuturo', 'CintDiferidoVp', 'CintDiferidoMensal', 'CintDiferidoFuturo', 'CprodDiferidoVp', 'CprodDiferidoMensal', 'CprodDiferidoFuturo', 'CmutDiferidoVp', 'CmutDiferidoMensal', 'CmutDiferidoFuturo', 'TotalDiferidoVp', 'TotalDiferidoMensal', 'TotalDiferidoFuturo', 'prazo_formatado', '_merge', 'Diferido']
+        colunas_remover = ["codigo_convenio", "nome_convenio", "rede", "regional", "status_convenio", "codigo_regra", "descricao_regra", "data_inicio_validade", "data_fim_validade", "tipo_conta_corrente", "sequencia_faixa", "range_faixa_taxa", "faixa_parcela", "taxa_juros_sem_seguro", "taxa_juros_com_seguro", "categoria_corban_para_comissao", "percentual_comissao_a_vista", "percentual_comissao_diferido", "percentual_comissao_total", "produto_regra", "canal_regra", '_merge', 'percent_converted', 'percent_work_converted', 'Diferido']
 
         df = df.drop(colunas_remover, axis=1)
         df2 = df2.drop(colunas_remover, axis=1)
@@ -258,6 +277,7 @@ class SafraMapper(Bank):
         model["% Taxa"] = "0,00-0,00"
         model["Idade"] = "0-80"
         model["-"] = "%"
+        model["Base Comissão"] = "LÍQUIDO"
         model["% Fator"] = "0,000000000"
         model["% TAC"] = "0,000000"
         model["Val. Teto TAC"] = "0,000000"
@@ -271,7 +291,6 @@ class SafraMapper(Bank):
         return model
 
     def run(self, df_work, file_Bank):
-
         try:
 
             print("Lendo arquivo enviado pelo banco...")
@@ -292,11 +311,7 @@ class SafraMapper(Bank):
             df_close2 = None
             df_open2 = None
 
-            print("""
-    =======================================================
-    Tabelas alteradas
-    =======================================================
-            """)
+            print("Iniciando a conversão para o modelo Workbank...")
             if len(list_of_open_tables) > 0:
                 print(f"Foram encontradas {len(list_of_open_tables)} tabelas para abrir.")
                 df_open = self.create_open_tables(list_of_open_tables, model)
@@ -307,16 +322,12 @@ class SafraMapper(Bank):
                 print(f"Foram encontradas {len(list_to_close_and_open)} tabelas para fechar e abrir.")
                 df_close2, df_open2 = self.create_close_open_tables(list_to_close_and_open)
 
-            print("""
-    =======================================================
-    Conversão realizada com sucesso!
-    =======================================================
-            """)
-
+            print("Conversão realizada com sucesso!")
             print("Iniciando processo de junção dos arquivos...")
             dfs_para_juntar = [df for df in [df_close, df_close2, df_open, df_open2] if df is not None and not df.empty]
             if dfs_para_juntar:
                 df_final = pd.concat(dfs_para_juntar, axis=0, ignore_index=True, sort=False)
+                df_final.to_excel("abertura e fechamento.xlsx", index=False)
                 print(f"Sucesso! Total de linhas: {len(df_final)}")
             else:
                 print("Nenhum dado encontrado para juntar.")
