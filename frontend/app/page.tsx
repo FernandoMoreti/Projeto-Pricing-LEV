@@ -31,18 +31,35 @@ export default function Home() {
     setLoading(true);
     setMessage("");
 
-    const url = process.env.API_URL_QUEUE;
+    const uri = process.env.API_URL_QUEUE;
     const form = new FormData();
     form.append('fileWork', fileWorkbank);
     form.append('fileBank', fileBank);
     form.append("bank", bank);
 
     try {
-      const response = await axios.post(`${url}/pricing`, form);
-      if (response.status >= 200 && response.status < 300) {
-        setMessage(response.data.message || "Lote enviado para processamento!");
-        setIsSuccess(response.data.success);
+      const response = await axios.post(`${uri}/pricing`, form, { responseType: 'blob' });
+
+      if (response.data.type === "application/json") {
+        const text = await response.data.text();
+        const errorData = JSON.parse(text);
+
+        setMessage(errorData.message || "O Excel não foi gerado com sucesso.");
+        setIsSuccess(false);
+        setLoading(false);
+        return;
       }
+
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `${bank}_Atualizacoes.xlsx`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      setMessage("Arquivo com as Alterações gerado com sucesso");
+      setIsSuccess(true);
     } catch (err) {
       setMessage("Falha na comunicação com o serviço de fila.");
       setIsSuccess(false);
@@ -54,7 +71,6 @@ export default function Home() {
   return (
     <main className="min-h-screen w-full bg-[#020617] text-slate-200 flex flex-col font-sans">
 
-      {/* Header Estendido */}
       <nav className="w-full border-b border-slate-800 bg-slate-900/20 backdrop-blur-md px-8 py-4 flex justify-between items-center">
         <div className="flex items-center gap-3">
           <div className="bg-blue-600 p-2 rounded-lg">

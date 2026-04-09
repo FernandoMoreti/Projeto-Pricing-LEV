@@ -97,3 +97,10 @@ group_convenio = {
     "TRIBUNAIS": "TRIBUNAIS",
     "PREFEITURAS": "PREFEITURAS",
 }
+
+operation = {
+    "Port": "PORTABILIDADE",
+    "Novo": "NOVO",
+    "Refin": "REFIN",
+    "Refin Port": "PORTAB/REFIN",
+}

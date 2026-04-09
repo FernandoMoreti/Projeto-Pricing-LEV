@@ -325,7 +325,7 @@ class CapitalConsigMapper(Bank):
             print("Processo de junção finalizado!")
 
             print("Exportando resultado para Excel...")
-            df_final.to_excel("capital_consig_resultado.xlsx", index=False)
+            df_final.to_excel("Capital_Consig_Atualizacoes.xlsx", index=False)
             print("Resultado exportado com sucesso!")
 
             print("Processo concluído!")

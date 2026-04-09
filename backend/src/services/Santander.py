@@ -3,7 +3,7 @@ from datetime import datetime
 import pandas as pd
 import io
 from ..utils.utils import convertValues, remover_acentos
-from ..config.bank.SantanderVariables import family_product, group_convenio
+from ..config.bank.SantanderVariables import family_product, group_convenio, operation
 from ..config.citys_uf import citys, citys_uf, states
 
 class SantanderMapper(Bank):
@@ -48,6 +48,9 @@ class SantanderMapper(Bank):
             print(f"Encontrados {len(df_matches)} correspondências!")
 
         for index, row in df_open.iterrows():
+
+            if row["produto_regra"] == "Unificado":
+                continue
 
             row["Diferido"] = row["percentual_comissao_diferido"]
 
@@ -162,13 +165,16 @@ class SantanderMapper(Bank):
 
         return "CONVENIO DESCONHECIDO"
 
-    def get_seguro(self, texto):
-        texto = str(texto).upper()
-        if any(termo in texto for termo in ["C SEGURO", "COM SEGURO", "C SEG"]):
+    def get_seguro(self, text):
+        text = str(text).upper()
+        if any(term in text for term in ["C SEGURO", "COM SEGURO", "C SEG"]):
             return " - C/ SEGURO - "
-        if any(termo in texto for termo in ["S SEGURO", "SEM SEGURO", "S SEG"]):
+        if any(term in text for term in ["S SEGURO", "SEM SEGURO", "S SEG"]):
             return " - S/ SEGURO - "
         return " - S/ SEGURO - "
+
+    def get_operation(self, value):
+        return operation.get(value, "")
 
     def create_open_tables(self, list_of_open_tables, model):
 
@@ -177,7 +183,7 @@ class SantanderMapper(Bank):
         for row in list_of_open_tables:
 
             product = row["nome_convenio"]
-
+            operation = self.get_operation(row["produto_regra"])
             convenio = self.get_convenio(product)
 
             agreement = convenio.strip().split(" ")[0]
@@ -186,19 +192,21 @@ class SantanderMapper(Bank):
             percent = convertValues(row["percentual_comissao_a_vista"])
             seguro = self.get_seguro(row["descricao_regra"])
 
-            if seguro == " - C/ SEGURO - ":
-                row["SEGURO"] = "0,56 | LIQUIDO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
-                row["REPASSE SEGURO"] = "0,40 | 0,50 | 0,56"
 
             codigo_str = str(row["codigo_regra"]).strip()
             complement = f"{codigo_str[4:]}{seguro}{row["codigo_regra"]}"
 
             new_row = model.copy()
 
-            new_row["Produto"] = product
+            if seguro == " - C/ SEGURO - ":
+                new_row["SEGURO"] = "0,56 | LIQUIDO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
+                new_row["REPASSE SEGURO"] = "0,40 | 0,50 | 0,56"
+
+            new_row["Produto"] = f"{product} - {row["codigo_regra"]}"
             new_row["Família Produto"] = family
             new_row["Grupo Convênio"] = group
             new_row["Convênio"] = convenio
+            new_row["Base Comissão"] = operation
             new_row["Parc. Atual"] = row["faixa_parcela"]
             new_row["% Mínima"] = percent * 0.70
             new_row["% Intermediária"] = percent * 0.95
@@ -229,7 +237,6 @@ class SantanderMapper(Bank):
 
         df = df.drop(["codigo_convenio", "nome_convenio", "rede", "regional", "status_convenio", "codigo_regra", "descricao_regra", "data_inicio_validade", "data_fim_validade", "tipo_conta_corrente", "sequencia_faixa", "range_faixa_taxa", "faixa_parcela", "taxa_juros_sem_seguro", "taxa_juros_com_seguro", "categoria_corban_para_comissao", "percentual_comissao_a_vista", "percentual_comissao_diferido", "percentual_comissao_total", "produto_regra", "canal_regra", '_merge'], axis=1)
 
-        df.to_excel("tabelafechada.xlsx", index=False)
         return df
 
     def create_close_open_tables(self, list_of_close_open):
@@ -271,13 +278,12 @@ class SantanderMapper(Bank):
 
     def input_standard_values(self, model):
 
-        model["Instituição"] = "CAPITAL CONSIG"
+        model["Instituição"] = "SANTANDER"
         model["Parc. Refin."] = "0-0"
         model["% PMT Pagas"] = "0,00-0,00"
         model["% Taxa"] = "0,00-0,00"
         model["Idade"] = "0-80"
         model["-"] = "%"
-        model["Base Comissão"] = "LÍQUIDO"
         model["% Fator"] = "0,000000000"
         model["% TAC"] = "0,000000"
         model["Val. Teto TAC"] = "0,000000"
@@ -327,7 +333,6 @@ class SantanderMapper(Bank):
             dfs_para_juntar = [df for df in [df_close, df_close2, df_open, df_open2] if df is not None and not df.empty]
             if dfs_para_juntar:
                 df_final = pd.concat(dfs_para_juntar, axis=0, ignore_index=True, sort=False)
-                df_final.to_excel("abertura e fechamento.xlsx", index=False)
                 print(f"Sucesso! Total de linhas: {len(df_final)}")
             else:
                 print("Nenhum dado encontrado para juntar.")
@@ -335,7 +340,7 @@ class SantanderMapper(Bank):
             print("Processo de junção finalizado!")
 
             print("Exportando resultado para Excel...")
-            df_final.to_excel("capital_consig_resultado.xlsx", index=False)
+            df_final.to_excel("Santander_Atualizacoes.xlsx", index=False)
             print("Resultado exportado com sucesso!")
 
             print("Processo concluído!")

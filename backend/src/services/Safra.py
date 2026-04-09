@@ -1,5 +1,5 @@
 from .Bank import Bank
-from datetime import datetime
+from datetime import datetime, timedelta
 import pandas as pd
 import io
 from ..utils.utils import convertValues, formatar_br, remover_acentos
@@ -9,7 +9,7 @@ from ..config.citys_uf import citys, citys_uf, states
 class SafraMapper(Bank):
 
     def read_archive(self, file):
-        df = pd.read_excel(io.BytesIO(file)) # header=3
+        df = pd.read_excel(io.BytesIO(file), header=3)
         return df
 
     def compare_archive(self, df_work, df_bank):
@@ -156,9 +156,6 @@ class SafraMapper(Bank):
 
             product = row["Convenio"]
 
-            if row["Produto_x"] == "PORTABILIDADE":
-                row["Tabela"] = row["Convenio"] + " " + row["Tabela"]
-
             convenio = self.get_convenio(product)
 
             agreement = row["Convenio"].strip().split(" ")[0]
@@ -171,9 +168,23 @@ class SafraMapper(Bank):
 
             new_row = model.copy()
 
-            new_row["Operação"] = row["Produto_x"]
+            if row["Produto_x"] == "PORTABILIDADE":
+                row["Tabela"] = row["Convenio"] + " " + row["Tabela"]
+                new_row["Base Comissão"] = "BRUTO"
+            else:
+                new_row["Base Comissão"] = row["CalculoComissao"]
+
+            if row["Produto_x"] == "REFIN_PORT":
+                new_row["Operação"] = "PORTAB/REFIN"
+            else:
+                new_row["Operação"] = row["Produto_x"]
+
+            if diferido != "0,00":
+                new_row["DIFERIMENTO"] = f"{diferido} | LIQUIDO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
+                new_row["REPASSE DIFERIMENTO"] = "0,00 | 0,00 | 0,00"
+
+            new_row["Val. Base Produção"] = new_row["Base Comissão"]
             new_row["Produto"] = row["Tabela"]
-            new_row["Base Comissão"] = row["CalculoComissao"]
             new_row["Família Produto"] = family
             new_row["Grupo Convênio"] = group
             new_row["Convênio"] = convenio
@@ -185,11 +196,7 @@ class SafraMapper(Bank):
             new_row["Vigência"] = datetime.now().strftime("%d/%m/%Y")
             new_row["Complemento"] = int(row["Id Tabela Nova"])
             new_row["Id Tabela Banco"] = int(row["Id Tabela Nova"])
-            new_row["DIFERIMENTO"] = f"{diferido} | LIQUIDO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
             new_row["Faixa Val. Contrato"] = f"{tkt_min}-{tkt_max}-LÍQUIDO"
-
-            if new_row["DIFERIMENTO"] != "":
-                new_row["REPASSE DIFERIMENTO"] = "0,00 | 0,00 | 0,00"
 
             list_of_convert_rows.append(new_row)
 
@@ -203,13 +210,17 @@ class SafraMapper(Bank):
 
         for index, row in list_of_close_tables.iterrows():
 
-            row["Término"] = datetime.now().strftime("%d/%m/%Y")
+            row["Produto"] = row["Produto_y"]
+            row["Término"] = (datetime.now() - timedelta(days=1)).strftime("%d/%m/%Y")
 
             list_of_convert_rows.append(row)
 
         df = pd.DataFrame(list_of_convert_rows)
 
-        df = df.drop(['Atualizações', 'Convenio', 'Tabela', 'Produto_x', 'DataInicioVigencia', 'PrazoDe', 'PrazoAte', 'TktmMin', 'TktmMax', 'Taxa', 'TaxaMaxima', 'CalculoComissao', 'Id Tabela Nova', 'IdConvenio', 'ComissaoAto', 'CdvpDiferidoVp', 'CdvpDiferidoMensal', 'CdvpDiferidoFuturo', 'CintDiferidoVp', 'CintDiferidoMensal', 'CintDiferidoFuturo', 'CprodDiferidoVp', 'CprodDiferidoMensal', 'CprodDiferidoFuturo', 'CmutDiferidoVp', 'CmutDiferidoMensal', 'CmutDiferidoFuturo', 'TotalDiferidoVp', 'TotalDiferidoMensal', 'TotalDiferidoFuturo', 'prazo_formatado', '_merge'], axis=1)
+        df = df.drop(['Atualizações', 'Convenio', 'Tabela', 'Produto', 'Produto_x', 'DataInicioVigencia', 'PrazoDe', 'PrazoAte', 'TktmMin', 'TktmMax', 'Taxa', 'TaxaMaxima', 'CalculoComissao', 'Id Tabela Nova', 'IdConvenio', 'ComissaoAto', 'CdvpDiferidoVp', 'CdvpDiferidoMensal', 'CdvpDiferidoFuturo', 'CintDiferidoVp', 'CintDiferidoMensal', 'CintDiferidoFuturo', 'CprodDiferidoVp', 'CprodDiferidoMensal', 'CprodDiferidoFuturo', 'CmutDiferidoVp', 'CmutDiferidoMensal', 'CmutDiferidoFuturo', 'TotalDiferidoVp', 'TotalDiferidoMensal', 'TotalDiferidoFuturo', 'prazo_formatado', '_merge'], axis=1)
+        df = df.rename(columns = {
+            'Produto_y': 'Produto'
+        })
 
         return df
 
@@ -252,7 +263,7 @@ class SafraMapper(Bank):
 
     def input_standard_values(self, model):
 
-        model["Instituição"] = "CAPITAL CONSIG"
+        model["Instituição"] = "SAFRA"
         model["Parc. Refin."] = "0-0"
         model["% PMT Pagas"] = "0,00-0,00"
         model["% Taxa"] = "0,00-0,00"
@@ -265,8 +276,6 @@ class SafraMapper(Bank):
         model["Faixa Val. Seguro"] = "0,00-0,00"
         model["Venda Digital"] = "SIM"
         model["Visualização Restrita"] = "NÃO"
-        model["Val. Base Produção"] = "LÍQUIDO"
-        model["REPASSE BONUS VIP"] = "0,00 | 0,00 | 0,00"
 
         return model
 
@@ -292,11 +301,6 @@ class SafraMapper(Bank):
             df_close2 = None
             df_open2 = None
 
-            print("""
-    =======================================================
-    Tabelas alteradas
-    =======================================================
-            """)
             if len(list_of_open_tables) > 0:
                 print(f"Foram encontradas {len(list_of_open_tables)} tabelas para abrir.")
                 df_open = self.create_open_tables(list_of_open_tables, model)
@@ -306,12 +310,6 @@ class SafraMapper(Bank):
             if len(list_to_close_and_open) > 0:
                 print(f"Foram encontradas {len(list_to_close_and_open)} tabelas para fechar e abrir.")
                 df_close2, df_open2 = self.create_close_open_tables(list_to_close_and_open)
-
-            print("""
-    =======================================================
-    Conversão realizada com sucesso!
-    =======================================================
-            """)
 
             print("Iniciando processo de junção dos arquivos...")
             dfs_para_juntar = [df for df in [df_close, df_close2, df_open, df_open2] if df is not None and not df.empty]
@@ -324,10 +322,12 @@ class SafraMapper(Bank):
             print("Processo de junção finalizado!")
 
             print("Exportando resultado para Excel...")
-            df_final.to_excel("capital_consig_resultado.xlsx", index=False)
+            df_final.to_excel("Safra_Atualizacoes.xlsx", index=False)
             print("Resultado exportado com sucesso!")
 
+
             print("Processo concluído!")
+            return df_final
 
         except Exception as e:
             print(f"Erro durante o processamento: {str(e)}")

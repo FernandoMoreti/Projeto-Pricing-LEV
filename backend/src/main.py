@@ -1,5 +1,6 @@
 from fastapi import FastAPI, File, UploadFile, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 import pandas as pd
 import io
 from .factories.FactoryBanks import FactoryBank
@@ -38,11 +39,22 @@ async def edit_pricing(
                 "message": "O Excel não foi gerado com sucesso.",
             }
 
-        return {
-            "success": True,
-            "message": f"Processamento do banco {bank} concluído com sucesso!",
-            "details": "Os arquivos foram unidos e o Excel foi gerado."
+        output = io.BytesIO()
+
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            response.to_excel(writer, index=False)
+
+        output.seek(0)
+
+        headers = {
+            'Content-Disposition': f'attachment; filename="{bank}_Atualizacoes.xlsx"'
         }
+
+        return StreamingResponse(
+            output,
+            media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            headers=headers,
+        )
 
     except Exception as e:
         raise HTTPException(
