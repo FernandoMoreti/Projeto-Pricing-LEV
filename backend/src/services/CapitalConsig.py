@@ -214,7 +214,7 @@ class CapitalConsigMapper(Bank):
 
         df = pd.DataFrame(list_of_convert_rows)
 
-        df = df.drop(['CÓD  ', 'NOMENCLATURA FUNÇÃO', 'Unnamed: 2', ' CONVENIO', 'PRAZO ', '% PROMOTORA', 'prazo_formatado', '_merge'], axis=1)
+        df = df.drop(['CÓD  ', 'NOMENCLATURA FUNÇÃO', 'Unnamed: 2', ' CONVENIO', 'PRAZO ', '% PROMOTORA', 'prazo_formatado', '_merge'], axis=1, errors='ignore')
 
         return df
 
@@ -254,8 +254,8 @@ class CapitalConsigMapper(Bank):
             'prazo_formatado', '_merge'
         ]
 
-        df = df.drop(colunas_remover, axis=1)
-        df2 = df2.drop(colunas_remover, axis=1)
+        df = df.drop(colunas_remover, axis=1, errors='ignore')
+        df2 = df2.drop(colunas_remover, axis=1, errors='ignore')
 
         return df, df2
 
@@ -317,18 +317,15 @@ class CapitalConsigMapper(Bank):
             dfs_para_juntar = [df for df in [df_close, df_close2, df_open, df_open2] if df is not None and not df.empty]
             if dfs_para_juntar:
                 df_final = pd.concat(dfs_para_juntar, axis=0, ignore_index=True, sort=False)
-                df_final = df_final.drop(['BONUS'], axis=1)
+                df_final = df_final.drop(['BONUS', 'NÍVEL', 'EMPREGADOR'], axis=1)
                 print(f"Sucesso! Total de linhas: {len(df_final)}")
             else:
                 print("Nenhum dado encontrado para juntar.")
                 df_final = pd.DataFrame()
             print("Processo de junção finalizado!")
 
-            print("Exportando resultado para Excel...")
-            df_final.to_excel("Capital_Consig_Atualizacoes.xlsx", index=False)
-            print("Resultado exportado com sucesso!")
-
             print("Processo concluído!")
+            return df_final
 
         except Exception as e:
             print(f"Erro durante o processamento: {str(e)}")
