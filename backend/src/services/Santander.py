@@ -194,7 +194,7 @@ class SantanderMapper(Bank):
 
 
             codigo_str = str(row["codigo_regra"]).strip()
-            complement = f"{codigo_str[4:]}{seguro}{row["codigo_regra"]}"
+            complement = f"{codigo_str[4:]}{seguro}{row['codigo_regra']}"
 
             new_row = model.copy()
 
