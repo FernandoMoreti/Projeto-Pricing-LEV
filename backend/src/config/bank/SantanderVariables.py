@@ -89,6 +89,7 @@ family_product = {
     "TJ | ": "TRIBUNAIS",
     "GOV-": "GOVERNOS",
     "PREF.": "PREFEITURAS",
+    "Sem convenio": "PREFEITURAS",
 }
 
 group_convenio = {

@@ -5,7 +5,7 @@ import io
 from ..utils.utils import convertValues, remover_acentos
 from ..config.bank.SantanderVariables import family_product, group_convenio, operation
 from ..config.citys_uf import citys, citys_uf, states
-
+from ..config.grade import grade
 class SantanderMapper(Bank):
 
     def read_archive(self, file):
@@ -49,7 +49,7 @@ class SantanderMapper(Bank):
 
         for index, row in df_open.iterrows():
 
-            if row["produto_regra"] == "Unificado":
+            if row["produto_regra"] == "Unificado" or row["produto_regra"] == "Ret Port":
                 continue
 
             row["Diferido"] = row["percentual_comissao_diferido"]
@@ -82,7 +82,7 @@ class SantanderMapper(Bank):
         if cidade == None:
             if product == "PREFEITURA MUNICIPAL DE ITU":
                 return "ITU"
-            return ""
+            return "Sem convenio"
 
         return cidade
 
@@ -127,7 +127,7 @@ class SantanderMapper(Bank):
             "FEDERAL SIAPE": ["SIAPE"],
             "TJ | ": ["TRIB"],
             "GOV-": ["ASSEMB", "ESTADO", "AMAPA" "PROCURADORIA", "IPSEMG", "JUSTICA", "UNIVERSITARIO", "CORPO", "DEFENSORIA", "UNIVERSIDADE", "GOVERNO", "MINISTERIO", "POLICIA", "SANESUL"],
-            "PREF. ": ["PREF", "PREV", "MUNICIP", "MUNIC", "AUTARQUIA", "INST", "ARAPREV", "ASPMI", "CARAGUAPREV", "COMPANHIA", "DEPART", "FUND", "IPASLUZ", "IPREM", "SECRETARIA", "SAAE", "SAEMAS", "SAMAE", "SAME", "SANEAMENTO", "SANEBAVI", "SEPREM", "SERV", "SUPERINTENDENCIA", "UNITAU"],
+            "PREF. ": ["PREF", "PREV", "MUNICIP", "MUNIC", "AUTARQUIA", "INST", "ARAPREV", "ASPMI", "CARAGUAPREV", "COMPANHIA", "DEPART", "FUND", "IPASLUZ", "IPREM", "SECRETARIA", "SAAE", "SAEMAS", "SAMAE", "SAME", "SANEAMENTO", "SANEBAVI", "SEPREM", "SERV", "SUPERINTENDENCIA", "UNITAU", "FIEB"],
         }
 
         for categoria, prefixos in categorias.items():
@@ -192,9 +192,10 @@ class SantanderMapper(Bank):
             percent = convertValues(row["percentual_comissao_a_vista"])
             seguro = self.get_seguro(row["descricao_regra"])
 
-
             codigo_str = str(row["codigo_regra"]).strip()
             complement = f"{codigo_str[4:]}{seguro}{row['codigo_regra']}"
+
+            grades = grade.get(operation, "")
 
             new_row = model.copy()
 
@@ -202,15 +203,20 @@ class SantanderMapper(Bank):
                 new_row["SEGURO"] = "0,56 | LIQUIDO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
                 new_row["REPASSE SEGURO"] = "0,40 | 0,50 | 0,56"
 
-            new_row["Produto"] = f"{product} - {row['codigo_regra']}"
+            if operation == "PORTABILIDADE":
+                new_row["Base Comissão"] = "BRUTO"
+            else:
+                new_row["Base Comissão"] = "LIQUÍDO"
+
+            new_row["Produto"] = f"{product} - {int(row['codigo_regra'])}"
             new_row["Família Produto"] = family
             new_row["Grupo Convênio"] = group
             new_row["Convênio"] = convenio
-            new_row["Base Comissão"] = operation
+            new_row["Operação"] = operation
             new_row["Parc. Atual"] = row["faixa_parcela"]
-            new_row["% Mínima"] = percent * 0.70
-            new_row["% Intermediária"] = percent * 0.95
-            new_row["% Máxima"] = percent
+            new_row["% Mínima"] = percent * grades["min"]
+            new_row["% Intermediária"] = percent * grades["med"]
+            new_row["% Máxima"] = percent * grades["max"]
             new_row["% Comissão"] = percent
             new_row["Vigência"] = datetime.now().strftime("%d/%m/%Y")
             new_row["Complemento"] = complement
@@ -256,13 +262,16 @@ class SantanderMapper(Bank):
 
             row_open = row.copy()
 
+            operation = self.get_operation(row["produto_regra"])
+            grades = grade.get(operation, "")
+
             row_open["Término"] = ""
             row_open["Vigência"] = datetime.now().strftime("%d/%m/%Y")
             row_open["ID"] = ''
             row_open["% Comissão"] = convertValues(row["percentual_comissao_a_vista"])
-            row_open["% Mínima"] = percent * 0.70
-            row_open["% Intermediária"] = percent * 0.95
-            row_open["% Máxima"] = percent
+            row_open["% Mínima"] = percent * grades["min"]
+            row_open["% Intermediária"] = percent * grades["med"]
+            row_open["% Máxima"] = percent * grades["max"]
 
             list_of_convert_open_rows.append(row_open)
 

@@ -148,6 +148,7 @@ export default function Home() {
                     <option value="" disabled>Selecione uma opção...</option>
                     <option value="Capital Consig">Capital Consig</option>
                     <option value="Safra">Safra</option>
+                    <option value="Santander">Santander</option>
                 </select>
 
                 <div className="pt-4 border-t border-slate-800 mt-6">

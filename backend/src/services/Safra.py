@@ -5,6 +5,7 @@ import io
 from ..utils.utils import convertValues, formatar_br, remover_acentos
 from ..config.bank.SafraVariable import family_product, group_convenio, prazo_convenio
 from ..config.citys_uf import citys, citys_uf, states
+from ..config.grade import grade
 
 class SafraMapper(Bank):
 
@@ -179,6 +180,9 @@ class SafraMapper(Bank):
             else:
                 new_row["Operação"] = row["Produto_x"]
 
+            operation = new_row["Operação"]
+            grades = grade.get(operation, "")
+
             if diferido != "0,00":
                 new_row["DIFERIMENTO"] = f"{diferido} | LIQUIDO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
                 new_row["REPASSE DIFERIMENTO"] = "0,00 | 0,00 | 0,00"
@@ -189,9 +193,9 @@ class SafraMapper(Bank):
             new_row["Grupo Convênio"] = group
             new_row["Convênio"] = convenio
             new_row["Parc. Atual"] = row["prazo_formatado"]
-            new_row["% Mínima"] = percent * 0.70
-            new_row["% Intermediária"] = percent * 0.95
-            new_row["% Máxima"] = percent
+            new_row["% Mínima"] = percent * grades["min"]
+            new_row["% Intermediária"] = percent * grades["med"]
+            new_row["% Máxima"] = percent * grades["max"]
             new_row["% Comissão"] = percent
             new_row["Vigência"] = datetime.now().strftime("%d/%m/%Y")
             new_row["Complemento"] = int(row["Id Tabela Nova"])
@@ -241,13 +245,18 @@ class SafraMapper(Bank):
 
             row_open = row.copy()
 
+            print(row)
+
+            operation = row["Operação"]
+            grades = grade.get(operation, "")
+
             row_open["Término"] = ""
             row_open["Vigência"] = datetime.now().strftime("%d/%m/%Y")
             row_open["ID"] = ''
             row_open["% Comissão"] = convertValues(row["ComissaoAto"] * 100)
-            row_open["% Mínima"] = percent * 0.70
-            row_open["% Intermediária"] = percent * 0.95
-            row_open["% Máxima"] = percent
+            row_open["% Mínima"] = percent * grades["min"]
+            row_open["% Intermediária"] = percent * grades["med"]
+            row_open["% Máxima"] = percent * grades["max"]
 
             list_of_convert_open_rows.append(row_open)
 
@@ -324,7 +333,6 @@ class SafraMapper(Bank):
             print("Exportando resultado para Excel...")
             df_final.to_excel("Safra_Atualizacoes.xlsx", index=False)
             print("Resultado exportado com sucesso!")
-
 
             print("Processo concluído!")
             return df_final

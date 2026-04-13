@@ -5,6 +5,7 @@ import io
 from ..utils.utils import convertValues, remover_acentos
 from ..config.bank.CapitalConsigVariables import family_product, group_convenio
 from ..config.citys_uf import citys, citys_uf, states
+from ..config.grade import grade
 
 class CapitalConsigMapper(Bank):
 
@@ -187,14 +188,17 @@ class CapitalConsigMapper(Bank):
             else:
                 new_row["Operação"] = "CARTÃO"
 
+            operation = new_row["Operação"]
+            grades = grade.get(operation, "")
+
             new_row["Produto"] = product
             new_row["Família Produto"] = family
             new_row["Grupo Convênio"] = group
             new_row["Convênio"] = convenio
             new_row["Parc. Atual"] = row["prazo_formatado"]
-            new_row["% Mínima"] = percent * 0.70
-            new_row["% Intermediária"] = percent * 0.95
-            new_row["% Máxima"] = percent
+            new_row["% Mínima"] = percent * grades["min"]
+            new_row["% Intermediária"] = percent * grades["med"]
+            new_row["% Máxima"] = percent * grades["max"]
             new_row["% Comissão"] = percent
             new_row["Vigência"] = datetime.now().strftime("%d/%m/%Y")
             new_row["Complemento"] = int(row["CÓD  "])
@@ -240,13 +244,16 @@ class CapitalConsigMapper(Bank):
 
             row_open = row.copy()
 
+            operation = row["Operação"]
+            grades = grade.get(operation, "")
+
             row_open["Término"] = ""
             row_open["Vigência"] = datetime.now().strftime("%d/%m/%Y")
             row_open["ID"] = ''
             row_open["% Comissão"] = convertValues(row["% PROMOTORA"] * 100)
-            row_open["% Mínima"] = percent * 0.70
-            row_open["% Intermediária"] = percent * 0.95
-            row_open["% Máxima"] = percent
+            row_open["% Mínima"] = percent * grades["min"]
+            row_open["% Intermediária"] = percent * grades["med"]
+            row_open["% Máxima"] = percent * grades["max"]
 
             list_of_convert_open_rows.append(row_open)
 
