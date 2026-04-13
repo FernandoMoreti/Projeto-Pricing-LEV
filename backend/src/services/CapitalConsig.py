@@ -194,7 +194,7 @@ class CapitalConsigMapper(Bank):
             new_row["Vigência"] = datetime.now().strftime("%d/%m/%Y")
             new_row["Complemento"] = int(row["CÓD  "])
             new_row["Id Tabela Banco"] = int(row["CÓD  "])
-            new_row["BONUS VIP"] = f"{row["BONUS"]},00 | LIQUIDO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
+            new_row["BONUS VIP"] = f"{row['BONUS']},00 | LIQUIDO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
 
             list_of_convert_rows.append(new_row)
 
