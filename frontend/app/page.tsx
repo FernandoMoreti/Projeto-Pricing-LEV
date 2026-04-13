@@ -157,7 +157,7 @@ export default function Home() {
                         disabled={loading}
                         className={`w-full py-4 rounded-xl font-bold flex items-center justify-center gap-3 transition-all
                             ${loading
-                                ? "bg-slate-800 text-slate-500" 
+                                ? "bg-slate-800 text-slate-500"
                                 : "bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-500/20 active:scale-95"}`}
                     >
                         {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <ArrowRight className="w-5 h-5" />}
@@ -170,7 +170,7 @@ export default function Home() {
           {message && (
             <div className={`p-4 rounded-xl border flex items-start gap-3 animate-in fade-in zoom-in duration-300
               ${isSuccess
-                ? "bg-emerald-500/5 border-emerald-500/20 text-emerald-400" 
+                ? "bg-emerald-500/5 border-emerald-500/20 text-emerald-400"
                 : "bg-red-500/5 border-red-500/20 text-red-400"}`}>
               {isSuccess ? <CheckCircle2 className="w-5 h-5 mt-0.5" /> : <AlertCircle className="w-5 h-5 mt-0.5" />}
               <div>

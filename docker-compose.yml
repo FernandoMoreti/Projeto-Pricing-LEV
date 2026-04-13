@@ -1,0 +1,28 @@
+services:
+  backend-prod:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.prod
+    container_name: api_pricing_prod
+    restart: always
+    ports:
+      - "8001:8001"
+    environment:
+      - ENV=production
+
+  frontend-prod:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+    container_name: front_pricing_prod
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      - API_URL_QUEUE=http://127.0.0.1:8001
+    depends_on:
+      - backend-prod
+
+networks:
+  default:
+    name: pricing-network
