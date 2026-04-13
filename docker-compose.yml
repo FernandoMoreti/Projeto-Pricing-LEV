@@ -17,9 +17,9 @@ services:
     container_name: front_pricing_prod
     restart: always
     ports:
-      - "60000:8000"
+      - "60000:3000"
     environment:
-      - API_URL_QUEUE=http://127.0.0.1:8001
+      - NEXT_PUBLIC_API_URL_QUEUE=http://192.168.1.90:8001
     depends_on:
       - backend-prod
 
