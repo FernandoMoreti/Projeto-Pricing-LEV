@@ -81,6 +81,11 @@ class CapitalConsigMapper(Bank):
 
         cidade = rest_of_product.split("_")[0]
 
+        sep = " "
+
+        if sep in cidade:
+            cidade = cidade.split(" ")[0]
+
         if cidade in ["CAMPINA", "PORTO", "SANTA", "SAO", "BELO"]:
             cidade = rest_of_product.split("_")[0] + " " + rest_of_product.split("_")[1]
 
