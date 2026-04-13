@@ -2,7 +2,7 @@ services:
   backend-prod:
     build:
       context: ./backend
-      dockerfile: Dockerfile.prod
+      dockerfile: Dockerfile
     container_name: api_pricing_prod
     restart: always
     ports:
@@ -13,7 +13,7 @@ services:
   frontend-prod:
     build:
       context: ./frontend
-      dockerfile: Dockerfile.prod
+      dockerfile: Dockerfile
     container_name: front_pricing_prod
     restart: always
     ports:
