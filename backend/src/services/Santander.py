@@ -202,7 +202,7 @@ class SantanderMapper(Bank):
                 new_row["SEGURO"] = "0,56 | LIQUIDO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
                 new_row["REPASSE SEGURO"] = "0,40 | 0,50 | 0,56"
 
-            new_row["Produto"] = f"{product} - {row["codigo_regra"]}"
+            new_row["Produto"] = f"{product} - {row['codigo_regra']}"
             new_row["Família Produto"] = family
             new_row["Grupo Convênio"] = group
             new_row["Convênio"] = convenio
@@ -215,7 +215,7 @@ class SantanderMapper(Bank):
             new_row["Vigência"] = datetime.now().strftime("%d/%m/%Y")
             new_row["Complemento"] = complement
             new_row["Id Tabela Banco"] = row["codigo_regra"]
-            new_row["DIFERIMENTO"] = f"{int(row["Diferido"])},00 | LIQUIDO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
+            new_row["DIFERIMENTO"] = f"{int(row['Diferido'])},00 | LIQUIDO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
 
             list_of_convert_rows.append(new_row)
 
