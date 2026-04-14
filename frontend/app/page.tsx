@@ -73,7 +73,7 @@ export default function Home() {
   async function inputInWorkbank(e: React.FormEvent) {
     e.preventDefault()
 
-    if (!fileAtt || !bank) {
+    if (!fileAtt || !bankWork) {
       setMessage("Preencha todos os parâmetros antes de iniciar.");
       setIsSuccess(false);
       return;
@@ -82,7 +82,7 @@ export default function Home() {
     setLoading(true);
     setMessage("");
 
-    const uri = "http://192.168.1.90:8001";
+    const uri = "http://127.0.0.1:8080";
     const form = new FormData();
 
     form.append("fileAtt", fileAtt)
@@ -94,6 +94,9 @@ export default function Home() {
       console.log(response.data)
     } catch (err) {
       console.error(err)
+      return err
+    } finally {
+      setLoading(false)
     }
 
   }

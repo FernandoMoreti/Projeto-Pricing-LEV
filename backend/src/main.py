@@ -4,12 +4,15 @@ from fastapi.responses import StreamingResponse
 import pandas as pd
 import io
 from .factories.FactoryBanks import FactoryBank
+from dotenv import load_dotenv
+load_dotenv()
+
 
 app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://192.168.1.90:60000"],
+    allow_origins=["http://localhost:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -65,3 +68,25 @@ async def edit_pricing(
                 "error": str(e)
             }
         )
+
+@app.post("/input")
+async def input_pricing(
+    fileAtt: UploadFile = File(...),
+    bankWork: str = Form(...)
+):
+    try:
+        content_work = await fileAtt.read()
+        bank = bankWork.strip().lower().replace(" ", "")
+
+        return {"success": True, "message": "Robô executado com sucesso."}
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "success": False,
+                "message": "Erro ao processar os arquivos.",
+                "error": str(e)
+            }
+        )
+
