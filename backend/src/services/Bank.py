@@ -1,4 +1,5 @@
 from abc import ABC
+import pandas as pd
 
 class Bank(ABC):
 
@@ -41,3 +42,10 @@ class Bank(ABC):
 
     def createNullModel(self):
         return {chave: None for chave in self.columns}
+
+    def paint_row(self, df, column):
+        def apply_style(row):
+            color = 'background-color: yellow' if row[column] == '' else ''
+            return [color] * len(row)
+
+        return df.style.apply(apply_style, axis=1)
