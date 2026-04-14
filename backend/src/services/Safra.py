@@ -330,10 +330,6 @@ class SafraMapper(Bank):
                 df_final = pd.DataFrame()
             print("Processo de junção finalizado!")
 
-            print("Exportando resultado para Excel...")
-            df_final.to_excel("Safra_Atualizacoes.xlsx", index=False)
-            print("Resultado exportado com sucesso!")
-
             print("Processo concluído!")
             return df_final
 
