@@ -75,7 +75,9 @@ class SantanderMapper(Bank):
 
         product_limpo = remover_acentos(str(product).upper().strip())
 
-        key_city = next((cidade for cidade in citys if cidade in product_limpo), None)
+        words = product_limpo.split()
+
+        key_city = next((p for p in words if p in citys), None)
 
         cidade = citys.get(key_city) if key_city else None
 
@@ -152,6 +154,7 @@ class SantanderMapper(Bank):
                     uf = self.extract_uf_of_city(city)
 
                     convenio = convenio + city + uf
+
                     return convenio
 
                 if convenio in ["GOV-", "TJ | "]:
@@ -186,14 +189,18 @@ class SantanderMapper(Bank):
             operation = self.get_operation(row["produto_regra"])
             convenio = self.get_convenio(product)
 
-            agreement = convenio.strip().split(" ")[0]
-            family = family_product.get(agreement, "")
-            group = group_convenio.get(family, "")
+            if convenio.startswith("GOV-"):
+                agreement = convenio[:4]
+            else:
+                agreement = convenio.strip().split(" ")[0]
+
+            family = family_product[agreement]
+            group = group_convenio[family]
             percent = convertValues(row["percentual_comissao_a_vista"])
             seguro = self.get_seguro(row["descricao_regra"])
 
             codigo_str = str(row["codigo_regra"]).strip()
-            complement = f"{codigo_str[4:]}{seguro}{row['codigo_regra']}"
+            complement = f"{int(float(codigo_str[4:]))}{seguro}{int(float(row['codigo_regra']))}"
 
             grades = grade.get(operation, "")
 
@@ -208,10 +215,14 @@ class SantanderMapper(Bank):
             else:
                 new_row["Base Comissão"] = "LIQUÍDO"
 
+            if convenio == 'PREF. Sem convenio ':
+                new_row["Convênio"] = ''
+            else:
+                new_row["Convênio"] = convenio
+
             new_row["Produto"] = f"{product} - {int(row['codigo_regra'])}"
             new_row["Família Produto"] = family
             new_row["Grupo Convênio"] = group
-            new_row["Convênio"] = convenio
             new_row["Operação"] = operation
             new_row["Parc. Atual"] = row["faixa_parcela"]
             new_row["% Mínima"] = percent * grades["min"]
@@ -301,7 +312,7 @@ class SantanderMapper(Bank):
         model["Venda Digital"] = "SIM"
         model["Visualização Restrita"] = "NÃO"
         model["Val. Base Produção"] = "LÍQUIDO"
-        model["REPASSE BONUS VIP"] = "0,00 | 0,00 | 0,00"
+        model["REPASSE DIFERIMENTO"] = "0,00 | 0,00 | 0,00"
 
         return model
 
@@ -349,6 +360,7 @@ class SantanderMapper(Bank):
             print("Processo de junção finalizado!")
 
             print("Processo concluído!")
+            df_final = self.paint_row(df_final, "Convênio")
             return df_final
 
         except Exception as e:
