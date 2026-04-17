@@ -1,10 +1,12 @@
 from ..services.Safra import SafraMapper
 from ..services.CapitalConsig import CapitalConsigMapper
 from ..services.Santander import SantanderMapper
+from ..services.PanLafy import PanLafyMapper
 
 class FactoryBank:
     _factoryBanksMapper = {
         "capitalconsig": CapitalConsigMapper(),
+        "panlafy": PanLafyMapper(),
         "safra": SafraMapper(),
         "santander": SantanderMapper(),
     }

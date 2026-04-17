@@ -148,7 +148,6 @@ class CapitalConsigMapper(Bank):
                 if convenio == "FEDERAL SIAPE":
                     return convenio
 
-
                 if convenio == "PREF. ":
                     city = self.extract_city(rest_of_product)
                     uf = self.extract_uf_of_city(city)

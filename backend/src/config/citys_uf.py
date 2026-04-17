@@ -5293,6 +5293,9 @@ citys_uf = {
     "ESP": "ES"
 }
 citys = {
+    "SLUIS": "SAO LUIS",
+    "RJ": "RIO DE JANEIRO",
+    "FORT": "FORTALEZA",
     "BUZIOS": "BUZIOS",
     "IPREM": "SAO PAULO",
     "PORTO": "PORTO VELHO",
@@ -10644,4 +10647,7 @@ states = {
     "ESP": "ES",
     "CAMPINAS": "SP",
     "MG": "MG",
+    "AMA": "AM",
+    "RIOPREV": "RJ",
+    "PMESP": "SP",
 }
