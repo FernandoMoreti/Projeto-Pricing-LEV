@@ -220,6 +220,10 @@ class SantanderMapper(Bank):
             else:
                 new_row["Convênio"] = convenio
 
+            if int(row['Diferido']) > 0:
+                new_row["DIFERIMENTO"] = f"{int(row['Diferido'])},00 | LIQUIDO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
+                new_row["REPASSE DIFERIMENTO"] = "0,00 | 0,00 | 0,00"
+
             new_row["Produto"] = f"{product} - {int(row['codigo_regra'])}"
             new_row["Família Produto"] = family
             new_row["Grupo Convênio"] = group
@@ -232,7 +236,6 @@ class SantanderMapper(Bank):
             new_row["Vigência"] = datetime.now().strftime("%d/%m/%Y")
             new_row["Complemento"] = complement
             new_row["Id Tabela Banco"] = row["codigo_regra"]
-            new_row["DIFERIMENTO"] = f"{int(row['Diferido'])},00 | LIQUIDO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
 
             list_of_convert_rows.append(new_row)
 
@@ -312,7 +315,6 @@ class SantanderMapper(Bank):
         model["Venda Digital"] = "SIM"
         model["Visualização Restrita"] = "NÃO"
         model["Val. Base Produção"] = "LÍQUIDO"
-        model["REPASSE DIFERIMENTO"] = "0,00 | 0,00 | 0,00"
 
         return model
 
