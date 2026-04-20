@@ -245,8 +245,6 @@ class SafraMapper(Bank):
 
             row_open = row.copy()
 
-            print(row)
-
             operation = row["Operação"]
             grades = grade.get(operation, "")
 

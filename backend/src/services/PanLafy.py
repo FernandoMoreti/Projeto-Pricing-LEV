@@ -155,6 +155,56 @@ class PanLafyMapper(Bank):
 
         return product[0].strip()
 
+    def adding_values(self, new_row, row):
+        if pd.isna(row["BÔNUS"]):
+            new_row["BÔNUS"] = row["BÔNUS_CAMPANHA"]
+        elif pd.isna(row["BÔNUS_CAMPANHA"]):
+            new_row["BÔNUS"] = row["BÔNUS"]
+
+        if pd.notna(new_row["BÔNUS"]):
+            new_row["REPASSE BÔNUS"] = "0,00 | 0,00 | 0,00"
+
+        new_row["ATIVAÇÃO"] = row["ATIVAÇÃO_x"]
+        if pd.notna(new_row["ATIVAÇÃO"]):
+            if "80,00" in new_row["ATIVAÇÃO"]:
+                new_row["REPASSE ATIVAÇÃO"] = "55,00 | 64,00 | 72,00"
+            else:
+                new_row["REPASSE ATIVAÇÃO"] = "35,00 | 40,00 | 45,00"
+
+        new_row["PRÉ-ADESÃO"] = row["PRE_ADESÃO"]
+        if pd.notna(new_row["PRÉ-ADESÃO"]):
+            if "50,00" in new_row["PRÉ-ADESÃO"]:
+                new_row["REPASSE PRÉ-ADESÃO"] = "35,00 | 40,00 | 45,00"
+            elif "80,00" in new_row["PRÉ-ADESÃO"]:
+                new_row["REPASSE PRÉ-ADESÃO"] = "55,00 | 64,00 | 72,00"
+            elif "160,00" in new_row["PRÉ-ADESÃO"]:
+                new_row["REPASSE PRÉ-ADESÃO"] = "110,00 | 128,00 | 144,00"
+            elif "300,00" in new_row["PRÉ-ADESÃO"]:
+                new_row["REPASSE PRÉ-ADESÃO"] = "210,00 | 240,00 | 270,00"
+
+        new_row["SEGURO PAN"] = row["SEGURO"]
+        if pd.notna(new_row["SEGURO PAN"]):
+            if "0,00 |" in new_row["SEGURO PAN"]:
+                if pd.notna(row["SEGURO_CARTÃO"]):
+                    new_row["SEGURO PAN"] = row["SEGURO_CARTÃO"]
+                elif pd.notna(row["SEGURO_CONSIG"]):
+                    new_row["SEGURO PAN"] = row["SEGURO_CONSIG"]
+                elif pd.notna(row["SEGURO_FGTS"]):
+                    new_row["SEGURO PAN"] = row["SEGURO_FGTS"]
+
+        # VALIDAR NOVAMENTE
+        if pd.notna(new_row["SEGURO PAN"]):
+            if "0,00 |" in new_row["SEGURO PAN"] or "24,00" in new_row["SEGURO PAN"]:
+                new_row["REPASSE SEGURO PAN"] = "0,00 | 0,00 | 0,00"
+            elif "1,00" in new_row["SEGURO PAN"]:
+                new_row["REPASSE SEGURO PAN"] = "0,65 | 0,70 | 0,80"
+            elif "1,68" in new_row["SEGURO PAN"]:
+                new_row["REPASSE SEGURO PAN"] = "1,15 | 1,30 | 1,50"
+            elif "2,25" in new_row["SEGURO PAN"]:
+                new_row["REPASSE SEGURO PAN"] = "1,60 | 1,80 | 2,03"
+
+        return new_row
+
     def create_open_tables(self, list_of_open_tables, model):
 
         list_of_convert_rows = []
@@ -186,8 +236,6 @@ class PanLafyMapper(Bank):
 
             new_row = model.copy()
 
-            print(row)
-
             new_row["Base Comissão"] = row["Base Comissão_x"]
             new_row["Val. Base Produção"] = new_row["Base Comissão"]
             new_row["Operação"] = operation
@@ -207,30 +255,12 @@ class PanLafyMapper(Bank):
             new_row["Faixa Val. Seguro"] = row["Faixa Val. Seguro"]
             new_row["Faixa Val. Contrato"] = row["Faixa Val. Contrato"]
             new_row["Idade"] = row["Idade"]
-            new_row["BONUS EXTRA"] = row["BONUS EXTRA"]
-            new_row["REPASSE BONUS EXTRA"] = row["REPASSE BONUS EXTRA"]
-            new_row["ANTECIPAÇÃO"] = row["ANTECIPAÇÃO"]
-            new_row["REPASSE ANTECIPAÇÃO"] = row["REPASSE ANTECIPAÇÃO"]
-            new_row["ATIVAÇÃO"] = row["ATIVAÇÃO_x"]
-            new_row["REPASSE ATIVAÇÃO"] = row["REPASSE ATIVAÇÃO_x"]
-            new_row["BONUS VIP"] = row["BONUS VIP"]
-            new_row["REPASSE BONUS VIP"] = row["REPASSE BONUS VIP"]
-            new_row["BONUS VP"] = row["BONUS VP"]
-            new_row["REPASSE BONUS VP"] = row["REPASSE BONUS VP"]
-            new_row["PRÉ-ADESÃO"] = row["PRÉ-ADESÃO"]
-            new_row["REPASSE PRÉ-ADESÃO"] = row["REPASSE PRÉ-ADESÃO"]
-            new_row["RESERVA TRIBUTO"] = row["RESERVA TRIBUTO"]
-            new_row["REPASSE RESERVA TRIBUTO"] = row["REPASSE RESERVA TRIBUTO"]
-            new_row["SEGURO PAN"] = row["SEGURO PAN"]
-            new_row["REPASSE SEGURO PAN"] = row["REPASSE SEGURO PAN"]
-            new_row["VARIAVEL COMERCIAL"] = row["VARIAVEL COMERCIAL"]
-            new_row["REPASSE VARIAVEL COMERCIAL"] = row["REPASSE VARIAVEL COMERCIAL"]
+
+            new_row = self.adding_values(new_row, row)
 
             list_of_convert_rows.append(new_row)
 
         df = pd.DataFrame(list_of_convert_rows)
-
-        df.to_excel("123.xlsx", index=False)
 
         return df
 
@@ -238,19 +268,17 @@ class PanLafyMapper(Bank):
 
         list_of_convert_rows = []
 
+
         for index, row in list_of_close_tables.iterrows():
 
-            row["Produto"] = row["Produto_y"]
-            row["Término"] = (datetime.now() - timedelta(days=1)).strftime("%d/%m/%Y")
+            row["Término_y"] = (datetime.now() - timedelta(days=1)).strftime("%d/%m/%Y")
 
             list_of_convert_rows.append(row)
 
         df = pd.DataFrame(list_of_convert_rows)
 
-        df = df.drop(['Atualizações', 'Convenio', 'Tabela', 'Produto', 'Produto_x', 'DataInicioVigencia', 'PrazoDe', 'PrazoAte', 'TktmMin', 'TktmMax', 'Taxa', 'TaxaMaxima', 'CalculoComissao', 'Id Tabela Nova', 'IdConvenio', 'ComissaoAto', 'CdvpDiferidoVp', 'CdvpDiferidoMensal', 'CdvpDiferidoFuturo', 'CintDiferidoVp', 'CintDiferidoMensal', 'CintDiferidoFuturo', 'CprodDiferidoVp', 'CprodDiferidoMensal', 'CprodDiferidoFuturo', 'CmutDiferidoVp', 'CmutDiferidoMensal', 'CmutDiferidoFuturo', 'TotalDiferidoVp', 'TotalDiferidoMensal', 'TotalDiferidoFuturo', 'prazo_formatado', '_merge'], axis=1)
-        df = df.rename(columns = {
-            'Produto_y': 'Produto'
-        })
+        df = df.drop(['ID_x', 'Instituição_x', 'Família Produto_x', 'Grupo Convênio_x', 'Convênio_x', 'Parc. Refin._x', '% PMT Pagas_x', '% Taxa_x', '% Comissão_x', '-_x', 'Base Comissão_x', '% Mínima_x', '% Intermediária_x', '% Máxima_x', '% Fator_x', '% TAC_x', 'Val. Teto TAC_x', 'Vigência_x', 'Término_x', 'Visualização Restrita_x', 'Val. Base Produção_x', 'Val. Base Produção_x', 'Id Tabela Banco_x', 'ATIVAÇÃO_x', 'REPASSE ATIVAÇÃO_x', '_merge'], axis=1)
+        df.columns = df.columns.str.replace('_y', '')
 
         return df
 
@@ -261,35 +289,46 @@ class PanLafyMapper(Bank):
 
         for row in list_of_close_open:
 
-            percent = convertValues(row["ComissaoAto"] * 100)
+            percent = convertValues(row["% Comissão_y"])
 
             row_close = row.copy()
 
-            row_close["Término"] = datetime.now().strftime("%d/%m/%Y")
+            row_close["Término_y"] = datetime.now().strftime("%d/%m/%Y")
 
             list_of_convert_close_rows.append(row_close)
 
             row_open = row.copy()
 
-            print(row)
-
             operation = row["Operação"]
+
+            if operation == "COMPRA DE DIVIDA":
+                operation = "COMP.D.DIV"
+
+            if operation == "SAQUE COMPL.":
+                operation = "SAQUE"
+
+            if operation == "":
+                continue
+
             grades = grade.get(operation, "")
 
-            row_open["Término"] = ""
-            row_open["Vigência"] = datetime.now().strftime("%d/%m/%Y")
-            row_open["ID"] = ''
-            row_open["% Comissão"] = convertValues(row["ComissaoAto"] * 100)
-            row_open["% Mínima"] = percent * grades["min"]
-            row_open["% Intermediária"] = percent * grades["med"]
-            row_open["% Máxima"] = percent * grades["max"]
+            row_open["Término_y"] = ""
+            row_open["Vigência_y"] = datetime.now().strftime("%d/%m/%Y")
+            row_open["ID_y"] = ''
+            row_open["% Comissão_y"] = percent
+            row_open["% Mínima_y"] = percent * grades["min"]
+            row_open["% Intermediária_y"] = percent * grades["med"]
+            row_open["% Máxima_y"] = percent * grades["max"]
 
             list_of_convert_open_rows.append(row_open)
 
         df = pd.DataFrame(list_of_convert_close_rows)
         df2 = pd.DataFrame(list_of_convert_open_rows)
 
-        colunas_remover = ['Atualizações', 'Convenio', 'Tabela', 'Produto_x', 'DataInicioVigencia', 'PrazoDe', 'PrazoAte', 'TktmMin', 'TktmMax', 'Taxa', 'TaxaMaxima', 'CalculoComissao', 'Id Tabela Nova', 'IdConvenio', 'ComissaoAto', 'CdvpDiferidoVp', 'CdvpDiferidoMensal', 'CdvpDiferidoFuturo', 'CintDiferidoVp', 'CintDiferidoMensal', 'CintDiferidoFuturo', 'CprodDiferidoVp', 'CprodDiferidoMensal', 'CprodDiferidoFuturo', 'CmutDiferidoVp', 'CmutDiferidoMensal', 'CmutDiferidoFuturo', 'TotalDiferidoVp', 'TotalDiferidoMensal', 'TotalDiferidoFuturo', 'prazo_formatado', '_merge', 'Diferido']
+        colunas_remover = ['ID_x', 'Instituição_x', 'Família Produto_x', 'Grupo Convênio_x', 'Convênio_x', 'Parc. Refin._x', '% PMT Pagas_x', '% Taxa_x', '% Comissão_x', '-_x', 'Base Comissão_x', '% Mínima_x', '% Intermediária_x', '% Máxima_x', '% Fator_x', '% TAC_x', 'Val. Teto TAC_x', 'Vigência_x', 'Término_x', 'Visualização Restrita_x', 'Val. Base Produção_x', 'Val. Base Produção_x', 'Id Tabela Banco_x', 'ATIVAÇÃO_x', 'REPASSE ATIVAÇÃO_x', '_merge']
+
+        df.columns = df.columns.str.replace('_y', '')
+        df2.columns = df.columns.str.replace('_y', '')
 
         df = df.drop(colunas_remover, axis=1)
         df2 = df2.drop(colunas_remover, axis=1)
@@ -344,14 +383,17 @@ class PanLafyMapper(Bank):
                 df_close2, df_open2 = self.create_close_open_tables(list_to_close_and_open)
 
             print("Iniciando processo de junção dos arquivos...")
-            dfs_para_juntar = [df for df in [df_close, df_close2, df_open, df_open2] if df is not None and not df.empty]
-            if dfs_para_juntar:
-                df_final = pd.concat(dfs_para_juntar, axis=0, ignore_index=True, sort=False)
-                print(f"Sucesso! Total de linhas: {len(df_final)}")
-            else:
-                print("Nenhum dado encontrado para juntar.")
-                df_final = pd.DataFrame()
-            print("Processo de junção finalizado!")
+            columns_in_order = df_open.columns.tolist()
+
+            dfs_para_juntar = []
+
+            for df in [df_close, df_close2, df_open, df_open2]:
+                if df is not None and not df.empty:
+                    df_temp = df.copy()
+                    df_temp = df_temp.reindex(columns=columns_in_order)
+                    dfs_para_juntar.append(df_temp)
+            df_final = pd.concat(dfs_para_juntar, axis=0, ignore_index=True, sort=False)
+            print(f"Sucesso! Total de linhas: {len(df_final)}")
 
             print("Processo concluído!")
             return df_final
