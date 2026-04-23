@@ -84,6 +84,8 @@ class SantanderMapper(Bank):
         if cidade == None:
             if product == "PREFEITURA MUNICIPAL DE ITU":
                 return "ITU"
+            if "ILHA SOLTEIRA" in product:
+                return "ILHA SOLTEIRA"
             return "Sem convenio"
 
         return cidade
