@@ -187,8 +187,8 @@ class PanLafyMapper(Bank):
             if "0,00 |" in new_row["SEGURO PAN"]:
                 if pd.notna(row["SEGURO_CARTÃO"]):
                     new_row["SEGURO PAN"] = row["SEGURO_CARTÃO"]
-                elif pd.notna(row["SEGURO_CONSIG"]):
-                    new_row["SEGURO PAN"] = row["SEGURO_CONSIG"]
+                # elif pd.notna(row["SEGURO_CONSIG"]):
+                #     new_row["SEGURO PAN"] = row["SEGURO_CONSIG"]
                 elif pd.notna(row["SEGURO_FGTS"]):
                     new_row["SEGURO PAN"] = row["SEGURO_FGTS"]
 
