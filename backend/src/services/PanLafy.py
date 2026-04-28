@@ -42,6 +42,8 @@ class PanLafyMapper(Bank):
             indicator=True
         )
 
+        df_result = df_result[df_result["Venda Digital"] != "NÃO"]
+
         df_open = df_result[df_result["_merge"] == "left_only"]
         list_of_close_tables = df_result[df_result["_merge"] == "right_only"]
         list_to_close_and_open = []
@@ -57,7 +59,51 @@ class PanLafyMapper(Bank):
 
             percent = convertValues(row["% Comissão_x"])
             percent_work = convertValues(row["% Comissão_y"])
+
+            if pd.notna(row["ATIVAÇÃO_x"]):
+                ativation = convertValues(row["ATIVAÇÃO_x"].split("|")[0].strip())
+            else:
+                ativation = None
+
+            if pd.notna(row["ATIVAÇÃO_y"]):
+                ativation_work = convertValues(row["ATIVAÇÃO_y"].split("|")[0].strip())
+            else:
+                ativation_work = None
+
+            if pd.notna(row["PRE_ADESÃO"]):
+                adesao = convertValues(row["PRE_ADESÃO"].split("|")[0].strip())
+            else:
+                adesao = None
+
+            if pd.notna(row["PRÉ-ADESÃO"]):
+                adesao_work = convertValues(row["PRÉ-ADESÃO"].split("|")[0].strip())
+            else:
+                adesao_work = None
+
+            if pd.notna(row["SEGURO"]):
+                if row["SEGURO"].split("|")[0].strip() == "0,00":
+                    if pd.notna(row["SEGURO_CARTÃO"]):
+                        seguro = convertValues(row["SEGURO_CARTÃO"].split("|")[0].strip())
+                    elif pd.notna(row["SEGURO_FGTS"]):
+                        seguro = convertValues(row["SEGURO_FGTS"].split("|")[0].strip())
+                else:
+                    seguro = convertValues(row["SEGURO"].split("|")[0].strip())
+            else:
+                seguro = 0
+
+            if pd.notna(row["SEGURO PAN"]):
+                seguro_work = convertValues(row["SEGURO PAN"].split("|")[0].strip())
+            else:
+                seguro_work = 0
+
+
             if percent != percent_work:
+                list_to_close_and_open.append(row)
+            elif ativation != ativation_work:
+                list_to_close_and_open.append(row)
+            elif adesao != adesao_work:
+                list_to_close_and_open.append(row)
+            elif seguro != seguro_work:
                 list_to_close_and_open.append(row)
 
         return list_of_open_tables, list_of_close_tables, list_to_close_and_open
@@ -156,13 +202,17 @@ class PanLafyMapper(Bank):
         return product[0].strip()
 
     def adding_values(self, new_row, row):
-        if pd.isna(row["BÔNUS"]):
-            new_row["BÔNUS"] = row["BÔNUS_CAMPANHA"]
-        elif pd.isna(row["BÔNUS_CAMPANHA"]):
-            new_row["BÔNUS EXTRA"] = row["BÔNUS"]
 
-        if pd.notna(new_row["BÔNUS"]):
-            new_row["REPASSE BÔNUS"] = "0,00 | 0,00 | 0,00"
+        if pd.isna(row["BÔNUS"]):
+            new_row["BONUS EXTRA"] = f"{row["BÔNUS_CAMPANHA"]} | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
+        elif pd.isna(row["BÔNUS_CAMPANHA"]):
+            new_row["BONUS EXTRA"] = f"{row["BÔNUS"]} | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
+
+        if new_row["BONUS EXTRA"] == "nan | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO":
+            new_row["BONUS EXTRA"] = None
+
+        if pd.notna(new_row["BONUS EXTRA"]):
+            new_row["REPASSE BÔNUS EXTRA"] = "0,00 | 0,00 | 0,00"
 
         new_row["ATIVAÇÃO"] = row["ATIVAÇÃO_x"]
         if pd.notna(new_row["ATIVAÇÃO"]):
@@ -222,15 +272,15 @@ class PanLafyMapper(Bank):
             operation = row["Operação"]
 
             if operation == "COMPRA DE DIVIDA":
-                operation = "COMP.D.DIV"
+                operation2 = "COMP.D.DIV"
 
             if operation == "SAQUE COMPL.":
-                operation = "SAQUE"
+                operation2 = "SAQUE"
 
             if operation == "":
                 continue
 
-            grades = grade.get(operation, "")
+            grades = grade.get(operation2, "")
 
             nameTable = self.get_product_name(product)
 

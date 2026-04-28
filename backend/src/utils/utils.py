@@ -3,15 +3,12 @@ import pandas as pd
 def convertValues(value):
     valor_str = value
 
-    if type(value) == str :
-
-        valor_str = str(value)
-        valor_teste = valor_str.replace("R$", "")
-        valor_teste = valor_teste.replace(".", "")
-        valor_teste = valor_teste.replace(",", ".")
-        valor_str = float(valor_teste)
-
-    valor_str = round(valor_str, 2)
+    v = str(value).replace("R$", "").strip()
+    if "," in v and "." in v:
+        v = v.replace(".", "").replace(",", ".")
+    elif "," in v:
+        v = v.replace(",", ".")
+    valor_str = float(v)
 
     return valor_str
 
