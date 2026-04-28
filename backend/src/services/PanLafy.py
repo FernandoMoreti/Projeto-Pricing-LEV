@@ -159,7 +159,7 @@ class PanLafyMapper(Bank):
         if pd.isna(row["BÔNUS"]):
             new_row["BÔNUS"] = row["BÔNUS_CAMPANHA"]
         elif pd.isna(row["BÔNUS_CAMPANHA"]):
-            new_row["BÔNUS"] = row["BÔNUS"]
+            new_row["BÔNUS EXTRA"] = row["BÔNUS"]
 
         if pd.notna(new_row["BÔNUS"]):
             new_row["REPASSE BÔNUS"] = "0,00 | 0,00 | 0,00"

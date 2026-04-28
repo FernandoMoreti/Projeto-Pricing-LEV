@@ -328,7 +328,7 @@ class CapitalConsigMapper(Bank):
             dfs_para_juntar = [df for df in [df_close, df_close2, df_open, df_open2] if df is not None and not df.empty]
             if dfs_para_juntar:
                 df_final = pd.concat(dfs_para_juntar, axis=0, ignore_index=True, sort=False)
-                df_final = df_final.drop(['BONUS', 'NÍVEL', 'EMPREGADOR'], axis=1)
+                df_final = df_final.drop(['BONUS', 'NÍVEL', 'EMPREGADOR'], axis=1, errors='ignore')
                 print(f"Sucesso! Total de linhas: {len(df_final)}")
             else:
                 print("Nenhum dado encontrado para juntar.")
