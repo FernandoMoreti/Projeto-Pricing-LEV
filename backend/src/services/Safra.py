@@ -239,7 +239,7 @@ class SafraMapper(Bank):
 
             row_close = row.copy()
 
-            row_close["Término"] = datetime.now().strftime("%d/%m/%Y")
+            row_close["Término"] = (datetime.now() - timedelta(days=1)).strftime("%d/%m/%Y")
 
             list_of_convert_close_rows.append(row_close)
 

@@ -1,5 +1,5 @@
 from .Bank import Bank
-from datetime import datetime
+from datetime import datetime, timedelta
 import pandas as pd
 import io
 from ..utils.utils import convertValues, remover_acentos
@@ -216,7 +216,7 @@ class CapitalConsigMapper(Bank):
 
         for index, row in list_of_close_tables.iterrows():
 
-            row["Término"] = datetime.now().strftime("%d/%m/%Y")
+            row["Término"] = (datetime.now() - timedelta(days=1)).strftime("%d/%m/%Y")
 
             list_of_convert_rows.append(row)
 
@@ -237,7 +237,7 @@ class CapitalConsigMapper(Bank):
 
             row_close = row.copy()
 
-            row_close["Término"] = datetime.now().strftime("%d/%m/%Y")
+            row_close["Término"] = (datetime.now() - timedelta(days=1)).strftime("%d/%m/%Y")
 
             list_of_convert_close_rows.append(row_close)
 
