@@ -350,7 +350,6 @@ class SafraMapper(Bank):
                 df_final = pd.DataFrame()
             print("Processo de junção finalizado!")
 
-            df_final.to_excel("123.xlsx", index=False)
             print("Processo concluído!")
             return df_final
 
