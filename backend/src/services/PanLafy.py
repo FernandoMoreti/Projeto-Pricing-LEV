@@ -204,9 +204,9 @@ class PanLafyMapper(Bank):
     def adding_values(self, new_row, row):
 
         if pd.isna(row["BÔNUS"]):
-            new_row["BONUS EXTRA"] = f"{row["BÔNUS_CAMPANHA"]} | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
+            new_row["BONUS EXTRA"] = f"{row['BÔNUS_CAMPANHA']} | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
         elif pd.isna(row["BÔNUS_CAMPANHA"]):
-            new_row["BONUS EXTRA"] = f"{row["BÔNUS"]} | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
+            new_row["BONUS EXTRA"] = f"{row['BÔNUS']} | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
 
         if new_row["BONUS EXTRA"] == "nan | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO":
             new_row["BONUS EXTRA"] = None
