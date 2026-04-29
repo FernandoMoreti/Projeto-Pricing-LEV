@@ -203,6 +203,7 @@ class CapitalConsigMapper(Bank):
             new_row["Complemento"] = int(row["CÓD  "])
             new_row["Id Tabela Banco"] = int(row["CÓD  "])
             new_row["BONUS VIP"] = f"{row['BONUS']},00 | LIQUIDO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
+            new_row["Atualizações"] = "INCLUSÃO"
 
             list_of_convert_rows.append(new_row)
 
@@ -224,6 +225,8 @@ class CapitalConsigMapper(Bank):
 
         df = df.drop(['CÓD  ', 'NOMENCLATURA FUNÇÃO', 'Unnamed: 2', ' CONVENIO', 'PRAZO ', '% PROMOTORA', 'prazo_formatado', '_merge'], axis=1, errors='ignore')
 
+        df["Atualizações"] = "ENCERRAMENTO"
+
         return df
 
     def create_close_open_tables(self, list_of_close_open):
@@ -238,6 +241,7 @@ class CapitalConsigMapper(Bank):
             row_close = row.copy()
 
             row_close["Término"] = (datetime.now() - timedelta(days=1)).strftime("%d/%m/%Y")
+            row_close["Atualizações"] = "ALTERAÇÃO"
 
             list_of_convert_close_rows.append(row_close)
 
@@ -253,6 +257,7 @@ class CapitalConsigMapper(Bank):
             row_open["% Mínima"] = percent * grades["min"]
             row_open["% Intermediária"] = percent * grades["med"]
             row_open["% Máxima"] = percent * grades["max"]
+            row_open["Atualizações"] = "ALTERAÇÃO"
 
             list_of_convert_open_rows.append(row_open)
 

@@ -201,6 +201,8 @@ class SafraMapper(Bank):
             new_row["Complemento"] = int(row["Id Tabela Nova"])
             new_row["Id Tabela Banco"] = int(row["Id Tabela Nova"])
             new_row["Faixa Val. Contrato"] = f"{tkt_min}-{tkt_max}-LÍQUIDO"
+            new_row["Atualizações"] = "INCLUSÃO"
+
 
             list_of_convert_rows.append(new_row)
 
@@ -216,6 +218,8 @@ class SafraMapper(Bank):
 
             row["Produto"] = row["Produto_y"]
             row["Término"] = (datetime.now() - timedelta(days=1)).strftime("%d/%m/%Y")
+            row["Atualizações"] = "ENCERRAMENTO"
+
 
             list_of_convert_rows.append(row)
 
@@ -240,6 +244,8 @@ class SafraMapper(Bank):
             row_close = row.copy()
 
             row_close["Término"] = (datetime.now() - timedelta(days=1)).strftime("%d/%m/%Y")
+            row_close["Atualizações"] = "ALTERAÇÃO"
+
 
             list_of_convert_close_rows.append(row_close)
 
@@ -255,6 +261,8 @@ class SafraMapper(Bank):
             row_open["% Mínima"] = percent * grades["min"]
             row_open["% Intermediária"] = percent * grades["med"]
             row_open["% Máxima"] = percent * grades["max"]
+            row_open["Atualizações"] = "ALTERAÇÃO"
+
 
             list_of_convert_open_rows.append(row_open)
 

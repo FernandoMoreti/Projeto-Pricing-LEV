@@ -238,6 +238,7 @@ class SantanderMapper(Bank):
             new_row["Vigência"] = datetime.now().strftime("%d/%m/%Y")
             new_row["Complemento"] = complement
             new_row["Id Tabela Banco"] = row["codigo_regra"]
+            new_row["Atualizações"] = "INCLUSÃO"
 
             list_of_convert_rows.append(new_row)
 
@@ -252,6 +253,8 @@ class SantanderMapper(Bank):
         for index, row in list_of_close_tables.iterrows():
 
             row["Término"] = (datetime.now() - timedelta(days=1)).strftime("%d/%m/%Y")
+            row["Atualizações"] = "ENCERRAMENTO"
+
 
             list_of_convert_rows.append(row)
 
@@ -273,6 +276,8 @@ class SantanderMapper(Bank):
             row_close = row.copy()
 
             row_close["Término"] = (datetime.now() - timedelta(days=1)).strftime("%d/%m/%Y")
+            row_close["Atualizações"] = "ALTERAÇÃO"
+
 
             list_of_convert_close_rows.append(row_close)
 
@@ -288,6 +293,8 @@ class SantanderMapper(Bank):
             row_open["% Mínima"] = percent * grades["min"]
             row_open["% Intermediária"] = percent * grades["med"]
             row_open["% Máxima"] = percent * grades["max"]
+            row_open["Atualizações"] = "ALTERAÇÃO"
+
 
             list_of_convert_open_rows.append(row_open)
 

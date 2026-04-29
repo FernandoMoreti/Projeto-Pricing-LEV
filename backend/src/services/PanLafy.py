@@ -305,6 +305,8 @@ class PanLafyMapper(Bank):
             new_row["Faixa Val. Seguro"] = row["Faixa Val. Seguro"]
             new_row["Faixa Val. Contrato"] = row["Faixa Val. Contrato"]
             new_row["Idade"] = row["Idade"]
+            new_row["Atualizações"] = "INCLUSÃO"
+
 
             new_row = self.adding_values(new_row, row)
 
@@ -322,6 +324,8 @@ class PanLafyMapper(Bank):
         for index, row in list_of_close_tables.iterrows():
 
             row["Término_y"] = (datetime.now() - timedelta(days=1)).strftime("%d/%m/%Y")
+            row["Atualizações"] = "ENCERRAMENTO"
+
 
             list_of_convert_rows.append(row)
 
@@ -344,6 +348,8 @@ class PanLafyMapper(Bank):
             row_close = row.copy()
 
             row_close["Término_y"] = datetime.now().strftime("%d/%m/%Y")
+            row_close["Atualizações"] = "ALTERAÇÃO"
+
 
             list_of_convert_close_rows.append(row_close)
 
@@ -369,6 +375,8 @@ class PanLafyMapper(Bank):
             row_open["% Mínima_y"] = percent * grades["min"]
             row_open["% Intermediária_y"] = percent * grades["med"]
             row_open["% Máxima_y"] = percent * grades["max"]
+            row_open["Atualizações"] = "ALTERAÇÃO"
+
 
             list_of_convert_open_rows.append(row_open)
 
