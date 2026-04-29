@@ -73,20 +73,32 @@ class SafraMapper(Bank):
 
     def extract_city(self, product):
         product = str(product).upper().strip()
+        partes = product.split(" ")
 
-        if product.split(" ")[0] in ["IPREM"]:
-            return citys.get(product.split(" ")[0], "")
+        if not partes: # Se a string for vazia
+            return ""
 
-        cidade = product.split(" ")[1]
+        # Caso IPREM
+        if partes[0] == "IPREM":
+            return citys.get("IPREM", "")
 
-        if cidade in ["CAMPINA", "PORTO", "SANTA", "SAO", "BELO"]:
-            cidade = product.split(" ")[1] + " " + product.split(" ")[2]
+        # Se só tiver uma palavra (ex: "CAMPINAS")
+        if len(partes) < 2:
+            return citys.get(remover_acentos(partes[0]), "")
+
+        cidade = partes[1]
+
+        # CUIDADO AQUI: Verificamos se existe a terceira palavra antes de acessar o índice [2]
+        prefixos_compostos = ["CAMPINA", "PORTO", "SANTA", "SAO", "BELO"]
+        if cidade in prefixos_compostos:
+            if len(partes) > 2: # <--- ESSA VALIDAÇÃO É ESSENCIAL
+                cidade = f"{partes[1]} {partes[2]}"
+            else:
+                # Se for "PREF SAO" e não tiver a próxima palavra, tratamos como erro ou pegamos só a primeira
+                cidade = partes[1]
 
         cidade = remover_acentos(cidade)
-
-        city = citys.get(cidade, "")
-
-        return city
+        return citys.get(cidade, "")
 
     def extract_uf_of_city(self, city):
         city = str(city).upper().strip()
@@ -117,7 +129,7 @@ class SafraMapper(Bank):
         categorias = {
             "GOV-": ["GOV", "GOV_", "GOV.", "SPPREV_"],
             "FEDERAL SIAPE": ["SIAPE"],
-            "PREF. ": ["PREF", "PREF_", "PREF.", "IPREM"],
+            "PREF. ": ["CAMPREV", "PREF", "PREF_", "PREF.", "IPREM", "UNICAMP"],
         }
 
         if product in ["AERONAUTICA", "MARINHA", "FGTS", "INSS"]:
@@ -146,7 +158,6 @@ class SafraMapper(Bank):
                     uf = product.split(" ")[1]
                     convenio = convenio + uf
                     return convenio
-
         return "CONVENIO DESCONHECIDO"
 
     def create_open_tables(self, list_of_open_tables, model):
@@ -154,6 +165,8 @@ class SafraMapper(Bank):
         list_of_convert_rows = []
 
         for row in list_of_open_tables:
+            if pd.isna(row["Convenio"]):
+                continue
 
             product = row["Convenio"]
 
@@ -245,7 +258,7 @@ class SafraMapper(Bank):
 
             row_close["Término"] = (datetime.now() - timedelta(days=1)).strftime("%d/%m/%Y")
             row_close["Atualizações"] = "ALTERAÇÃO"
-
+            row_close["Produto"] = row_close["Produto_y"]
 
             list_of_convert_close_rows.append(row_close)
 
@@ -262,14 +275,15 @@ class SafraMapper(Bank):
             row_open["% Intermediária"] = percent * grades["med"]
             row_open["% Máxima"] = percent * grades["max"]
             row_open["Atualizações"] = "ALTERAÇÃO"
-
+            row_open["Produto"] = row_open["Produto_y"]
 
             list_of_convert_open_rows.append(row_open)
 
         df = pd.DataFrame(list_of_convert_close_rows)
         df2 = pd.DataFrame(list_of_convert_open_rows)
 
-        colunas_remover = ['Atualizações', 'Convenio', 'Tabela', 'Produto_x', 'DataInicioVigencia', 'PrazoDe', 'PrazoAte', 'TktmMin', 'TktmMax', 'Taxa', 'TaxaMaxima', 'CalculoComissao', 'Id Tabela Nova', 'IdConvenio', 'ComissaoAto', 'CdvpDiferidoVp', 'CdvpDiferidoMensal', 'CdvpDiferidoFuturo', 'CintDiferidoVp', 'CintDiferidoMensal', 'CintDiferidoFuturo', 'CprodDiferidoVp', 'CprodDiferidoMensal', 'CprodDiferidoFuturo', 'CmutDiferidoVp', 'CmutDiferidoMensal', 'CmutDiferidoFuturo', 'TotalDiferidoVp', 'TotalDiferidoMensal', 'TotalDiferidoFuturo', 'prazo_formatado', '_merge', 'Diferido']
+
+        colunas_remover = ['Atualizações', 'Convenio', 'Produto_y', 'Tabela', 'Produto_x', 'DataInicioVigencia', 'PrazoDe', 'PrazoAte', 'TktmMin', 'TktmMax', 'Taxa', 'TaxaMaxima', 'CalculoComissao', 'Id Tabela Nova', 'IdConvenio', 'ComissaoAto', 'CdvpDiferidoVp', 'CdvpDiferidoMensal', 'CdvpDiferidoFuturo', 'CintDiferidoVp', 'CintDiferidoMensal', 'CintDiferidoFuturo', 'CprodDiferidoVp', 'CprodDiferidoMensal', 'CprodDiferidoFuturo', 'CmutDiferidoVp', 'CmutDiferidoMensal', 'CmutDiferidoFuturo', 'TotalDiferidoVp', 'TotalDiferidoMensal', 'TotalDiferidoFuturo', 'prazo_formatado', '_merge', 'Diferido']
 
         df = df.drop(colunas_remover, axis=1)
         df2 = df2.drop(colunas_remover, axis=1)
@@ -336,6 +350,7 @@ class SafraMapper(Bank):
                 df_final = pd.DataFrame()
             print("Processo de junção finalizado!")
 
+            df_final.to_excel("123.xlsx", index=False)
             print("Processo concluído!")
             return df_final
 

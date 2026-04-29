@@ -31,6 +31,8 @@ family_product = {
     "GOVERNO": "GOVERNOS",
     "GOV": "GOVERNOS",
     "T.J": "TRIBUNAIS",
+    "CAMPREV": "PREFEITURAS",
+    "UNICAMP": "PREFEITURAS",
 }
 
 group_convenio = {

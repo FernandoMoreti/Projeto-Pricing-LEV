@@ -5293,6 +5293,8 @@ citys_uf = {
     "ESP": "ES"
 }
 citys = {
+    "UNICAMP": "CAMPINAS",
+    "CAMPREV": "CAMPINAS",
     "SLUIS": "SAO LUIS",
     "RJ": "RIO DE JANEIRO",
     "FORT": "FORTALEZA",
