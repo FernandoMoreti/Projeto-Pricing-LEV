@@ -96,8 +96,7 @@ class PanLafyMapper(Bank):
             else:
                 seguro_work = 0
 
-
-            if percent != percent_work:
+            if percent != percent:
                 list_to_close_and_open.append(row)
             elif ativation != ativation_work:
                 list_to_close_and_open.append(row)

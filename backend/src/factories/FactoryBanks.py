@@ -2,6 +2,7 @@ from ..services.Safra import SafraMapper
 from ..services.CapitalConsig import CapitalConsigMapper
 from ..services.Santander import SantanderMapper
 from ..services.PanLafy import PanLafyMapper
+from ..services.Ole import OleMapper
 
 class FactoryBank:
     _factoryBanksMapper = {
@@ -9,6 +10,7 @@ class FactoryBank:
         "panlafy": PanLafyMapper(),
         "safra": SafraMapper(),
         "santander": SantanderMapper(),
+        "ole": OleMapper(),
     }
 
     @staticmethod

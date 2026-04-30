@@ -66,7 +66,7 @@ class SafraMapper(Bank):
 
             percent = convertValues(row["ComissaoAto"] * 100)
             percent_work = convertValues(row["% Comissão"])
-            if percent != percent_work:
+            if round(percent, 2) != percent_work:
                 list_to_close_and_open.append(row)
 
         return list_of_open_tables, list_of_close_tables, list_to_close_and_open

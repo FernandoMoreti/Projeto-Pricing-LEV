@@ -3,14 +3,14 @@ from datetime import datetime, timedelta
 import pandas as pd
 import io
 from ..utils.utils import convertValues, remover_acentos
-from ..config.bank.CapitalConsigVariables import family_product, group_convenio
+from ..config.bank.SantanderVariables import family_product, group_convenio, operation
 from ..config.citys_uf import citys, citys_uf, states
 from ..config.grade import grade
 
-class CapitalConsigMapper(Bank):
+class OleMapper(Bank):
 
     def read_archive(self, file):
-        df = pd.read_excel(io.BytesIO(file))
+        df = pd.read_excel(io.BytesIO(file), sheet_name="Condições_comerciais")
         return df
 
     def get_retencao(self, value):
@@ -29,17 +29,11 @@ class CapitalConsigMapper(Bank):
 
     def compare_archive(self, df_work, df_bank):
 
-        df_bank["prazo_formatado"] = df_bank["PRAZO "].astype(str) + "-" + df_bank["PRAZO "].astype(str)
-        df_bank["NOMENCLATURA FUNÇÃO"] = df_bank["NOMENCLATURA FUNÇÃO"].astype(str).str.strip()
-        df_bank["prazo_formatado"] = df_bank["prazo_formatado"].astype(str).str.strip()
-        df_work["Produto"] = df_work["Produto"].astype(str).str.strip()
-        df_work["Parc. Atual"] = df_work["Parc. Atual"].astype(str).str.strip()
-
         df_result = pd.merge(
             df_bank,
             df_work,
-            left_on=["CÓD  ", "NOMENCLATURA FUNÇÃO", "prazo_formatado"],
-            right_on=["Id Tabela Banco", "Produto", "Parc. Atual"],
+            left_on=["codigo_regra"],
+            right_on=["Id Tabela Banco"],
             how="outer",
             indicator=True
         )
@@ -56,114 +50,137 @@ class CapitalConsigMapper(Bank):
 
         for index, row in df_open.iterrows():
 
-            retencao, bonus = self.get_retencao(convertValues(row["% PROMOTORA"] * 100))
+            if row["produto_regra"] == "Unificado" or row["produto_regra"] == "Ret Port":
+                continue
 
-            row["% PROMOTORA"] = retencao
-            row["BONUS"] = bonus
+            row["Diferido"] = row["percentual_comissao_diferido"]
 
             list_of_open_tables.append(row)
 
-        for index, row in df_matches.iterrows():
+        df_matches["percent_converted"] = df_matches["percentual_comissao_a_vista"].apply(convertValues)
+        df_matches["percent_work_converted"] = df_matches["% Comissão"].apply(convertValues)
 
-            retencao, bonus = self.get_retencao(convertValues(row["% PROMOTORA"] * 100))
+        df_matches["Diferido"] = df_matches["percentual_comissao_diferido"]
 
-            row["% PROMOTORA"] = retencao
-            row["BONUS"] = bonus
+        mask_diff = df_matches["percent_converted"] != df_matches["percent_work_converted"]
+        df_diff = df_matches[mask_diff]
 
-            percent = convertValues(row["% PROMOTORA"] * 100)
-            percent_work = convertValues(row["% Comissão"])
-            if round(percent, 2) != percent_work:
-                list_to_close_and_open.append(row)
+        list_to_close_and_open.extend(df_diff.to_dict('records'))
+
+        df_matches.drop(columns=["percent_converted", "percent_work_converted"], inplace=True)
 
         return list_of_open_tables, list_of_close_tables, list_to_close_and_open
 
-    def extract_city(self, rest_of_product):
-        rest_of_product = str(rest_of_product).upper().strip()
+    def extract_city(self, product):
+        product = str(product).upper().strip()
 
-        cidade = rest_of_product.split("_")[0]
+        product_limpo = remover_acentos(str(product).upper().strip())
 
-        sep = " "
+        words = product_limpo.split()
 
-        if sep in cidade:
-            cidade = cidade.split(" ")[0]
+        key_city = next((p for p in words if p in citys), None)
 
-        if cidade in ["CAMPINA", "PORTO", "SANTA", "SAO", "BELO"]:
-            cidade = rest_of_product.split("_")[0] + " " + rest_of_product.split("_")[1]
+        cidade = citys.get(key_city) if key_city else None
 
-        cidade = remover_acentos(cidade)
+        if cidade == None:
+            if product == "PREFEITURA MUNICIPAL DE ITU":
+                return "ITU"
+            if "ILHA SOLTEIRA" in product:
+                return "ILHA SOLTEIRA"
+            return "Sem convenio"
 
-        if cidade.startswith("PREV "):
-            cidade = cidade.split(" ")[1]
-            city = "DE " + citys.get(cidade, "")
-            return city
-
-        if cidade == "IPAM":
-            return ""
-
-        city = citys.get(cidade, "")
-
-        return city
+        return cidade
 
     def extract_uf_of_city(self, city):
         city = str(city).upper().strip()
-
-        if city.startswith("DE "):
-            city = city.split(" ")[1]
 
         uf = " " + citys_uf.get(city, "")
 
         return uf
 
-    def extract_uf_of_state(self, rest_of_product):
-        rest_of_product = str(rest_of_product).upper().strip()
+    def extract_uf_of_state(self, product):
+        product = str(product).upper().strip()
 
-        state = rest_of_product.split("_")[0]
+        if product == "PROCURADORIA GERAL DO ESTADO DE SP":
+            return "SP"
 
-        state = remover_acentos(state)
+        if product == "PROCURADORIA GERAL DE JUSTICA DO ES":
+            return "ES"
 
-        if len(state) == 2:
-            return state
+        product_limpo = remover_acentos(str(product).upper().strip())
 
-        uf = states.get(state, "")
+        key_state = next((state for state in states if state in product_limpo), None)
+
+        uf = states.get(key_state, "")
+
+        if uf == "":
+            key_city = next((city for city in citys if city in product_limpo), None)
+
+            uf = citys_uf.get(key_city, "")
+
+            if uf == "":
+                return ""
 
         return uf
 
     def get_convenio(self, product):
         product = str(product).upper()
         categorias = {
-            "GOV-": ["GOV ", "GOV_", "GOV.", "SPPREV_"],
-            "FEDERAL SIAPE": ["SIAPE ", "SIAPE_", "SIAPE."],
-            "PREF. ": ["PREF ", "PREF_", "PREF."],
-            "TJ | ": ["TJ ", "TJ_", "TJ."]
+            "CGI - IMOB": ["CGI", "USECASA"],
+            "": ["CREMESP"],
+            "AERONAUTIICA": ["AERONAUTICA"],
+            "FEDERAL SIAPE": ["SIAPE"],
+            "TJ | ": ["TRIB"],
+            "GOV-": ["ASSEMB", "ESTADO", "AMAPA" "PROCURADORIA", "IPSEMG", "JUSTICA", "UNIVERSITARIO", "CORPO", "DEFENSORIA", "UNIVERSIDADE", "GOVERNO", "MINISTERIO", "POLICIA", "SANESUL"],
+            "PREF. ": ["PREF", "PREV", "MUNICIP", "MUNIC", "AUTARQUIA", "INST", "ARAPREV", "ASPMI", "CARAGUAPREV", "COMPANHIA", "DEPART", "FUND", "IPASLUZ", "IPREM", "SECRETARIA", "SAAE", "SAEMAS", "SAMAE", "SAME", "SANEAMENTO", "SANEBAVI", "SEPREM", "SERV", "SUPERINTENDENCIA", "UNITAU", "FIEB", "SAMS"],
         }
 
         for categoria, prefixos in categorias.items():
-            prefixo_encontrado = next((p for p in prefixos if p in product), None)
 
+            if product in ["SAO PAULO PREVIDENCIA", "CAMARA DOS DEPUTADOS", "FUND PRO SANGUE HEMOCENTRO SAO PAULO"]:
+                convenio = "GOV-"
+                prefixo_encontrado = True
+            else:
+                prefixo_encontrado = next((p for p in prefixos if p in product), None)
             if prefixo_encontrado:
-                partes = product.split(prefixo_encontrado, 1)
-                rest_of_product = partes[1].strip() if len(partes) > 1 else ""
                 convenio = categoria
 
-                if convenio == "FEDERAL SIAPE":
+                if convenio in ["FEDERAL SIAPE", "AERONAUTIICA", "CGI - IMOB", ""]:
                     return convenio
 
                 if convenio == "PREF. ":
-                    city = self.extract_city(rest_of_product)
-                    uf = self.extract_uf_of_city(city)
+                    city = self.extract_city(product)
 
                     if city == "":
                         return ""
 
+                    uf = self.extract_uf_of_city(city)
+
                     convenio = convenio + city + uf
+
                     return convenio
 
                 if convenio in ["GOV-", "TJ | "]:
-                    uf = self.extract_uf_of_state(rest_of_product)
+                    uf = self.extract_uf_of_state(product)
+
+                    if uf == "":
+                        return ""
+
                     convenio = convenio + uf
                     return convenio
 
         return "CONVENIO DESCONHECIDO"
+
+    def get_seguro(self, text):
+        text = str(text).upper()
+        if any(term in text for term in ["C SEGURO", "COM SEGURO", "C SEG"]):
+            return " - C/ SEGURO - "
+        if any(term in text for term in ["S SEGURO", "SEM SEGURO", "S SEG"]):
+            return " - S/ SEGURO - "
+        return " - S/ SEGURO - "
+
+    def get_operation(self, value):
+        return operation.get(value, "")
 
     def create_open_tables(self, list_of_open_tables, model):
 
@@ -171,38 +188,57 @@ class CapitalConsigMapper(Bank):
 
         for row in list_of_open_tables:
 
-            product = row["NOMENCLATURA FUNÇÃO"]
-
+            product = row["nome_convenio"]
+            operation = self.get_operation(row["produto_regra"])
             convenio = self.get_convenio(product)
 
-            agreement = row[" CONVENIO"].strip().split(" ")[0]
+            if convenio.startswith("GOV-"):
+                agreement = convenio[:4]
+            else:
+                agreement = convenio.strip().split(" ")[0]
+
             family = family_product[agreement]
             group = group_convenio[family]
-            percent = convertValues(row["% PROMOTORA"] * 100)
+            percent = convertValues(row["percentual_comissao_a_vista"])
+            seguro = self.get_seguro(row["descricao_regra"])
+
+            codigo_str = str(row["codigo_regra"]).strip()
+            complement = f"{int(float(codigo_str[4:]))}{seguro}{int(float(row['codigo_regra']))}"
+
+            grades = grade.get(operation, "")
 
             new_row = model.copy()
 
-            if "_EMP_" in product:
-                new_row["Operação"] = "NOVO"
+            if seguro == " - C/ SEGURO - ":
+                new_row["SEGURO"] = "0,56 | LIQUIDO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
+                new_row["REPASSE SEGURO"] = "0,40 | 0,50 | 0,56"
+
+            if operation == "PORTABILIDADE":
+                new_row["Base Comissão"] = "BRUTO"
             else:
-                new_row["Operação"] = "CARTÃO"
+                new_row["Base Comissão"] = "LIQUÍDO"
 
-            operation = new_row["Operação"]
-            grades = grade.get(operation, "")
+            if convenio == 'PREF. Sem convenio ':
+                new_row["Convênio"] = ''
+            else:
+                new_row["Convênio"] = convenio
 
-            new_row["Produto"] = product
+            if int(row['Diferido']) > 0:
+                new_row["DIFERIMENTO"] = f"{int(row['Diferido'])},00 | LIQUIDO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
+                new_row["REPASSE DIFERIMENTO"] = "0,00 | 0,00 | 0,00"
+
+            new_row["Produto"] = f"FVE - {product} - {int(row['codigo_regra'])}"
             new_row["Família Produto"] = family
             new_row["Grupo Convênio"] = group
-            new_row["Convênio"] = convenio
-            new_row["Parc. Atual"] = row["prazo_formatado"]
+            new_row["Operação"] = operation
+            new_row["Parc. Atual"] = row["faixa_parcela"]
             new_row["% Mínima"] = percent * grades["min"]
             new_row["% Intermediária"] = percent * grades["med"]
             new_row["% Máxima"] = percent * grades["max"]
             new_row["% Comissão"] = percent
             new_row["Vigência"] = datetime.now().strftime("%d/%m/%Y")
-            new_row["Complemento"] = int(row["CÓD  "])
-            new_row["Id Tabela Banco"] = int(row["CÓD  "])
-            new_row["BONUS VIP"] = f"{row['BONUS']},00 | LIQUIDO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
+            new_row["Complemento"] = complement
+            new_row["Id Tabela Banco"] = row["codigo_regra"]
             new_row["Atualizações"] = "INCLUSÃO"
 
             list_of_convert_rows.append(new_row)
@@ -218,14 +254,14 @@ class CapitalConsigMapper(Bank):
         for index, row in list_of_close_tables.iterrows():
 
             row["Término"] = (datetime.now() - timedelta(days=1)).strftime("%d/%m/%Y")
+            row["Atualizações"] = "ENCERRAMENTO"
+
 
             list_of_convert_rows.append(row)
 
         df = pd.DataFrame(list_of_convert_rows)
 
-        df = df.drop(['CÓD  ', 'NOMENCLATURA FUNÇÃO', 'Unnamed: 2', ' CONVENIO', 'PRAZO ', '% PROMOTORA', 'prazo_formatado', '_merge'], axis=1, errors='ignore')
-
-        df["Atualizações"] = "ENCERRAMENTO"
+        df = df.drop(["codigo_convenio", "nome_convenio", "rede", "regional", "status_convenio", "codigo_regra", "descricao_regra", "data_inicio_validade", "data_fim_validade", "tipo_conta_corrente", "sequencia_faixa", "range_faixa_taxa", "faixa_parcela", "taxa_juros_sem_seguro", "taxa_juros_com_seguro", "categoria_corban_para_comissao", "percentual_comissao_a_vista", "percentual_comissao_diferido", "percentual_comissao_total", "produto_regra", "canal_regra", '_merge'], axis=1)
 
         return df
 
@@ -236,54 +272,51 @@ class CapitalConsigMapper(Bank):
 
         for row in list_of_close_open:
 
-            percent = convertValues(row["% PROMOTORA"] * 100)
+            percent = convertValues(row["percentual_comissao_a_vista"])
 
             row_close = row.copy()
 
             row_close["Término"] = (datetime.now() - timedelta(days=1)).strftime("%d/%m/%Y")
             row_close["Atualizações"] = "ALTERAÇÃO"
 
+
             list_of_convert_close_rows.append(row_close)
 
             row_open = row.copy()
 
-            operation = row["Operação"]
+            operation = self.get_operation(row["produto_regra"])
             grades = grade.get(operation, "")
 
             row_open["Término"] = ""
             row_open["Vigência"] = datetime.now().strftime("%d/%m/%Y")
             row_open["ID"] = ''
-            row_open["% Comissão"] = convertValues(row["% PROMOTORA"] * 100)
+            row_open["% Comissão"] = convertValues(row["percentual_comissao_a_vista"])
             row_open["% Mínima"] = percent * grades["min"]
             row_open["% Intermediária"] = percent * grades["med"]
             row_open["% Máxima"] = percent * grades["max"]
             row_open["Atualizações"] = "ALTERAÇÃO"
+
 
             list_of_convert_open_rows.append(row_open)
 
         df = pd.DataFrame(list_of_convert_close_rows)
         df2 = pd.DataFrame(list_of_convert_open_rows)
 
-        colunas_remover = [
-            'CÓD  ', 'NOMENCLATURA FUNÇÃO', 'Unnamed: 2',
-            ' CONVENIO', 'PRAZO ', '% PROMOTORA',
-            'prazo_formatado', '_merge'
-        ]
+        colunas_remover = ["codigo_convenio", "nome_convenio", "rede", "regional", "status_convenio", "codigo_regra", "descricao_regra", "data_inicio_validade", "data_fim_validade", "tipo_conta_corrente", "sequencia_faixa", "range_faixa_taxa", "faixa_parcela", "taxa_juros_sem_seguro", "taxa_juros_com_seguro", "categoria_corban_para_comissao", "percentual_comissao_a_vista", "percentual_comissao_diferido", "percentual_comissao_total", "produto_regra", "canal_regra", '_merge', 'percent_converted', 'percent_work_converted', 'Diferido']
 
-        df = df.drop(colunas_remover, axis=1, errors='ignore')
-        df2 = df2.drop(colunas_remover, axis=1, errors='ignore')
+        df = df.drop(colunas_remover, axis=1)
+        df2 = df2.drop(colunas_remover, axis=1)
 
         return df, df2
 
     def input_standard_values(self, model):
 
-        model["Instituição"] = "CAPITAL CONSIG"
+        model["Instituição"] = "SANTANDER"
         model["Parc. Refin."] = "0-0"
         model["% PMT Pagas"] = "0,00-0,00"
         model["% Taxa"] = "0,00-0,00"
         model["Idade"] = "0-80"
         model["-"] = "%"
-        model["Base Comissão"] = "LÍQUIDO"
         model["% Fator"] = "0,000000000"
         model["% TAC"] = "0,000000"
         model["Val. Teto TAC"] = "0,000000"
@@ -292,7 +325,6 @@ class CapitalConsigMapper(Bank):
         model["Venda Digital"] = "SIM"
         model["Visualização Restrita"] = "NÃO"
         model["Val. Base Produção"] = "LÍQUIDO"
-        model["REPASSE BONUS VIP"] = "0,00 | 0,00 | 0,00"
 
         return model
 
@@ -333,7 +365,6 @@ class CapitalConsigMapper(Bank):
             dfs_para_juntar = [df for df in [df_close, df_close2, df_open, df_open2] if df is not None and not df.empty]
             if dfs_para_juntar:
                 df_final = pd.concat(dfs_para_juntar, axis=0, ignore_index=True, sort=False)
-                df_final = df_final.drop(['BONUS', 'NÍVEL', 'EMPREGADOR'], axis=1, errors='ignore')
                 print(f"Sucesso! Total de linhas: {len(df_final)}")
             else:
                 print("Nenhum dado encontrado para juntar.")
@@ -341,6 +372,7 @@ class CapitalConsigMapper(Bank):
             print("Processo de junção finalizado!")
 
             print("Processo concluído!")
+            df_final = self.paint_row(df_final, "Convênio")
             return df_final
 
         except Exception as e:

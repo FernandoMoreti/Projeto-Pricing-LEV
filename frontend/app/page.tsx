@@ -149,6 +149,7 @@ export default function Home() {
                     <option value="PanLafy">PanLafy</option>
                     <option value="Safra">Safra</option>
                     <option value="Santander">Santander</option>
+                    <option value="Santander">Ole</option>
                 </select>
 
                 <div className="pt-4 border-t border-slate-800 mt-6">
