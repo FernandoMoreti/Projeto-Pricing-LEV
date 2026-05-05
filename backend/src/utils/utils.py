@@ -1,4 +1,5 @@
 import pandas as pd
+import re
 
 def convertValues(value):
     valor_str = value
@@ -85,3 +86,19 @@ def formatar_br(valor):
     if pd.isna(valor) or valor == "" or valor is None:
         return "0,00"
     return f"{float(valor):,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+
+
+def limpar_zeros(texto):
+    return re.sub(r'\b0+', '', texto)
+
+def rename_duplicates(cols):
+    counts = {}
+    new_cols = []
+    for col in cols:
+        if col in counts:
+            counts[col] += 1
+            new_cols.append(f"{col}.{counts[col]}")
+        else:
+            counts[col] = 0
+            new_cols.append(col)
+    return new_cols
