@@ -5293,6 +5293,8 @@ citys_uf = {
     "ESP": "ES"
 }
 citys = {
+    "S.": "SAO PAULO",
+    "SEC": "SAO PAULO",
     "UNICAMP": "CAMPINAS",
     "CAMPREV": "CAMPINAS",
     "SLUIS": "SAO LUIS",
@@ -10616,6 +10618,8 @@ citys = {
 }
 
 states = {
+    "RIO": "RJ",
+    "IPSEMG": "MG",
     "ACRE": "AC",
     "ALAGOAS": "AL",
     "AMAPA": "AP",

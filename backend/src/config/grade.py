@@ -34,4 +34,9 @@ grade = {
         "med": 0.95,
         "max": 1,
     },
+    "SAQUE COMPL.": {
+        "min": 0.7,
+        "med": 0.95,
+        "max": 1,
+    },
 }

@@ -1,11 +1,11 @@
 family_product = {
-    "PRIVADO": "CLT",
-    "FEDERAIS": "FEDERAIS",
+    "CLT": "CLT",
+    "FEDERAL": "FEDERAIS",
     "FGTS": "FGTS",
     "INSS": "INSS",
-    "GOVERNOS": "GOVERNOS",
-    "PREFEITURAS": "PREFEITURAS",
-    "TRIBUNAIS": "TRIBUNAIS",
+    "GOV": "GOVERNOS",
+    "PREF.": "PREFEITURAS",
+    "TJ": "TRIBUNAIS",
 }
 
 group_convenio = {
