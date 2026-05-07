@@ -1,15 +1,20 @@
 from fastapi import FastAPI, File, UploadFile, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
+from fastapi.concurrency import run_in_threadpool
 import pandas as pd
 import io
 from .factories.FactoryBanks import FactoryBank
+from .services.Runner.Workbank import iniciar_robo_sync
+
+from dotenv import load_dotenv
+load_dotenv()
 
 app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://192.168.1.90:60000"],
+    allow_origins=["http://localhost:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -55,6 +60,31 @@ async def edit_pricing(
             media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             headers=headers,
         )
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "success": False,
+                "message": "Erro ao processar os arquivos.",
+                "error": str(e)
+            }
+        )
+
+@app.post("/input")
+async def input_pricing(
+    fileAtt: UploadFile = File(...),
+    bankWork: str = Form(...)
+):
+    try:
+        content_work = await fileAtt.read()
+        bank = bankWork.strip().lower().replace(" ", "")
+
+        print(f"Recebido arquivo para input: {fileAtt.filename} do banco: {bank}")
+
+        await run_in_threadpool(iniciar_robo_sync)
+
+        return {"success": True, "message": "Robô executado com sucesso."}
 
     except Exception as e:
         raise HTTPException(

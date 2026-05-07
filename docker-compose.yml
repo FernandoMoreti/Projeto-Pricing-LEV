@@ -4,6 +4,7 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     container_name: api_pricing_prod
+    shm_size: '2gb'
     restart: always
     ports:
       - "8001:8001"
