@@ -182,8 +182,6 @@ class PanMapper(Bank):
         df_close = df_result[df_result["_merge"] == "right_only"]
         df_matches = df_result[df_result["_merge"] == "both"]
 
-        df_matches.to_excel("matches_cartao.xlsx", index=False)
-
         for index, row in df_close.iterrows():
             list_of_close_tables.append(row)
 
@@ -650,7 +648,6 @@ class PanMapper(Bank):
             print(f"Sucesso! Total de linhas: {len(df_final)}")
 
             print("Processo concluído!")
-            df_final.to_excel("tabelas_processadas_pan.xlsx", index=False)
             return df_final
 
         except Exception as e:

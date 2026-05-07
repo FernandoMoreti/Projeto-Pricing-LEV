@@ -30,7 +30,7 @@ export default function Home() {
 
     setLoading(true);
     setMessage("");
-    const uri = "http://127.0.0.1:8080";
+    const uri = "http://192.168.1.90:8001";
     const form = new FormData();
     form.append('fileWork', fileWorkbank);
     form.append('fileBank', fileBank);
