@@ -444,7 +444,7 @@ class PanMapper(Bank):
 
             if operation == "CARTÃO" or operation == "SAQUE COMPL.":
                 if pd.notna(row["Ativacao"]) and row["Ativacao"] != None and row["Ativacao"] != 0:
-                    new_row["ATIVAÇÃO"] = f"{row["ATIVAÇÃO"]} | FIXO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
+                    new_row["ATIVAÇÃO"] = f"{row['ATIVAÇÃO']} | FIXO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
 
                     if row["Ativacao"] == 80:
                         new_row["REPASSE ATIVAÇÃO"] = "56,00 | 68,00 | 76,00"
@@ -454,7 +454,7 @@ class PanMapper(Bank):
                         new_row["REPASSE ATIVAÇÃO"] = "28,00 | 32,00 | 36,00"
 
                 if pd.notna(row["Venda"]) and row["Venda"] != None and row["Venda"] != 0:
-                    new_row["PRÉ-ADESÃO"] = f"{row["Venda"]} | FIXO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
+                    new_row["PRÉ-ADESÃO"] = f"{row['Venda']} | FIXO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
 
                     if row["Venda"] == 50:
                         new_row["REPASSE ATIVAÇÃO"] = "35,00 | 40,00 | 45,00"
