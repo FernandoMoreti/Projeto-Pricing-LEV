@@ -384,10 +384,15 @@ class PanMapper(Bank):
                 prazo = row["Plano"]
                 codigo = row["Cód Tabela"]
 
+
             new_row = model.copy()
 
-            # new_row["Base Comissão"] = row["Base Comissão_x"]
-            # new_row["Val. Base Produção"] = new_row["Base Comissão"]
+            if operation == "PORTABILIDADE":
+                new_row["Base Comissão"] = "BRUTO"
+                new_row["Val. Base Produção"] = "BRUTO"
+            else:
+                new_row["Base Comissão"] = "LÍQUIDO"
+                new_row["Val. Base Produção"] = "LÍQUIDO"
             new_row["Operação"] = operation
             new_row["Produto"] = nameTable
             new_row["Família Produto"] = family
@@ -417,8 +422,10 @@ class PanMapper(Bank):
 
             if family == "CLT":
                 new_row["Visualização Restrita"] = "NÃO"
+                new_row["Venda Digital"] = "NÃO"
             else:
                 new_row["Visualização Restrita"] = "SIM"
+                new_row["Venda Digital"] = "SIM"
 
             if row["SEGURO PAN"] != '':
                 new_row["Faixa Val. Seguro"] = "2,00-5.000,00"
@@ -498,6 +505,7 @@ class PanMapper(Bank):
 
             row["Término"] = (datetime.now() - timedelta(days=1)).strftime("%d/%m/%Y")
             row["Atualizações"] = "ENCERRAMENTO"
+            row["Val. Base Produção"] = row["Base Comissão"]
 
             list_of_convert_rows.append(row)
 
@@ -505,7 +513,7 @@ class PanMapper(Bank):
 
         df['Vigência_y'] = df['Vigência_y'].combine_first(df['Vigência'])
 
-        df = df.drop(['Convênio_x', 'Empregador', 'Operação', 'Cód Tabela',
+        df = df.drop(['Convênio_x', 'Empregador', 'Cód Tabela',
        'Tabela Financiamento', 'Tipo Tabela', 'Plano', 'Taxa Início',
        'Taxa Fim', 'Flat', 'Pmt', 'Fator Antecipação', 'Vp Antecipada',
        'VP Total', 'Port', 'MinOperacao', 'MaxOperacao', 'MinParcela',
@@ -528,7 +536,7 @@ class PanMapper(Bank):
 
             row_close = row.copy()
 
-            row_close["Término"] = datetime.now().strftime("%d/%m/%Y")
+            row_close["Término"] = (datetime.now() - timedelta(days=1)).strftime("%d/%m/%Y")
             row_close["Atualizações"] = "ALTERAÇÃO"
 
             list_of_convert_close_rows.append(row_close)
@@ -537,17 +545,28 @@ class PanMapper(Bank):
 
             operation = row["Operação"]
 
+            if operation == "PORTABILIDADE":
+                row_open["Base Comissão"] = "BRUTO"
+                row_open["Val. Base Produção"] = "BRUTO"
+            else:
+                row_open["Base Comissão"] = "LÍQUIDO"
+                row_open["Val. Base Produção"] = "LÍQUIDO"
+
             grades = grade.get(operation, "")
 
             row_open["Término"] = ""
-            row_open["Vigência"] = datetime.now().strftime("%d/%m/%Y")
+            row_open["Vigência_y"] = datetime.now().strftime("%d/%m/%Y")
             row_open["ID"] = ''
             row_open["% Comissão"] = percent
+            row_open["Operação"] = operation
             row_open["% Mínima"] = percent * grades["min"]
             row_open["% Intermediária"] = percent * grades["med"]
             row_open["% Máxima"] = percent * grades["max"]
             row_open["Atualizações"] = "ALTERAÇÃO"
-            row_open["DIFERIMENTO"] = row["Pmt"]
+
+            if pd.notna(row["Pmt"]) and row["Pmt"] != None and round(row["Pmt"] * 100, 2) != 0:
+                row_open["DIFERIMENTO"] = f"{round(row["Pmt"] * 100, 2)} | FIXO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
+                row_open["REPASSE DIFERIMENTO"] = "0,00 | 0,00 | 0,00"
 
             list_of_convert_open_rows.append(row_open)
 
@@ -555,23 +574,21 @@ class PanMapper(Bank):
         df2 = pd.DataFrame(list_of_convert_open_rows)
 
         colunas_para_dropar = [
-            'Convênio_x', 'Empregador', 'Operação', 'Cód Tabela',
+            'Convênio_x', 'Empregador', 'Cód Tabela',
             'Tabela Financiamento', 'Tipo Tabela', 'Plano', 'Taxa Início',
             'Taxa Fim', 'Flat', 'Pmt', 'Fator Antecipação',
             'Vp Antecipada', 'VP Total', 'Port', 'MinOperacao',
             'MaxOperacao', 'MinParcela', 'Seguro', '% Fator Seguro',
             'Prêmio', 'Comissão Seguro', 'Comissão Seguro + VP',
-            'Vigência_x', 'Observação', 'teste_seguro', '_merge'
+            'Vigência_x', 'Observação', 'teste_seguro', '_merge', 'Vigência'
         ]
-        print(df.columns)
-        print(df2.columns)
+
+
+        df = df.drop(colunas_para_dropar, axis=1, errors='ignore')
+        df2 = df2.drop(colunas_para_dropar, axis=1, errors='ignore')
 
         df.columns = df.columns.str.replace('_y', '')
-        df2.columns = df.columns.str.replace('_y', '')
-
-
-        df = df.drop(colunas_para_dropar, axis=1)
-        df2 = df2.drop(colunas_para_dropar, axis=1)
+        df2.columns = df2.columns.str.replace('_y', '')
 
         return df, df2
 
@@ -633,6 +650,7 @@ class PanMapper(Bank):
             print(f"Sucesso! Total de linhas: {len(df_final)}")
 
             print("Processo concluído!")
+            df_final.to_excel("tabelas_processadas_pan.xlsx", index=False)
             return df_final
 
         except Exception as e:
