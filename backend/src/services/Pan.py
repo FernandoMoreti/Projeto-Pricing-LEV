@@ -466,11 +466,11 @@ class PanMapper(Bank):
                         new_row["REPASSE ATIVAÇÃO"] = "28,00 | 32,00 | 36,00"
 
                 if pd.notna(row["PMT"]) and row["PMT"] != None and round(row["PMT"] * 100, 2) != 0:
-                    new_row["DIFERIMENTO"] = f"{round(row["PMT"] * 100, 2)} | FIXO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
+                    new_row["DIFERIMENTO"] = f"{round(row['PMT'] * 100, 2)} | FIXO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
                     new_row["REPASSE DIFERIMENTO"] = "0,00 | 0,00 | 0,00"
             else:
                 if pd.notna(row["Pmt"]) and row["Pmt"] != None and round(row["Pmt"] * 100, 2) != 0:
-                    new_row["DIFERIMENTO"] = f"{round(row["Pmt"] * 100, 2)} | FIXO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
+                    new_row["DIFERIMENTO"] = f"{round(row['Pmt'] * 100, 2)} | FIXO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
                     new_row["REPASSE DIFERIMENTO"] = "0,00 | 0,00 | 0,00"
 
 
@@ -563,7 +563,7 @@ class PanMapper(Bank):
             row_open["Atualizações"] = "ALTERAÇÃO"
 
             if pd.notna(row["Pmt"]) and row["Pmt"] != None and round(row["Pmt"] * 100, 2) != 0:
-                row_open["DIFERIMENTO"] = f"{round(row["Pmt"] * 100, 2)} | FIXO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
+                row_open["DIFERIMENTO"] = f"{round(row['Pmt'] * 100, 2)} | FIXO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
                 row_open["REPASSE DIFERIMENTO"] = "0,00 | 0,00 | 0,00"
 
             list_of_convert_open_rows.append(row_open)
