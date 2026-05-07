@@ -1,12 +1,14 @@
 from fastapi import FastAPI, File, UploadFile, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
+from fastapi.concurrency import run_in_threadpool
 import pandas as pd
 import io
 from .factories.FactoryBanks import FactoryBank
+from .services.Runner.Workbank import iniciar_robo_sync
+
 from dotenv import load_dotenv
 load_dotenv()
-
 
 app = FastAPI()
 
@@ -78,6 +80,10 @@ async def input_pricing(
         content_work = await fileAtt.read()
         bank = bankWork.strip().lower().replace(" ", "")
 
+        print(f"Recebido arquivo para input: {fileAtt.filename} do banco: {bank}")
+
+        await run_in_threadpool(iniciar_robo_sync)
+
         return {"success": True, "message": "Robô executado com sucesso."}
 
     except Exception as e:
@@ -89,4 +95,3 @@ async def input_pricing(
                 "error": str(e)
             }
         )
-

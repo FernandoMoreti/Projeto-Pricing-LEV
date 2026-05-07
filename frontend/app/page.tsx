@@ -22,7 +22,7 @@ export default function Home() {
   const [loading, setLoading] = useState<boolean>(false);
   const [isSuccess, setIsSuccess] = useState<boolean>(false);
 
-  async function sendToQueue(e: React.FormEvent) {
+  async function sendToEdit(e: React.FormEvent) {
     e.preventDefault();
     if (!fileWorkbank || !fileBank || !bank) {
       setMessage("Preencha todos os parâmetros antes de iniciar.");
@@ -32,7 +32,6 @@ export default function Home() {
 
     setLoading(true);
     setMessage("");
-
     const uri = "http://192.168.1.90:8001";
     const form = new FormData();
     form.append('fileWork', fileWorkbank);
@@ -82,7 +81,7 @@ export default function Home() {
     setLoading(true);
     setMessage("");
 
-    const uri = "http://127.0.0.1:8080";
+    const uri = "http://192.168.1.90:8001";
     const form = new FormData();
 
     form.append("fileAtt", fileAtt)
@@ -167,83 +166,89 @@ export default function Home() {
                   <select
                     value={bank}
                     onChange={(e) => setBank(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl p-4 text-sm text-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
+                    className="w-full mb-5 bg-slate-950 border border-slate-800 rounded-xl p-4 text-sm text-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
                   >
                     <option value="" disabled>Selecione uma opção...</option>
                     <option value="Capital Consig">Capital Consig</option>
+                    <option value="Pan">Pan</option>
+                    <option value="PanLafy">PanLafy</option>
                     <option value="Safra">Safra</option>
                     <option value="Santander">Santander</option>
+                    <option value="Ole">Ole</option>
                   </select>
+
+                  <button
+                    onClick={sendToEdit}
+                    disabled={loading}
+                    className={`w-full mb-5 py-4 rounded-xl font-bold flex items-center justify-center gap-3 transition-all
+                      ${loading ? "bg-slate-800 text-slate-500" : "bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-500/20 active:scale-95"}`}
+                  >
+                    {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <ArrowRight className="w-5 h-5" />}
+                    {loading ? "EDITANDO..." : "INICIAR EDIÇÃO"}
+                  </button>
+                </div>
+              </div>
+
+              <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-6 mb-5">
+                <h2 className="text-xl font-semibold mb-4">Entrada no Workbank</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
+                  <div className="flex flex-col gap-2">
+                    <label className="block text-[10px] uppercase font-bold text-slate-500 tracking-widest ml-1">Instituição</label>
+                    <select
+                      value={bankWork}
+                      onChange={(e) => setBankWork(e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl p-4 text-sm text-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
+                    >
+                      <option value="" disabled>Selecione...</option>
+                      <option value="Capital Consig">Capital Consig</option>
+                      <option value="Pan">Pan</option>
+                      <option value="PanLafy">PanLafy</option>
+                      <option value="Safra">Safra</option>
+                      <option value="Santander">Santander</option>
+                      <option value="Ole">Ole</option>
+                    </select>
+                  </div>
+
+                  <div className="flex flex-col gap-2">
+                    <label className="block text-[10px] uppercase font-bold text-slate-500 tracking-widest ml-1">Arquivo Input</label>
+                    <div className="border-2 border-dashed border-slate-800 rounded-xl h-13.5 flex items-center hover:border-blue-500/30 transition-all hover:bg-slate-950/50">
+                      <input
+                        type="file"
+                        className="hidden"
+                        id="fileAtt"
+                        onChange={(e) => setFileAtt(e.target.files?.[0] || null)}
+                      />
+                      <label htmlFor="fileAtt" className="cursor-pointer w-full text-center truncate">
+                        <p className="text-xs font-medium text-slate-400">
+                          {fileAtt ? fileAtt.name : "Clique p/ anexar"}
+                        </p>
+                      </label>
+                    </div>
+                  </div>
                 </div>
 
                 <button
-                  onClick={sendToQueue}
+                  onClick={inputInWorkbank}
                   disabled={loading}
-                  className={`w-full py-4 rounded-xl font-bold flex items-center justify-center gap-3 transition-all
+                  className={`w-full mt-4 py-4 rounded-xl font-bold flex items-center justify-center gap-3 transition-all
                     ${loading ? "bg-slate-800 text-slate-500" : "bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-500/20 active:scale-95"}`}
                 >
                   {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <ArrowRight className="w-5 h-5" />}
-                  {loading ? "EDITANDO..." : "INICIAR EDIÇÃO"}
+                  {loading ? "INPUTANDO..." : "ENVIAR PARA O WORKBANK"}
                 </button>
               </div>
-            </div>
 
-            <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-6">
-              <h2 className="text-xl font-semibold mb-4">Entrada no Workbank</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
-                <div className="flex flex-col gap-2">
-                  <label className="block text-[10px] uppercase font-bold text-slate-500 tracking-widest ml-1">Instituição</label>
-                  <select
-                    value={bankWork}
-                    onChange={(e) => setBankWork(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl p-4 text-sm text-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
-                  >
-                    <option value="" disabled>Selecione...</option>
-                    <option value="Capital Consig">Capital Consig</option>
-                    <option value="Safra">Safra</option>
-                    <option value="Santander">Santander</option>
-                  </select>
-                </div>
-
-                <div className="flex flex-col gap-2">
-                  <label className="block text-[10px] uppercase font-bold text-slate-500 tracking-widest ml-1">Arquivo Input</label>
-                  <div className="border-2 border-dashed border-slate-800 rounded-xl h-13.5 flex items-center hover:border-blue-500/30 transition-all hover:bg-slate-950/50">
-                    <input
-                      type="file"
-                      className="hidden"
-                      id="fileAtt"
-                      onChange={(e) => setFileAtt(e.target.files?.[0] || null)}
-                    />
-                    <label htmlFor="fileAtt" className="cursor-pointer w-full text-center truncate">
-                      <p className="text-xs font-medium text-slate-400">
-                        {fileAtt ? fileAtt.name : "Clique p/ anexar"}
-                      </p>
-                    </label>
+              {message && (
+                <div className={`p-4 rounded-xl border flex items-start gap-3 animate-in fade-in zoom-in duration-300
+                  ${isSuccess ? "bg-emerald-500/5 border-emerald-500/20 text-emerald-400" : "bg-red-500/5 border-red-500/20 text-red-400"}`}>
+                  {isSuccess ? <CheckCircle2 className="w-5 h-5 mt-0.5" /> : <AlertCircle className="w-5 h-5 mt-0.5" />}
+                  <div>
+                    <p className="font-bold text-sm">{isSuccess ? "Sucesso" : "Atenção"}</p>
+                    <p className="text-xs opacity-80">{message}</p>
                   </div>
                 </div>
-              </div>
-
-              <button
-                onClick={inputInWorkbank}
-                disabled={loading}
-                className={`w-full mt-4 py-4 rounded-xl font-bold flex items-center justify-center gap-3 transition-all
-                  ${loading ? "bg-slate-800 text-slate-500" : "bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-500/20 active:scale-95"}`}
-              >
-                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <ArrowRight className="w-5 h-5" />}
-                {loading ? "INPUTANDO..." : "INICIAR INPUT"}
-              </button>
+              )}
             </div>
-
-            {message && (
-              <div className={`p-4 rounded-xl border flex items-start gap-3 animate-in fade-in zoom-in duration-300
-                ${isSuccess ? "bg-emerald-500/5 border-emerald-500/20 text-emerald-400" : "bg-red-500/5 border-red-500/20 text-red-400"}`}>
-                {isSuccess ? <CheckCircle2 className="w-5 h-5 mt-0.5" /> : <AlertCircle className="w-5 h-5 mt-0.5" />}
-                <div>
-                  <p className="font-bold text-sm">{isSuccess ? "Sucesso" : "Atenção"}</p>
-                  <p className="text-xs opacity-80">{message}</p>
-                </div>
-              </div>
-            )}
           </div>
         </div>
       </div>

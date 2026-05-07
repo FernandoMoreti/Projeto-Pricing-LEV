@@ -6,7 +6,8 @@ from ..utils.utils import convertValues, remover_acentos
 from ..config.bank.SantanderVariables import family_product, group_convenio, operation
 from ..config.citys_uf import citys, citys_uf, states
 from ..config.grade import grade
-class SantanderMapper(Bank):
+
+class OleMapper(Bank):
 
     def read_archive(self, file):
         df = pd.read_excel(io.BytesIO(file), sheet_name="Condições_comerciais")
@@ -226,7 +227,7 @@ class SantanderMapper(Bank):
                 new_row["DIFERIMENTO"] = f"{int(row['Diferido'])},00 | LIQUIDO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
                 new_row["REPASSE DIFERIMENTO"] = "0,00 | 0,00 | 0,00"
 
-            new_row["Produto"] = f"{product} - {int(row['codigo_regra'])}"
+            new_row["Produto"] = f"FVE - {product} - {int(row['codigo_regra'])}"
             new_row["Família Produto"] = family
             new_row["Grupo Convênio"] = group
             new_row["Operação"] = operation

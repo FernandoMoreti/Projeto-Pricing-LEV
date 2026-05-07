@@ -1,5 +1,5 @@
 from .Bank import Bank
-from datetime import datetime
+from datetime import datetime, timedelta
 import pandas as pd
 import io
 from ..utils.utils import convertValues, remover_acentos
@@ -38,8 +38,8 @@ class CapitalConsigMapper(Bank):
         df_result = pd.merge(
             df_bank,
             df_work,
-            left_on=["NOMENCLATURA FUNÇÃO", "prazo_formatado"],
-            right_on=["Produto", "Parc. Atual"],
+            left_on=["CÓD  ", "NOMENCLATURA FUNÇÃO", "prazo_formatado"],
+            right_on=["Id Tabela Banco", "Produto", "Parc. Atual"],
             how="outer",
             indicator=True
         )
@@ -72,7 +72,7 @@ class CapitalConsigMapper(Bank):
 
             percent = convertValues(row["% PROMOTORA"] * 100)
             percent_work = convertValues(row["% Comissão"])
-            if percent != percent_work:
+            if round(percent, 2) != percent_work:
                 list_to_close_and_open.append(row)
 
         return list_of_open_tables, list_of_close_tables, list_to_close_and_open
@@ -148,7 +148,6 @@ class CapitalConsigMapper(Bank):
                 if convenio == "FEDERAL SIAPE":
                     return convenio
 
-
                 if convenio == "PREF. ":
                     city = self.extract_city(rest_of_product)
                     uf = self.extract_uf_of_city(city)
@@ -204,6 +203,7 @@ class CapitalConsigMapper(Bank):
             new_row["Complemento"] = int(row["CÓD  "])
             new_row["Id Tabela Banco"] = int(row["CÓD  "])
             new_row["BONUS VIP"] = f"{row['BONUS']},00 | LIQUIDO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
+            new_row["Atualizações"] = "INCLUSÃO"
 
             list_of_convert_rows.append(new_row)
 
@@ -217,13 +217,15 @@ class CapitalConsigMapper(Bank):
 
         for index, row in list_of_close_tables.iterrows():
 
-            row["Término"] = datetime.now().strftime("%d/%m/%Y")
+            row["Término"] = (datetime.now() - timedelta(days=1)).strftime("%d/%m/%Y")
 
             list_of_convert_rows.append(row)
 
         df = pd.DataFrame(list_of_convert_rows)
 
         df = df.drop(['CÓD  ', 'NOMENCLATURA FUNÇÃO', 'Unnamed: 2', ' CONVENIO', 'PRAZO ', '% PROMOTORA', 'prazo_formatado', '_merge'], axis=1, errors='ignore')
+
+        df["Atualizações"] = "ENCERRAMENTO"
 
         return df
 
@@ -238,7 +240,8 @@ class CapitalConsigMapper(Bank):
 
             row_close = row.copy()
 
-            row_close["Término"] = datetime.now().strftime("%d/%m/%Y")
+            row_close["Término"] = (datetime.now() - timedelta(days=1)).strftime("%d/%m/%Y")
+            row_close["Atualizações"] = "ALTERAÇÃO"
 
             list_of_convert_close_rows.append(row_close)
 
@@ -254,6 +257,7 @@ class CapitalConsigMapper(Bank):
             row_open["% Mínima"] = percent * grades["min"]
             row_open["% Intermediária"] = percent * grades["med"]
             row_open["% Máxima"] = percent * grades["max"]
+            row_open["Atualizações"] = "ALTERAÇÃO"
 
             list_of_convert_open_rows.append(row_open)
 
@@ -329,7 +333,7 @@ class CapitalConsigMapper(Bank):
             dfs_para_juntar = [df for df in [df_close, df_close2, df_open, df_open2] if df is not None and not df.empty]
             if dfs_para_juntar:
                 df_final = pd.concat(dfs_para_juntar, axis=0, ignore_index=True, sort=False)
-                df_final = df_final.drop(['BONUS', 'NÍVEL', 'EMPREGADOR'], axis=1)
+                df_final = df_final.drop(['BONUS', 'NÍVEL', 'EMPREGADOR'], axis=1, errors='ignore')
                 print(f"Sucesso! Total de linhas: {len(df_final)}")
             else:
                 print("Nenhum dado encontrado para juntar.")

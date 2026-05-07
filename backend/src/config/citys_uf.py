@@ -5293,6 +5293,13 @@ citys_uf = {
     "ESP": "ES"
 }
 citys = {
+    "S.": "SAO PAULO",
+    "SEC": "SAO PAULO",
+    "UNICAMP": "CAMPINAS",
+    "CAMPREV": "CAMPINAS",
+    "SLUIS": "SAO LUIS",
+    "RJ": "RIO DE JANEIRO",
+    "FORT": "FORTALEZA",
     "BUZIOS": "BUZIOS",
     "IPREM": "SAO PAULO",
     "PORTO": "PORTO VELHO",
@@ -10611,6 +10618,8 @@ citys = {
 }
 
 states = {
+    "RIO": "RJ",
+    "IPSEMG": "MG",
     "ACRE": "AC",
     "ALAGOAS": "AL",
     "AMAPA": "AP",
@@ -10644,4 +10653,7 @@ states = {
     "ESP": "ES",
     "CAMPINAS": "SP",
     "MG": "MG",
+    "AMA": "AM",
+    "RIOPREV": "RJ",
+    "PMESP": "SP",
 }

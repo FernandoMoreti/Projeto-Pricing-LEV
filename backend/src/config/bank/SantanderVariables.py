@@ -88,6 +88,7 @@ family_product = {
     "": "EMPRESAS PRIVADAS",
     "AERONAUTIICA": "FORCAS ARMADAS",
     "TJ | ": "TRIBUNAIS",
+    "TJ": "TRIBUNAIS",
     "GOV": "GOVERNOS",
     "GOV-": "GOVERNOS",
     "PREF.": "PREFEITURAS",
