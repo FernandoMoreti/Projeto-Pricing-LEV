@@ -7,3 +7,4 @@ python-dotenv
 pydantic
 pydantic-settings
 openpyxl
+playwright==1.43.0
