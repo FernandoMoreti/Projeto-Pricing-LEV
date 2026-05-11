@@ -96,6 +96,10 @@ family_product = {
 }
 
 group_convenio = {
+    "CGI": "",
+    "USECASA": "",
+    "FORCAS ARMADAS": "",
+    "EMPRESAS PRIVADAS": "PREFEITURAS",
     "GOVERNOS": "ESTADUAL",
     "FEDERAIS": "FEDERAL",
     "TRIBUNAIS": "TRIBUNAIS",
