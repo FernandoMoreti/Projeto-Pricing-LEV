@@ -164,7 +164,10 @@ class OleMapper(Bank):
                     uf = self.extract_uf_of_state(product)
 
                     if uf == "":
-                        return ""
+                        if convenio == "TJ | ":
+                            return "TJ | "
+                        else:
+                            return "GOV-"
 
                     convenio = convenio + uf
                     return convenio
@@ -218,7 +221,7 @@ class OleMapper(Bank):
             else:
                 new_row["Base Comissão"] = "LIQUÍDO"
 
-            if convenio == 'PREF. Sem convenio ':
+            if convenio == 'PREF. Sem convenio ' or convenio == 'TJ | ':
                 new_row["Convênio"] = ''
             else:
                 new_row["Convênio"] = convenio
@@ -311,7 +314,7 @@ class OleMapper(Bank):
 
     def input_standard_values(self, model):
 
-        model["Instituição"] = "SANTANDER"
+        model["Instituição"] = "OLE"
         model["Parc. Refin."] = "0-0"
         model["% PMT Pagas"] = "0,00-0,00"
         model["% Taxa"] = "0,00-0,00"
@@ -373,6 +376,7 @@ class OleMapper(Bank):
 
             print("Processo concluído!")
             df_final = self.paint_row(df_final, "Convênio")
+            df_final.to_excel("Alo.xlsx", index=False)
             return df_final
 
         except Exception as e:

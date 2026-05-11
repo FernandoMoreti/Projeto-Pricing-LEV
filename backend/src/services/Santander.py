@@ -163,7 +163,10 @@ class SantanderMapper(Bank):
                     uf = self.extract_uf_of_state(product)
 
                     if uf == "":
-                        return ""
+                        if convenio == "TJ | ":
+                            return "TJ | "
+                        else:
+                            return "GOV-"
 
                     convenio = convenio + uf
                     return convenio
@@ -217,7 +220,7 @@ class SantanderMapper(Bank):
             else:
                 new_row["Base Comissão"] = "LIQUÍDO"
 
-            if convenio == 'PREF. Sem convenio ':
+            if convenio == 'PREF. Sem convenio ' or convenio == 'TJ | ':
                 new_row["Convênio"] = ''
             else:
                 new_row["Convênio"] = convenio

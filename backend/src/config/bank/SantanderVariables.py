@@ -85,13 +85,13 @@ convenio_mapper = {
 family_product = {
     "CGI - IMOB": "USECASA",
     "CGI - IMOB": "CGI",
-    "": "EMPRESAS PRIVADAS",
     "AERONAUTIICA": "FORCAS ARMADAS",
     "TJ | ": "TRIBUNAIS",
     "TJ": "TRIBUNAIS",
     "GOV": "GOVERNOS",
     "GOV-": "GOVERNOS",
     "PREF.": "PREFEITURAS",
+    "": "EMPRESAS PRIVADAS",
     "Sem convenio": "PREFEITURAS",
 }
 
