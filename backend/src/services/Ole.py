@@ -376,7 +376,6 @@ class OleMapper(Bank):
 
             print("Processo concluído!")
             df_final = self.paint_row(df_final, "Convênio")
-            df_final.to_excel("Alo.xlsx", index=False)
             return df_final
 
         except Exception as e:
