@@ -1,3 +1,4 @@
+from ..services.Amigoz import AmigozMapper
 from ..services.Safra import SafraMapper
 from ..services.CapitalConsig import CapitalConsigMapper
 from ..services.Santander import SantanderMapper
@@ -7,6 +8,7 @@ from ..services.Ole import OleMapper
 
 class FactoryBank:
     _factoryBanksMapper = {
+        "amigoz": AmigozMapper(),
         "capitalconsig": CapitalConsigMapper(),
         "pan": PanMapper(),
         "panlafy": PanLafyMapper(),
