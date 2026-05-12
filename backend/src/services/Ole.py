@@ -230,7 +230,7 @@ class OleMapper(Bank):
                 new_row["DIFERIMENTO"] = f"{int(row['Diferido'])},00 | LIQUIDO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
                 new_row["REPASSE DIFERIMENTO"] = "0,00 | 0,00 | 0,00"
 
-            new_row["Produto"] = f"FVE - {product} - {int(row['codigo_regra'])}"
+            new_row["Produto"] = f"FVE OLE {product} - {int(row['codigo_regra'])}"
             new_row["Família Produto"] = family
             new_row["Grupo Convênio"] = group
             new_row["Operação"] = operation
