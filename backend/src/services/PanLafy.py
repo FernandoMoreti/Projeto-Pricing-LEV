@@ -15,7 +15,7 @@ class PanLafyMapper(Bank):
 
     def compare_archive(self, df_work, df_bank):
 
-        df_bank["Produto"] = df_bank["Produto"].str.strip()
+        df_bank['Produto'] = df_bank['Produto'].str.split(' - ', n=1).str[1]
         df_work["Produto"] = df_work["Produto"].str.strip()
 
         excecoes = ["PORTAB/REFIN", "PORTABILIDADE", "SAQUE COMPL.", "CARTÃO"]
@@ -23,21 +23,11 @@ class PanLafyMapper(Bank):
         mask = ~df_bank["Operação"].isin(excecoes)
         df_bank.loc[mask, "Operação"] = df_bank.loc[mask, "Operação"].map(operation).fillna("")
 
-        for i, row in df_bank.iterrows():
-
-            text = row["Produto"]
-            if text.startswith("PMESP-"):
-                row["Produto"] = row["Produto"].split("- ")[1]
-            elif text.startswith("GOV_PR_"):
-                row["Produto"] = row["Produto"]
-            else:
-                row["Produto"] = row["Produto"].split(" - ")[1]
-
         df_result = pd.merge(
             df_bank,
             df_work,
-            left_on=["Produto", "Complemento", "Parc. Atual", "Operação", "Faixa Val. Seguro", "Venda Digital", "Idade", "Faixa Val. Contrato"],
-            right_on=["Produto", "Complemento", "Parc. Atual", "Operação", "Faixa Val. Seguro", "Venda Digital", "Idade", "Faixa Val. Contrato"],
+            left_on=["Produto", "Complemento", "Parc. Atual", "Operação", "Faixa Val. Seguro", "Venda Digital", "Idade"],
+            right_on=["Produto", "Complemento", "Parc. Atual", "Operação", "Faixa Val. Seguro", "Venda Digital", "Idade"],
             how="outer",
             indicator=True
         )
@@ -113,7 +103,8 @@ class PanLafyMapper(Bank):
         if product.split("_")[0] in ["IPREM"]:
             return citys.get(product.split(" ")[0], "")
 
-        cidade = product.split("_")[1]
+        if "_" in product:
+            cidade = product.split("_")[1]
 
         if cidade in ["CAMPINA", "PORTO", "SANTA", "SAO", "BELO"]:
             cidade = product.split(" ")[1] + " " + product.split(" ")[2]
@@ -152,7 +143,7 @@ class PanLafyMapper(Bank):
     def get_convenio(self, product):
         firstProduct = str(product).upper().split("-")[0].strip()
         categorias = {
-            "GOV-": ["GOV", "GOV_", "GOV.", "SPPREV_", "AMA", "PMESP"],
+            "GOV-": ["GOV", "GOV_", "GOV.", "SPPREV_", "AMA", "PMESP", "PMMG"],
             "FEDERAL SIAPE": ["SIAPE", "SIA"],
             "PREF. ": ["PREF", "PREF_", "PREF.", "IPREM", "PRE_"],
             "TJ | ": ["TJ ", "TJ_", "TJ."]
@@ -261,25 +252,27 @@ class PanLafyMapper(Bank):
         for row in list_of_open_tables:
 
             product = row["Produto"]
+            print(product)
             convenio = self.get_convenio(product)
 
             agreement = row["Família Produto_x"].strip()
             family = family_product[agreement]
             group = group_convenio[family]
+            print(convenio)
             percent = convertValues(row["% Comissão_x"])
 
             operation = row["Operação"]
 
             if operation == "COMPRA DE DIVIDA":
-                operation2 = "COMP.D.DIV"
+                operation = "COMP.D.DIV"
 
             if operation == "SAQUE COMPL.":
-                operation2 = "SAQUE"
+                operation = "SAQUE"
 
             if operation == "":
                 continue
 
-            grades = grade.get(operation2, "")
+            grades = grade.get(operation, "")
 
             nameTable = self.get_product_name(product)
 
@@ -302,7 +295,7 @@ class PanLafyMapper(Bank):
             new_row["Id Tabela Banco"] = row["Complemento"]
             new_row["Venda Digital"] = row["Venda Digital"]
             new_row["Faixa Val. Seguro"] = row["Faixa Val. Seguro"]
-            new_row["Faixa Val. Contrato"] = row["Faixa Val. Contrato"]
+            new_row["Faixa Val. Contrato"] = 0
             new_row["Idade"] = row["Idade"]
             new_row["Atualizações"] = "INCLUSÃO"
 
@@ -434,10 +427,10 @@ class PanLafyMapper(Bank):
                 df_open = self.create_open_tables(list_of_open_tables, model)
             if len(list_of_close_tables) > 0:
                 print(f"Foram encontradas {len(list_of_close_tables)} tabelas para fechar.")
-                df_close = self.create_close_tables(list_of_close_tables)
+                # df_close = self.create_close_tables(list_of_close_tables)
             if len(list_to_close_and_open) > 0:
                 print(f"Foram encontradas {len(list_to_close_and_open)} tabelas para fechar e abrir.")
-                df_close2, df_open2 = self.create_close_open_tables(list_to_close_and_open)
+                # df_close2, df_open2 = self.create_close_open_tables(list_to_close_and_open)
 
             print("Iniciando processo de junção dos arquivos...")
             columns_in_order = df_open.columns.tolist()
