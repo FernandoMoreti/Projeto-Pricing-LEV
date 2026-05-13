@@ -100,14 +100,18 @@ class PanLafyMapper(Bank):
     def extract_city(self, product):
         product = str(product).upper().strip()
 
-        if product.split("_")[0] in ["IPREM"]:
-            return citys.get(product.split(" ")[0], "")
+        if product.split("_")[0] in ["IPREM", "IPSEMG", "IPSM", "PM", "POL"]:
+            return citys.get(product.split("_")[0], "")
 
         if "_" in product:
             cidade = product.split("_")[1]
+            if cidade in ["CAMPINA", "PORTO", "SANTA", "SAO", "BELO"]:
+                cidade = product.split("_")[1] + " " + product.split("_")[2]
 
-        if cidade in ["CAMPINA", "PORTO", "SANTA", "SAO", "BELO"]:
-            cidade = product.split(" ")[1] + " " + product.split(" ")[2]
+        elif product.split(" ")[1] == "PREF":
+            cidade = product.split(" ")[2]
+            if cidade in ["CAMPINA", "PORTO", "SANTA", "SAO", "BELO"]:
+                cidade = product.split(" ")[2] + " " + product.split(" ")[3]
 
         cidade = remover_acentos(cidade)
 
@@ -128,6 +132,16 @@ class PanLafyMapper(Bank):
     def extract_uf_of_state(self, rest_of_product):
         state = str(rest_of_product).upper().strip()
 
+        if state.startswith("CARTAO"):
+            print(rest_of_product)
+            if len(state.split(" ")) > 2:
+                if len(state.split(" ")[2]) == 2:
+                    return state.split(" ")[2]
+            if state.split(" ")[1] == "TJ":
+                state = state.split(" ")[2]
+            else:
+                state = state.split(" ")[1]
+
         if "_" in state:
             state = state.split("_")[1]
 
@@ -141,9 +155,12 @@ class PanLafyMapper(Bank):
         return uf
 
     def get_convenio(self, product):
-        firstProduct = str(product).upper().split("-")[0].strip()
+        if "-" in product:
+            firstProduct = str(product).upper().split("-")[0].strip()
+        else:
+            firstProduct = product
         categorias = {
-            "GOV-": ["GOV", "GOV_", "GOV.", "SPPREV_", "AMA", "PMESP", "PMMG"],
+            "GOV-": ["GOV", "GOV_", "GOV.", "SPPREV_", "AMA", "PMESP", "PMMG", "IPSEMG", "IPSM", "PM", "POL", "CBMG"],
             "FEDERAL SIAPE": ["SIAPE", "SIA"],
             "PREF. ": ["PREF", "PREF_", "PREF.", "IPREM", "PRE_"],
             "TJ | ": ["TJ ", "TJ_", "TJ."]
@@ -182,14 +199,15 @@ class PanLafyMapper(Bank):
         return "CONVENIO DESCONHECIDO"
 
     def get_product_name(self, product):
-        if "-" in product:
-            product = str(product).upper().split("-")[1:]
 
-        if len(product) > 1:
-            product = "".join(p.strip() for p in product)
+        if product.startswith("INSS"):
             return product
 
-        return product[0].strip()
+        if product.startswith("GOV_") or product.startswith("PREF_") or product.startswith("FGTS") or product.startswith("SIA"):
+            if "-" in product:
+                product = str(product).upper().split("-")[1:]
+
+        return product
 
     def adding_values(self, new_row, row):
 
@@ -252,13 +270,15 @@ class PanLafyMapper(Bank):
         for row in list_of_open_tables:
 
             product = row["Produto"]
-            print(product)
+
+            if pd.isna(row["Produto"]):
+                continue
+
             convenio = self.get_convenio(product)
 
             agreement = row["Família Produto_x"].strip()
             family = family_product[agreement]
             group = group_convenio[family]
-            print(convenio)
             percent = convertValues(row["% Comissão_x"])
 
             operation = row["Operação"]
@@ -298,7 +318,6 @@ class PanLafyMapper(Bank):
             new_row["Faixa Val. Contrato"] = 0
             new_row["Idade"] = row["Idade"]
             new_row["Atualizações"] = "INCLUSÃO"
-
 
             new_row = self.adding_values(new_row, row)
 
@@ -387,7 +406,7 @@ class PanLafyMapper(Bank):
 
     def input_standard_values(self, model):
 
-        model["Instituição"] = "PANLAFY"
+        model["Instituição"] = "PAN LAFY"
         model["Parc. Refin."] = "0-0"
         model["% PMT Pagas"] = "0,00-0,00"
         model["% Taxa"] = "0,00-0,00"

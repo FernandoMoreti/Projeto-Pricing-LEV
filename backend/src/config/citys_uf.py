@@ -10614,7 +10614,11 @@ citys = {
     "GUACUANA": "MOGI GUACU",
     "PREVMMAR": "MARACAJU",
     "JUAZEIR": "JUAZEIRO",
-    "PARAIBA": "PARAIBA"
+    "PARAIBA": "PARAIBA",
+    "IPSEMG": "BELO HORIZONTE",
+    "IPSM": "BELO HORIZONTE",
+    "PM": "SAO PAULO",
+    "POL": "SAO PAULO"
 }
 
 states = {
@@ -10656,4 +10660,10 @@ states = {
     "AMA": "AM",
     "RIOPREV": "RJ",
     "PMESP": "SP",
+    "IPSEMG": "MG",
+    "IPSM": "MG",
+    "PM": "SP",
+    "POL": "SP",
+    "CBMG": "MG",
+    "PMMG": "MG",
 }
