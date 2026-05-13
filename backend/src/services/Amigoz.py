@@ -10,127 +10,47 @@ from ..config.grade import grade
 class AmigozMapper(Bank):
 
     def read_archive(self, file):
-        df = pd.read_excel(io.BytesIO(file), sheet_name=None)
+        df = pd.read_excel(io.BytesIO(file), header=3)
+        print(df)
         return df
 
     def compare_archive(self, df_work, df_bank):
 
-        df_bank_b2b = df_bank["B2B"]
         novas_linhas = []
 
-        # Fragmentar linhas
-        for index, row in df_bank_b2b.iterrows():
-            if row["Seguro"] == "S":
-                row_copy = row.copy()
-                row_copy["teste_seguro"] = "1,20 | LIQUIDO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
-                novas_linhas.append(row_copy)
+        for index, row in df_bank.iterrows():
+            if row["Produto"] == "Cartão Consignado" or row["Produto"] == "Cartão Benefício":
+                row["Convênio"] = (row["Convênio"] + ' - ' + row["Produto"]).upper()
+                row["Prazo"] = str(row["Prazo"]) + '-' + str(row["Prazo"])
+                row["Taxa %"] = str(row["ID"]).strip() + ' | TX ' + str(round(row["Taxa %"], 2)) + '%'
 
-        df_bank_b2b_privado = df_bank["B2B Privado"]
+                row_cartao = row.copy()
+                row_saque = row.copy()
+                row_cartao_seguro = row.copy()
+                row_cartao_seguro["Taxa %"] = row_cartao_seguro["Taxa %"] + ' - COM SEGURO'
+                row_saque_seguro = row.copy()
+                row_saque_seguro["Taxa %"] = row_saque_seguro["Taxa %"] + ' - COM SEGURO'
 
-        df_bank_fgts = df_bank["FGTS"]
-        # Fragmentar linhas
-        for index, row in df_bank_fgts.iterrows():
-            row_copy = row.copy()
-            row_copy2 = row.copy()
-            row_copy3 = row.copy()
-            row_copy["teste_seguro"] = "17,55 | FIXO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
-            row_copy2["teste_seguro"] = "405,00 | FIXO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
-            row_copy3["teste_seguro"] = "2,25 | LIQUIDO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
-            novas_linhas.append(row_copy)
-            novas_linhas.append(row_copy2)
-            novas_linhas.append(row_copy3)
+                if pd.notna(row["Apenas cartão"]):
+                    row["Convênio"] = row["Convênio"] + ' - PLASTICO'
+                    row_plastico = row.copy()
+                    novas_linhas.append(row_plastico)
 
-        df_bank_cartao = df_bank["Cartão"]
-        df_bank_cartao.columns = df_bank_cartao.iloc[0]
-        df_bank_cartao = df_bank_cartao[1:]
-
-        df_bank_cartao.columns = rename_duplicates(df_bank_cartao.columns)
-
-        colunas_base = ['Convênio', 'Empregador', 'Prazo', 'Tipo', 'Código da tabela']
-
-        dados_final = []
-
-        # Fragmentar linhas
-        for index, row in df_bank_cartao.iterrows():
-            linha_cartao = {col: row[col] for col in colunas_base}
-
-            linha_cartao['Operação'] = 'CARTÃO'
-            linha_cartao['Flat'] = row['Flat']
-            linha_cartao['PMT'] = row['PMT']
-            linha_cartao['Seguro'] = row['Seguro']
-            linha_cartao["base_comissao"] = "LÍQUIDO"
-            linha_cartao["Venda"] = row["Venda"]
-            linha_cartao["Ativacao"] = row["Ativacao"]
-
-            linha_plastico = linha_cartao.copy()
-            linha_plastico["Empregador"] = linha_plastico["Empregador"] + " - PLASTICO"
-            linha_plastico["Flat"] = 0
-            linha_plastico["PMT"] = 0
-            linha_plastico["base_comissao"] = "FIXO "
-            linha_plastico["Venda"] = row["Venda"]
-            linha_plastico["Ativacao"] = row["Ativacao"]
-
-            if row["Seguro"] == "S":
-                linha_cartao_seguro = linha_cartao.copy()
-                linha_cartao_seguro['teste_seguro'] = "1,47 | LIQUIDO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
-                dados_final.append(linha_cartao_seguro)
-            dados_final.append(linha_plastico)
-            dados_final.append(linha_cartao)
-
-            linha_saque = {col: row[col] for col in colunas_base}
-
-            linha_saque['Operação'] = 'SAQUE COMPL.'
-            linha_saque['Flat'] = row['Flat.1']
-            linha_saque['PMT'] = row['PMT.1']
-            linha_saque['Seguro'] = row['Seguro.1']
-            linha_saque["base_comissao"] = "LÍQUIDO"
-
-            if row["Seguro"] == "S":
-                linha_saque_seguro = linha_saque.copy()
-                linha_saque_seguro['teste_seguro'] = "1,47 | LIQUIDO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
-                dados_final.append(linha_saque_seguro)
-            dados_final.append(linha_saque)
-
-        df_bank_cartao = pd.DataFrame(dados_final)
-
-        df_bank = pd.concat([df_bank_b2b, df_bank_b2b_privado, df_bank_fgts], ignore_index=True)
+                novas_linhas.append(row_cartao)
+                novas_linhas.append(row_cartao_seguro)
+                novas_linhas.append(row_saque)
+                novas_linhas.append(row_saque_seguro)
 
         if novas_linhas:
-            df_bank = pd.concat([df_bank, pd.DataFrame(novas_linhas)], ignore_index=True)
+            df_bank = pd.DataFrame(novas_linhas)
 
-        df_bank["Tabela Financiamento"] = df_bank["Tabela Financiamento"].str.strip()
-        df_bank_cartao["Empregador"] = df_bank_cartao["Empregador"].str.strip()
         df_work["Produto"] = df_work["Produto"].str.strip()
-
-        excecoes = ["Refinanciamento de Portabilidade Pós"]
-
-        mask = ~df_bank["Operação"].isin(excecoes)
-        df_bank.loc[mask, "Operação"] = df_bank.loc[mask, "Operação"].map(operation).fillna("")
-
-        df_bank = df_bank[df_bank['Operação'] != 'Refinanciamento de Portabilidade Pós']
-
-        for index, row in df_bank.iterrows():
-            row["Plano"] = str(row["Plano"]).strip()
-            if 'até' in row["Plano"]:
-                novo_valor = f"{row['Plano'].split('até')[0].strip()}-{row['Plano'].split('até')[1].strip()}"
-            else:
-                if '-' in row["Plano"]:
-                    novo_valor = limpar_zeros(row["Plano"])
-                else:
-                    novo_valor = f"{row['Plano']}-{row['Plano']}"
-
-            df_bank.at[index, "Plano"] = novo_valor
-
-        df_work_cartao = df_work[(df_work['Operação'] == 'CARTÃO') | (df_work['Operação'] == 'SAQUE COMPL.')]
-        df_bank_cartao["Prazo"] = "1-" + df_bank_cartao["Prazo"].astype(str)
-
-        df_work_all = df_work[(df_work['Operação'] != 'CARTÃO') & (df_work['Operação'] != 'SAQUE COMPL.')]
 
         df_result = pd.merge(
             df_bank,
-            df_work_all,
-            left_on=["Tabela Financiamento", "Operação", "Plano", "teste_seguro"],
-            right_on=["Produto", "Operação", "Parc. Atual", "SEGURO PAN"],
+            df_work,
+            left_on=["Convênio", "Prazo", "Taxa %"],
+            right_on=["Produto", "Parc. Atual", "Complemento"],
             how="outer",
             indicator=True
         )
@@ -167,76 +87,6 @@ class AmigozMapper(Bank):
             if percent != percent_work:
                 list_to_close_and_open.append(row)
             elif diferimento != diferimento_work:
-                list_to_close_and_open.append(row)
-
-        df_result = pd.merge(
-            df_bank_cartao,
-            df_work_cartao,
-            left_on=["Empregador", "Prazo", "Operação", "base_comissao", "teste_seguro"],
-            right_on=["Produto", "Parc. Atual", "Operação", "Base Comissão", "SEGURO PAN"],
-            how="outer",
-            indicator=True
-        )
-
-        df_open = df_result[df_result["_merge"] == "left_only"]
-        df_close = df_result[df_result["_merge"] == "right_only"]
-        df_matches = df_result[df_result["_merge"] == "both"]
-
-        for index, row in df_close.iterrows():
-            list_of_close_tables.append(row)
-
-        for index, row in df_open.iterrows():
-            list_of_open_tables.append(row)
-
-        # Validar matches
-        for index, row in df_matches.iterrows():
-
-            percent = convertValues(row["Flat"]) * 100
-            percent_work = convertValues(row["% Comissão"])
-
-            if pd.notna(row["PMT"]):
-                diferimento = round(convertValues(row["PMT"]) * 100, 2)
-            else:
-                diferimento = 0.0
-
-            if pd.notna(row["DIFERIMENTO"]):
-                diferimento_work = convertValues(row["DIFERIMENTO"].split("|")[0].strip())
-            else:
-                diferimento_work = 0.0
-
-            if pd.notna(row["Venda"]):
-                if row["Venda"] == "":
-                    pre_adesao = 0.0
-                else:
-                    pre_adesao = convertValues(row["Venda"])
-            else:
-                pre_adesao = 0.0
-
-            if pd.notna(row["PRÉ-ADESÃO"]):
-                pre_adesao_work = convertValues(row["PRÉ-ADESÃO"].split("|")[0].strip())
-            else:
-                pre_adesao_work = 0.0
-
-            if pd.notna(row["Ativacao"]):
-                if row["Ativacao"] == "":
-                    ativacao = 0.0
-                else:
-                    ativacao = convertValues(row["Ativacao"])
-            else:
-                ativacao = 0.0
-
-            if pd.notna(row["ATIVAÇÃO"]):
-                ativacao_work = convertValues(row["ATIVAÇÃO"].split("|")[0].strip())
-            else:
-                ativacao_work = 0.0
-
-            if percent != percent_work:
-                list_to_close_and_open.append(row)
-            elif diferimento != diferimento_work:
-                list_to_close_and_open.append(row)
-            elif pre_adesao != pre_adesao_work:
-                list_to_close_and_open.append(row)
-            elif ativacao != ativacao_work:
                 list_to_close_and_open.append(row)
 
         return list_of_open_tables, list_of_close_tables, list_to_close_and_open
