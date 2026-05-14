@@ -32,7 +32,7 @@ export default function Home() {
 
     setLoading(true);
     setMessage("");
-    const uri = "http://192.168.1.90:60001";
+    const uri = "http://192.168.1.90:8001";
     const form = new FormData();
     form.append('fileWork', fileWorkbank);
     form.append('fileBank', fileBank);
