@@ -169,6 +169,7 @@ export default function Home() {
                     className="w-full mb-5 bg-slate-950 border border-slate-800 rounded-xl p-4 text-sm text-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
                   >
                     <option value="" disabled>Selecione uma opção...</option>
+                    <option value="Amigoz">Amigoz</option>
                     <option value="Capital Consig">Capital Consig</option>
                     <option value="Pan">Pan</option>
                     <option value="PanLafy">PanLafy</option>
@@ -200,6 +201,7 @@ export default function Home() {
                       className="w-full bg-slate-950 border border-slate-800 rounded-xl p-4 text-sm text-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
                     >
                       <option value="" disabled>Selecione...</option>
+                      <option value="Amigoz">Amigoz</option>
                       <option value="Capital Consig">Capital Consig</option>
                       <option value="Pan">Pan</option>
                       <option value="PanLafy">PanLafy</option>

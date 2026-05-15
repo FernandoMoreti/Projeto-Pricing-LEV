@@ -27,18 +27,19 @@ class PanMapper(Bank):
 
         df_bank_b2b_privado = df_bank["B2B Privado"]
 
-        df_bank_fgts = df_bank["FGTS"]
-        # Fragmentar linhas
-        for index, row in df_bank_fgts.iterrows():
-            row_copy = row.copy()
-            row_copy2 = row.copy()
-            row_copy3 = row.copy()
-            row_copy["teste_seguro"] = "17,55 | FIXO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
-            row_copy2["teste_seguro"] = "405,00 | FIXO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
-            row_copy3["teste_seguro"] = "2,25 | LIQUIDO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
-            novas_linhas.append(row_copy)
-            novas_linhas.append(row_copy2)
-            novas_linhas.append(row_copy3)
+        if "FGTS" in df_bank:
+            df_bank_fgts = df_bank["FGTS"]
+            # Fragmentar linhas
+            for index, row in df_bank_fgts.iterrows():
+                row_copy = row.copy()
+                row_copy2 = row.copy()
+                row_copy3 = row.copy()
+                row_copy["teste_seguro"] = "17,55 | FIXO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
+                row_copy2["teste_seguro"] = "405,00 | FIXO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
+                row_copy3["teste_seguro"] = "2,25 | LIQUIDO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
+                novas_linhas.append(row_copy)
+                novas_linhas.append(row_copy2)
+                novas_linhas.append(row_copy3)
 
         df_bank_cartao = df_bank["Cartão"]
         df_bank_cartao.columns = df_bank_cartao.iloc[0]
@@ -93,7 +94,24 @@ class PanMapper(Bank):
 
         df_bank_cartao = pd.DataFrame(dados_final)
 
-        df_bank = pd.concat([df_bank_b2b, df_bank_b2b_privado, df_bank_fgts], ignore_index=True)
+        dfs_para_juntar = []
+
+        candidatos = [
+            df_bank_b2b if 'df_bank_b2b' in locals() else None,
+            df_bank_b2b_privado if 'df_bank_b2b_privado' in locals() else None,
+            df_bank_fgts if 'df_bank_fgts' in locals() else None,
+            df_bank_cartao if 'df_bank_cartao' in locals() else None
+        ]
+
+        for df in candidatos:
+            if df is not None and not df.empty:
+                dfs_para_juntar.append(df)
+
+        if dfs_para_juntar:
+            df_bank = pd.concat(dfs_para_juntar, ignore_index=True)
+        else:
+            print("Aviso: Nenhuma aba válida encontrada para processar.")
+            df_bank = pd.DataFrame()
 
         if novas_linhas:
             df_bank = pd.concat([df_bank, pd.DataFrame(novas_linhas)], ignore_index=True)
@@ -243,27 +261,14 @@ class PanMapper(Bank):
 
     def extract_city(self, product):
         product = str(product).upper().strip()
+        product = remover_acentos(product)
 
-        if "IPREM" in product:
-            return citys.get("IPREM", "")
-
-        if "_" in product:
-            cidade = product.split("_")[1]
-        else:
-            cidade = product.split(" ")[1]
-
-        if cidade == "SEC":
-            return citys.get("SEC", "")
-
-        if cidade in ["CAMPINA", "PORTO", "SANTA", "SAO", "BELO"]:
-            if "_" in product:
-                cidade = product.split("_")[1] + " " + product.split("_")[2]
+        for nome_cidade in sorted(citys.keys(), key=len, reverse=True):
+            if nome_cidade in product:
+                city = citys[nome_cidade]
+                break
             else:
-                cidade = product.split(" ")[1] + " " + product.split(" ")[2]
-
-        cidade = remover_acentos(cidade)
-
-        city = citys.get(cidade, "")
+                city = ""
 
         return city
 
@@ -277,23 +282,15 @@ class PanMapper(Bank):
 
         return uf
 
-    def extract_uf_of_state(self, rest_of_product):
-        state = str(rest_of_product).upper().strip()
+    def extract_uf_of_state(self, product):
+        product = remover_acentos(product)
 
-        if "IPSEMG" in state:
-            return states.get("IPSEMG", "")
-
-        if "_" in state:
-            state = state.split("_")[1]
-        else:
-            state = state.split(" ")[1]
-
-        state = remover_acentos(state)
-
-        if len(state) == 2:
-            return state
-
-        uf = states.get(state, "")
+        for nome_cidade in sorted(states.keys(), key=len, reverse=True):
+            if nome_cidade in product:
+                uf = states[nome_cidade]
+                break
+            else:
+                uf = ""
 
         return uf
 
@@ -302,7 +299,7 @@ class PanMapper(Bank):
         firstProduct = str(product).upper().split(" ")[0].strip()
 
         categorias = {
-            "GOV-": ["GOV", "GOV_", "GOV.", "GOV ", "SPPREV_", "AMA", "PMESP", "IPSEMG", "RIO"],
+            "GOV-": ["GOV", "GOV_", "GOV.", "GOV ", "SPPREV_", "AMA", "PMESP", "IPSEMG", "RIO", "CBMG", "IPSM", "PMMG", "SPPREV"],
             "FEDERAL SIAPE": ["SIAPE", "SIA"],
             "PREF. ": ["PREF", "PREF_", "PREF.", "PREF ", "IPREM", "PRE_"],
             "TJ | ": ["TJ ", "TJ_", "TJ."],
@@ -318,7 +315,7 @@ class PanMapper(Bank):
             return "CLT"
 
         for categoria, prefixos in categorias.items():
-            prefixo_encontrado = next((p for p in prefixos if p in firstProduct), None)
+            prefixo_encontrado = next((p for p in prefixos if p in product), None)
             if prefixo_encontrado:
                 convenio = categoria
 
@@ -335,13 +332,8 @@ class PanMapper(Bank):
                     convenio = convenio + city + uf
                     return convenio
 
-                if convenio == "GOV-":
+                if convenio == "GOV-" or convenio == "TJ | ":
                     uf = self.extract_uf_of_state(product)
-                    convenio = convenio + uf
-                    return convenio
-
-                if convenio == "TJ | ":
-                    uf = self.extract_uf_of_state(firstProduct)
                     convenio = convenio + uf
                     return convenio
 

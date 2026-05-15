@@ -25,6 +25,4 @@ operation = {
     "Refinanciamento": "REFIN",
     "Refinanciamento + Portabilidade Manual": "PORTAB/REFIN",
     "Refinanciamento de Portabilidade": "PORTAB/REFIN",
-    "CARTÃO": "CARTÃO",
-    "SAQUE COMPL.": "SAQUE COMPL."
 }
