@@ -129,7 +129,7 @@ class AmigozMapper(Bank):
     def get_convenio(self, product):
 
         categorias = {
-            "GOV-": ["GOVERNO", "POLÍCIA", "AMAZONPREV", "AMAZONPREV-AM", "IPER", "SPPREV"],
+            "GOV-": ["GOVERNO", "POLÍCIA", "POLICIA", "BOMBEIROS", "DEFENSORIA", "AMAZONPREV", "AMAZONPREV-AM", "IPER", "SPPREV", "IPSM"],
             "FEDERAL SIAPE": ["SIAPE", "SIA"],
             "PREF. ": ["PREF", "PREFEITURA", "MARINGAPREV", "MANAUSPREV", "JFPREV", "ISSA", "IPVV", "IPSEM", "IPSA", "IPREM", "IPMO", "IPMC", "CAXIASPREV", "CAAPSML", "PREVISO"],
             "TJ | ": ["TRIBUNAL", "TJ", "TJ."],
