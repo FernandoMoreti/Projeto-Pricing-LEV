@@ -87,8 +87,6 @@ class AmigozMapper(Bank):
         if not df_matches.empty:
             print(f"Encontrados {len(df_matches)} correspondências!")
 
-        df_open.to_excel("Abc.xlsx", index=False)
-
         list_of_open_tables = df_open.to_dict(orient="records")
         list_of_close_tables = df_close.to_dict(orient="records")
 
