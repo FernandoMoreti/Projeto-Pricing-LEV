@@ -16,10 +16,12 @@ class AmigozMapper(Bank):
     def compare_archive(self, df_work, df_bank):
 
         novas_linhas = []
+        actual_convenio = ""
 
         for index, row in df_bank.iterrows():
             if row["Produto"] == "Cartão Consignado" or row["Produto"] == "Cartão Benefício":
-                row["Convênio"] = (row["Convênio"] + ' - ' + row["Produto"]).upper()
+                convenio_formatado = (row["Convênio"] + ' - ' + row["Produto"]).upper()
+                row["Convênio"] = convenio_formatado
                 row["Prazo"] = str(row["Prazo"]) + '-' + str(row["Prazo"])
                 taxa_formatada = f"{row['Taxa %']:.2f}".replace('.', ',')
                 row["Taxa %"] = str(row["ID"]).strip() + ' | TX ' + taxa_formatada + '%'
@@ -39,22 +41,30 @@ class AmigozMapper(Bank):
                 row_saque_seguro["% Comissao"] = row["Saque complementar %"] * 100
                 row_saque_seguro["Taxa %"] = row_saque_seguro["Taxa %"] + ' - COM SEGURO'
 
-                if row["Apenas cartão"] != 0:
+                if row["Apenas cartão"] != 0 and convenio_formatado.strip() != actual_convenio.strip():
+                    temp = row["Convênio"]
                     row["Produto"] = "CARTÃO"
                     row["Convênio"] = row["Convênio"] + ' - PLASTICO'
                     row["% Comissao"] = 0
                     row_plastico = row.copy()
+                    row_plastico["Prazo"] = "96-96"
                     novas_linhas.append(row_plastico)
+                    actual_convenio = convenio_formatado
 
                 novas_linhas.append(row_cartao)
                 novas_linhas.append(row_cartao_seguro)
                 novas_linhas.append(row_saque)
                 novas_linhas.append(row_saque_seguro)
+                actual_convenio = temp
 
         if novas_linhas:
             df_bank = pd.DataFrame(novas_linhas)
 
         df_work["Produto"] = df_work["Produto"].str.strip()
+
+        exclude_list = "CELETISTAS|CELET|LEI 500|TEMP C/DATA FIM|TEMPORARIOS"
+
+        df_work = df_work[~df_work["Produto"].str.contains(exclude_list, case=False, na=False)]
 
         df_bank = df_bank[df_bank["Status"] != "Bloqueado"]
 
@@ -76,6 +86,8 @@ class AmigozMapper(Bank):
 
         if not df_matches.empty:
             print(f"Encontrados {len(df_matches)} correspondências!")
+
+        df_open.to_excel("Abc.xlsx", index=False)
 
         list_of_open_tables = df_open.to_dict(orient="records")
         list_of_close_tables = df_close.to_dict(orient="records")
