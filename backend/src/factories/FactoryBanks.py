@@ -4,6 +4,7 @@ from ..services.CapitalConsig import CapitalConsigMapper
 from ..services.Santander import SantanderMapper
 from ..services.Pan import PanMapper
 from ..services.PanLafy import PanLafyMapper
+from ..services.ParanaBank import ParanaBankMapper
 from ..services.Ole import OleMapper
 
 class FactoryBank:
@@ -12,6 +13,7 @@ class FactoryBank:
         "capitalconsig": CapitalConsigMapper(),
         "pan": PanMapper(),
         "panlafy": PanLafyMapper(),
+        "paranabank": ParanaBankMapper(),
         "safra": SafraMapper(),
         "santander": SantanderMapper(),
         "ole": OleMapper(),
