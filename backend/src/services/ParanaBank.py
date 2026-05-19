@@ -73,8 +73,8 @@ class ParanaBankMapper(Bank):
 
         for index, row in df_matches.iterrows():
 
-            percent = convertValues(row["A Vista"] * 100)
-            percent_work = convertValues(row["% Comissão"])
+            percent = round(convertValues(row["A Vista"] * 100), 2)
+            percent_work = round(convertValues(row["% Comissão"]), 2)
 
             if percent != percent_work:
                 list_to_close_and_open.append(row)
@@ -108,6 +108,9 @@ class ParanaBankMapper(Bank):
     def extract_uf_of_state(self, product):
         product = remover_acentos(product)
 
+        if "ESTADO" in product:
+            product = product.replace("ESTADO", "")
+
         for nome_cidade in sorted(states.keys(), key=len, reverse=True):
             if nome_cidade in product:
                 uf = states[nome_cidade]
@@ -120,9 +123,9 @@ class ParanaBankMapper(Bank):
     def get_convenio(self, product):
 
         categorias = {
-            "GOV-": ["GOVERNO", "POLÍCIA", "POLICIA", "BOMBEIROS", "DEFENSORIA", "AMAZONPREV", "AMAZONPREV-AM", "IPER", "SPPREV", "IPSM"],
-            "FEDERAL SIAPE": ["SIAPE", "SIA"],
-            "PREF. ": ["PREF", "PREFEITURA", "MARINGAPREV", "MANAUSPREV", "JFPREV", "ISSA", "IPVV", "IPSEM", "IPSA", "IPREM", "IPMO", "IPMC", "CAXIASPREV", "CAAPSML", "PREVISO"],
+            "GOV-": ["GOVERNO", "POL", "ESTADO", "BOMBEIRO", "META", "IPSM", "SÃO PAULO PREV.", "SPPREV", "IPSM"],
+            "FEDERAL SIAPE": ["SIAPE", "SIA", "SIAPEWEBSERVICE"],
+            "PREF. ": ["PREF", "PREFEITURA", "IPM", "PM", "INST", "SANASA", "IPREM", "CAMPREV", "AFUMUSA", "PREVISERTI", "IPREVSANTOS", "IPREVSANTOS", "CAXIASPREV", "CAAPSML", "PREVISO"],
             "TJ | ": ["TRIBUNAL", "TJ", "TJ."],
         }
 
@@ -132,7 +135,7 @@ class ParanaBankMapper(Bank):
         if "INSS" in product:
             return "INSS"
 
-        if "CONSIG PRIVADO" in product:
+        if "CRED TRAB" in product:
             return "CLT"
 
         if "PREVISO" in product:
@@ -147,6 +150,8 @@ class ParanaBankMapper(Bank):
                     return convenio
 
                 if convenio == "PREF. ":
+                    if product == "INST.P.R.P-PORT":
+                        return "PREF. RIBEIRAO PRETO SP"
                     city = self.extract_city(product)
                     uf = self.extract_uf_of_city(city)
 
@@ -161,7 +166,7 @@ class ParanaBankMapper(Bank):
                     convenio = convenio + uf
                     return convenio
 
-        return "CONVENIO DESCONHECIDO"
+        return ""
 
     def create_open_tables(self, list_of_open_tables, model):
 
@@ -169,66 +174,57 @@ class ParanaBankMapper(Bank):
 
         for row in list_of_open_tables:
 
-            product = row["Convênio_x"]
+            product = row["Nome Empregador"]
             convenio = self.get_convenio(product)
 
-            if "-" in convenio:
+            if "-" in convenio and convenio:
                 agreement = convenio.split("-")[0].strip()
             else:
-                agreement = convenio.split()[0].strip()
+                if product == "AFUMUSA" or product == "PREVISERTI":
+                    agreement = "PREF."
+                else:
+                    agreement = convenio.split()[0].strip()
 
             family = family_product[agreement]
             group = group_convenio[family]
 
-            percent = convertValues(row["% Comissao"])
+            percent = convertValues(row["A Vista"]) * 100
 
-            operation = row["Produto_x"]
+            operation = row["Tipo Operacão"]
+
+            if operation == "NOVO COB":
+                operation = "NOVO"
+            elif operation == "REFIN COB":
+                operation = "REFIN"
+            elif operation == "REFIN+PORT":
+                operation = "PORTAB/REFIN"
+
+            if operation == "PORTABILIDADE":
+                base_commission = "BRUTO"
+            else:
+                base_commission = "LÍQUIDO"
 
             grades = grade.get(operation, "")
 
             new_row = model.copy()
 
             new_row["Operação"] = operation
-            new_row["Produto"] = row["Convênio_x"]
+            new_row["Produto"] = row["Desc Regra"]
             new_row["Família Produto"] = family
             new_row["Grupo Convênio"] = group
+            new_row["% Taxa"] = row["TaxaMax"]
+            new_row["Base Comissão"] = base_commission
+            new_row["Val. Base Produção"] = base_commission
             new_row["Convênio"] = convenio
-            new_row["Parc. Atual"] = row["Prazo"]
+            new_row["Parc. Atual"] = row["TaxaMax"]
             new_row["% Mínima"] = percent * grades["min"]
             new_row["% Intermediária"] = percent * grades["med"]
             new_row["% Máxima"] = percent * grades["max"]
             new_row["% Comissão"] = percent
             new_row["Vigência"] = datetime.now().strftime("%d/%m/%Y")
-            new_row["Complemento"] = row["Taxa %"]
-
-            if "COM SEGURO" in row["Taxa %"]:
-                new_row["SEGURO DIAMANTE"] = "3,00 | LIQUIDO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
-                new_row["REPASSE SEGURO DIAMANTE"] = "2,40 | 2,70 | 2,85"
-                new_row["SEGURO SUPER DIAMANTE"] = "4,50 | LIQUIDO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
-                new_row["REPASSE SEGURO SUPER DIAMANTE"] = "3,60 | 4,05 | 4,25"
-                new_row["Faixa Val. Seguro"] = "2,00-5.000,00"
-            else:
-                new_row["Faixa Val. Seguro"] = "0,00-1,00"
-
-            if "PLASTICO" not in convenio:
-                new_row["BONUS EXTRA"] = "2,00 | LIQUIDO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
-                new_row["REPASSE BONUS EXTRA"] = "0,00 | 0,00 | 0,00"
-                new_row["-"] = "%"
-            else:
-                new_row["PRÉ-ADESÃO"] = f"{str(row[' Apenas cartão '])} | FIXO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
-                if row[' Apenas cartão '] == 0:
-                    new_row["REPASSE PRÉ-ADESÃO"] = "0,00 | 0,00 | 0,00"
-                elif row[' Apenas cartão '] == 50:
-                    new_row["REPASSE PRÉ-ADESÃO"] = "35,00 | 40,00 | 45,00"
-                elif row[' Apenas cartão '] == 70:
-                    new_row["REPASSE PRÉ-ADESÃO"] = "52,50 | 59,50 | 66,50"
-                elif row[' Apenas cartão '] == 100:
-                    new_row["REPASSE PRÉ-ADESÃO"] = "70,00 | 80,00 | 90,00"
-                elif row[' Apenas cartão '] == 150:
-                    new_row["REPASSE PRÉ-ADESÃO"] = "105,00 | 120,00 | 135,00"
-                elif row[' Apenas cartão '] == 200:
-                    new_row["REPASSE PRÉ-ADESÃO"] = "140,00 | 160,00 | 180,00"
-                new_row["-"] = "$"
+            new_row["Complemento"] = row["Cod Regra"]
+            new_row["Id Tabela Banco"] = row["Cod Regra"]
+            new_row["Atualizações"] = "INCLUSÃO"
 
             list_of_convert_rows.append(new_row)
 
@@ -250,10 +246,11 @@ class ParanaBankMapper(Bank):
 
         df = pd.DataFrame(list_of_convert_rows)
 
-        df = df.drop(['ID_x', 'Convênio_x', 'Produto_x',
-       'Taxa %', 'Prazo', 'Saque%', 'Cartão no saque R$',
-       'Apenas cartão', 'Saque complementar %', 'REFIN %', 'Seguro Diamante', 'Seguro Super Diamante',
-       'Fator Multiplicador', 'Data Atualização', 'Status', 'Taxa Especial', '% Comissao'], axis=1)
+        df = df.drop(['Empregador Unico', 'Empregador', 'Nome Empregador', 'Tipo Operacão',
+       'Cod Regra', 'Desc Regra', 'MinPago', 'ParcelasMin', 'ParcelasMax',
+       'TaxaMin', 'TaxaMax', 'A Vista', 'PMT', 'Data Início', 'Seguro',
+       'IniVigSeguro', 'PermiteSeguro', 'PermiteJuncao', 'Parcela', 'ID_Linha',
+       'TaxaMin_Pct', 'TaxaMax_Pct', '_merge'], axis=1)
 
         df.columns = df.columns.str.replace('_y', '')
 
@@ -266,7 +263,7 @@ class ParanaBankMapper(Bank):
 
         for row in list_of_close_open:
 
-            percent = convertValues(row["% Comissao"])
+            percent = convertValues(row["A Vista"]) * 100
 
             row_close = row.copy()
 
@@ -282,8 +279,8 @@ class ParanaBankMapper(Bank):
             grades = grade.get(operation, "")
 
             row_open["Término"] = ''
-            row_open["Vigência_y"] = datetime.now().strftime("%d/%m/%Y")
-            row_open["ID_y"] = ''
+            row_open["Vigência"] = datetime.now().strftime("%d/%m/%Y")
+            row_open["ID"] = ''
             row_open["% Comissão"] = percent
             row_open["Operação"] = operation
             row_open["% Mínima"] = percent * grades["min"]
@@ -298,32 +295,30 @@ class ParanaBankMapper(Bank):
 
 
         colunas_para_dropar = [
-            'ID_x', 'Convênio_x', 'Produto_x',
-            'Taxa %', 'Prazo', 'Saque%', 'Cartão no saque R$',
-            'Apenas cartão', 'Saque complementar %', 'REFIN %', 'Seguro Diamante', 'Seguro Super Diamante',
-            'Fator Multiplicador', 'Data Atualização', 'Status', 'Taxa Especial', '% Comissao', '_merge', "Vigência"
+            'Empregador Unico', 'Empregador', 'Nome Empregador', 'Tipo Operacão',
+            'Cod Regra', 'Desc Regra', 'MinPago', 'ParcelasMin', 'ParcelasMax',
+            'TaxaMin', 'TaxaMax', 'A Vista', 'PMT', 'Data Início', 'Seguro',
+            'IniVigSeguro', 'PermiteSeguro', 'PermiteJuncao', 'Parcela', 'ID_Linha',
+            'TaxaMin_Pct', 'TaxaMax_Pct', '_merge'
         ]
-
 
         df = df.drop(colunas_para_dropar, axis=1, errors='ignore')
         df2 = df2.drop(colunas_para_dropar, axis=1, errors='ignore')
-
-        df.columns = df.columns.str.replace('_y', '')
-        df2.columns = df2.columns.str.replace('_y', '')
 
         return df, df2
 
     def input_standard_values(self, model):
 
-        model["Instituição"] = "AMIGOZ"
+        model["Instituição"] = "PARANA BANCO"
         model["Parc. Refin."] = "0-0"
         model["% PMT Pagas"] = "0,00-0,00"
-        model["% Taxa"] = "0,00-0,00"
         model["Idade"] = "0-80"
+        model["-"] = "%"
         model["% Fator"] = "0,000000000"
         model["% TAC"] = "0,000000"
         model["Val. Teto TAC"] = "0,000000"
         model["Faixa Val. Contrato"] = "0,00-100.000,00-LÍQUIDO"
+        model["Faixa Val. Seguro"] = "0,00-0,00"
         model["Venda Digital"] = "SIM"
         model["Visualização Restrita"] = "NÃO"
 
@@ -360,6 +355,7 @@ class ParanaBankMapper(Bank):
             if len(list_to_close_and_open) > 0:
                 print(f"Foram encontradas {len(list_to_close_and_open)} tabelas para fechar e abrir.")
                 df_close2, df_open2 = self.create_close_open_tables(list_to_close_and_open)
+
 
             print("Iniciando processo de junção dos arquivos...")
             columns_in_order = df_open.columns.tolist()
