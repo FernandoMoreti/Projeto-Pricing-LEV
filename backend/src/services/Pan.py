@@ -140,9 +140,10 @@ class PanMapper(Bank):
             df_bank.at[index, "Plano"] = novo_valor
 
         df_work_cartao = df_work[(df_work['Operação'] == 'CARTÃO') | (df_work['Operação'] == 'SAQUE COMPL.')]
-        df_bank_cartao["Prazo"] = "1-" + df_bank_cartao["Prazo"].astype(str)
+        df_bank_cartao["Prazo"] = "1-" + df_bank_cartao["Prazo"].astype(str).str.replace(".0", "")
 
         df_work_all = df_work[(df_work['Operação'] != 'CARTÃO') & (df_work['Operação'] != 'SAQUE COMPL.')]
+        df_bank = df_bank[(df_bank['Operação'] != 'CARTÃO') & (df_bank['Operação'] != 'SAQUE COMPL.')]
 
         df_result = pd.merge(
             df_bank,
@@ -344,6 +345,7 @@ class PanMapper(Bank):
         list_of_convert_rows = []
 
         for row in list_of_open_tables:
+            print(row)
 
             product = row["Empregador"]
             convenio = self.get_convenio(product)
@@ -374,7 +376,6 @@ class PanMapper(Bank):
                 prazo = row["Plano"]
                 codigo = row["Cód Tabela"]
 
-
             new_row = model.copy()
 
             if operation == "PORTABILIDADE":
@@ -394,7 +395,18 @@ class PanMapper(Bank):
             new_row["% Máxima"] = percent * grades["max"]
             new_row["% Comissão"] = percent
             new_row["Vigência"] = datetime.now().strftime("%d/%m/%Y")
-            new_row["Complemento"] = int(codigo)
+            if pd.isna(row["teste_seguro"]):
+                if operation == "CARTÃO" or operation == "SAQUE COMPL.":
+                    new_row["Complemento"] = f"{int(codigo)}"
+                else:
+                    if row["Taxa Início"] == row["Taxa Fim"]:
+                        new_row["Complemento"] = f"{int(codigo)} | TX {row["Taxa Fim"]}%"
+                    else:
+                        new_row["Complemento"] = f"{int(codigo)} | TX {row["Taxa Início"]}% A {row["Taxa Fim"]}%"
+            else:
+                new_row["Complemento"] = f"{int(codigo)} | C/ SEGURO"
+
+
             new_row["Id Tabela Banco"] = int(codigo)
             new_row["SEGURO PAN"] = row["teste_seguro"]
 
