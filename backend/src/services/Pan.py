@@ -400,9 +400,9 @@ class PanMapper(Bank):
                     new_row["Complemento"] = f"{int(codigo)}"
                 else:
                     if row["Taxa Início"] == row["Taxa Fim"]:
-                        new_row["Complemento"] = f"{int(codigo)} | TX {row["Taxa Fim"]}%"
+                        new_row["Complemento"] = f"{int(codigo)} | TX {row['Taxa Fim']}%"
                     else:
-                        new_row["Complemento"] = f"{int(codigo)} | TX {row["Taxa Início"]}% A {row["Taxa Fim"]}%"
+                        new_row["Complemento"] = f"{int(codigo)} | TX {row['Taxa Início']}% A {row['Taxa Fim']}%"
             else:
                 new_row["Complemento"] = f"{int(codigo)} | C/ SEGURO"
 
