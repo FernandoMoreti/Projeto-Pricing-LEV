@@ -219,6 +219,7 @@ class AmigozMapper(Bank):
             new_row["% Comissão"] = percent
             new_row["Vigência"] = datetime.now().strftime("%d/%m/%Y")
             new_row["Complemento"] = row["Taxa %"]
+            new_row["Id Tabela Banco"] = row["ID_x"]
 
             if "COM SEGURO" in row["Taxa %"]:
                 new_row["SEGURO DIAMANTE"] = "3,00 | LIQUIDO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
