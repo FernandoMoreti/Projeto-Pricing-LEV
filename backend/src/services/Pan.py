@@ -55,42 +55,45 @@ class PanMapper(Bank):
         for index, row in df_bank_cartao.iterrows():
             linha_cartao = {col: row[col] for col in colunas_base}
 
-            linha_cartao['Operação'] = 'CARTÃO'
-            linha_cartao['Flat'] = row['Flat']
-            linha_cartao['PMT'] = row['PMT']
-            linha_cartao['Seguro'] = row['Seguro']
-            linha_cartao["base_comissao"] = "LÍQUIDO"
-            linha_cartao["Venda"] = row["Venda"]
-            linha_cartao["Ativacao"] = row["Ativacao"]
+            if pd.notna(row["Flat"]):
+                linha_cartao['Operação'] = 'CARTÃO'
+                linha_cartao['Flat'] = row['Flat']
+                linha_cartao['PMT'] = row['PMT']
+                linha_cartao['Seguro'] = row['Seguro']
+                linha_cartao["base_comissao"] = "LÍQUIDO"
+                linha_cartao["Venda"] = row["Venda"]
+                linha_cartao["Ativacao"] = row["Ativacao"]
 
-            linha_plastico = linha_cartao.copy()
-            linha_plastico["Empregador"] = linha_plastico["Empregador"] + " - PLASTICO"
-            linha_plastico["Flat"] = 0
-            linha_plastico["PMT"] = 0
-            linha_plastico["base_comissao"] = "FIXO "
-            linha_plastico["Venda"] = row["Venda"]
-            linha_plastico["Ativacao"] = row["Ativacao"]
+                if row["Venda"] != 0:
+                    linha_plastico = linha_cartao.copy()
+                    linha_plastico["Empregador"] = linha_plastico["Empregador"] + " - PLASTICO"
+                    linha_plastico["Flat"] = 0
+                    linha_plastico["PMT"] = 0
+                    linha_plastico["base_comissao"] = "FIXO "
+                    linha_plastico["Venda"] = row["Venda"]
+                    linha_plastico["Ativacao"] = row["Ativacao"]
+                    dados_final.append(linha_plastico)
 
-            if row["Seguro"] == "S":
-                linha_cartao_seguro = linha_cartao.copy()
-                linha_cartao_seguro['teste_seguro'] = "1,47 | LIQUIDO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
-                dados_final.append(linha_cartao_seguro)
-            dados_final.append(linha_plastico)
-            dados_final.append(linha_cartao)
+                if row["Seguro"] == "S":
+                    linha_cartao_seguro = linha_cartao.copy()
+                    linha_cartao_seguro['teste_seguro'] = "1,47 | LIQUIDO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
+                    dados_final.append(linha_cartao_seguro)
+                dados_final.append(linha_cartao)
 
             linha_saque = {col: row[col] for col in colunas_base}
 
-            linha_saque['Operação'] = 'SAQUE COMPL.'
-            linha_saque['Flat'] = row['Flat.1']
-            linha_saque['PMT'] = row['PMT.1']
-            linha_saque['Seguro'] = row['Seguro.1']
-            linha_saque["base_comissao"] = "LÍQUIDO"
+            if pd.notna(row["Flat.1"]):
+                linha_saque['Operação'] = 'SAQUE COMPL.'
+                linha_saque['Flat'] = row['Flat.1']
+                linha_saque['PMT'] = row['PMT.1']
+                linha_saque['Seguro'] = row['Seguro.1']
+                linha_saque["base_comissao"] = "LÍQUIDO"
 
-            if row["Seguro"] == "S":
-                linha_saque_seguro = linha_saque.copy()
-                linha_saque_seguro['teste_seguro'] = "1,47 | LIQUIDO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
-                dados_final.append(linha_saque_seguro)
-            dados_final.append(linha_saque)
+                if row["Seguro"] == "S":
+                    linha_saque_seguro = linha_saque.copy()
+                    linha_saque_seguro['teste_seguro'] = "1,47 | LIQUIDO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
+                    dados_final.append(linha_saque_seguro)
+                dados_final.append(linha_saque)
 
         df_bank_cartao = pd.DataFrame(dados_final)
 
@@ -347,7 +350,6 @@ class PanMapper(Bank):
         for row in list_of_open_tables:
 
             product = row["Empregador"]
-            print(product)
             convenio = self.get_convenio(product)
 
 
@@ -363,13 +365,9 @@ class PanMapper(Bank):
 
             operation = row["Operação"].strip()
 
-            if operation == "COMPRA DE DIVIDA":
-                operation = "COMP.D.DIV"
-
             if (operation == "CARTÃO") or (operation == "SAQUE COMPL."):
                 percent = percent * 100
 
-            print(operation)
             grades = grade.get(operation, "")
 
             if operation == "CARTÃO" or operation == "SAQUE COMPL.":
@@ -433,7 +431,7 @@ class PanMapper(Bank):
                 new_row["Visualização Restrita"] = "SIM"
                 new_row["Venda Digital"] = "SIM"
 
-            if row["SEGURO PAN"] != '':
+            if pd.notna(new_row["SEGURO PAN"]):
                 new_row["Faixa Val. Seguro"] = "2,00-5.000,00"
             else:
                 new_row["Faixa Val. Seguro"] = "0,00-1,00"
@@ -474,11 +472,13 @@ class PanMapper(Bank):
                         new_row["REPASSE ATIVAÇÃO"] = "28,00 | 32,00 | 36,00"
 
                 if pd.notna(row["PMT"]) and row["PMT"] != None and round(row["PMT"] * 100, 2) != 0:
-                    new_row["DIFERIMENTO"] = f"{round(row['PMT'] * 100, 2)} | FIXO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
+                    value = str(round(row['PMT'] * 100, 2))
+                    new_row["DIFERIMENTO"] = f"{value.replace('.', ',')} | LIQUIDO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
                     new_row["REPASSE DIFERIMENTO"] = "0,00 | 0,00 | 0,00"
             else:
                 if pd.notna(row["Pmt"]) and row["Pmt"] != None and round(row["Pmt"] * 100, 2) != 0:
-                    new_row["DIFERIMENTO"] = f"{round(row['Pmt'] * 100, 2)} | FIXO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
+                    value = str(round(row['Pmt'], 2))
+                    new_row["DIFERIMENTO"] = f"{value.replace('.', ',')} | LIQUIDO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
                     new_row["REPASSE DIFERIMENTO"] = "0,00 | 0,00 | 0,00"
 
 

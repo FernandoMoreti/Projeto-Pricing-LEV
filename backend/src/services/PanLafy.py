@@ -283,9 +283,6 @@ class PanLafyMapper(Bank):
 
             operation = row["Operação"]
 
-            if operation == "COMPRA DE DIVIDA":
-                operation = "COMP.D.DIV"
-
             if operation == "SAQUE COMPL.":
                 operation = "SAQUE"
 
@@ -367,9 +364,6 @@ class PanLafyMapper(Bank):
             row_open = row.copy()
 
             operation = row["Operação"]
-
-            if operation == "COMPRA DE DIVIDA":
-                operation = "COMP.D.DIV"
 
             if operation == "SAQUE COMPL.":
                 operation = "SAQUE"

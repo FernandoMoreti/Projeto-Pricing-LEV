@@ -29,7 +29,7 @@ grade = {
         "med": 0.95,
         "max": 1,
     },
-    "COMP.D.DIV": {
+    "COMPRA DE DIVIDA": {
         "min": 0.7,
         "med": 0.95,
         "max": 1,
