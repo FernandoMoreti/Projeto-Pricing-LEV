@@ -47,7 +47,7 @@ class AmigozMapper(Bank):
                     row["Convênio"] = row["Convênio"] + ' - PLASTICO'
                     row["% Comissao"] = 0
                     row_plastico = row.copy()
-                    row_plastico["Prazo"] = "96-96"
+                    row_plastico["Prazo"] = '0-1'
                     novas_linhas.append(row_plastico)
                     actual_convenio = convenio_formatado
 
@@ -230,24 +230,28 @@ class AmigozMapper(Bank):
             else:
                 new_row["Faixa Val. Seguro"] = "0,00-1,00"
 
-            if "PLASTICO" not in convenio:
+            if "PLASTICO" not in product:
                 new_row["BONUS EXTRA"] = "2,00 | LIQUIDO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
                 new_row["REPASSE BONUS EXTRA"] = "0,00 | 0,00 | 0,00"
+                new_row["Base Comissão"] = "LÍQUIDO"
+                new_row["Val. Base Produção"] = "LÍQUIDO"
                 new_row["-"] = "%"
             else:
-                new_row["PRÉ-ADESÃO"] = f"{str(row[' Apenas cartão '])} | FIXO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
-                if row[' Apenas cartão '] == 0:
+                new_row["PRÉ-ADESÃO"] = f"{str(row['Apenas cartão'])} | FIXO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
+                if row['Apenas cartão'] == 0:
                     new_row["REPASSE PRÉ-ADESÃO"] = "0,00 | 0,00 | 0,00"
-                elif row[' Apenas cartão '] == 50:
+                elif row['Apenas cartão'] == 50:
                     new_row["REPASSE PRÉ-ADESÃO"] = "35,00 | 40,00 | 45,00"
-                elif row[' Apenas cartão '] == 70:
+                elif row['Apenas cartão'] == 70:
                     new_row["REPASSE PRÉ-ADESÃO"] = "52,50 | 59,50 | 66,50"
-                elif row[' Apenas cartão '] == 100:
+                elif row['Apenas cartão'] == 100:
                     new_row["REPASSE PRÉ-ADESÃO"] = "70,00 | 80,00 | 90,00"
-                elif row[' Apenas cartão '] == 150:
+                elif row['Apenas cartão'] == 150:
                     new_row["REPASSE PRÉ-ADESÃO"] = "105,00 | 120,00 | 135,00"
-                elif row[' Apenas cartão '] == 200:
+                elif row['Apenas cartão'] == 200:
                     new_row["REPASSE PRÉ-ADESÃO"] = "140,00 | 160,00 | 180,00"
+                new_row["Base Comissão"] = "FIXO"
+                new_row["Val. Base Produção"] = "FIXO"
                 new_row["-"] = "$"
 
             list_of_convert_rows.append(new_row)
