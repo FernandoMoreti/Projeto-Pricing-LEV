@@ -345,10 +345,11 @@ class PanMapper(Bank):
         list_of_convert_rows = []
 
         for row in list_of_open_tables:
-            print(row)
 
             product = row["Empregador"]
+            print(product)
             convenio = self.get_convenio(product)
+
 
             if "-" in convenio:
                 agreement = convenio.split("-")[0].strip()
@@ -360,11 +361,15 @@ class PanMapper(Bank):
 
             percent = convertValues(row["Flat"])
 
-            operation = row["Operação"]
+            operation = row["Operação"].strip()
+
+            if operation == "COMPRA DE DIVIDA":
+                operation = "COMP.D.DIV"
 
             if (operation == "CARTÃO") or (operation == "SAQUE COMPL."):
                 percent = percent * 100
 
+            print(operation)
             grades = grade.get(operation, "")
 
             if operation == "CARTÃO" or operation == "SAQUE COMPL.":
@@ -405,7 +410,6 @@ class PanMapper(Bank):
                         new_row["Complemento"] = f"{int(codigo)} | TX {row['Taxa Início']}% A {row['Taxa Fim']}%"
             else:
                 new_row["Complemento"] = f"{int(codigo)} | C/ SEGURO"
-
 
             new_row["Id Tabela Banco"] = int(codigo)
             new_row["SEGURO PAN"] = row["teste_seguro"]
