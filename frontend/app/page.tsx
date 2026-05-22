@@ -174,6 +174,7 @@ export default function Home() {
                     <option value="Pan">Pan</option>
                     <option value="PanLafy">PanLafy</option>
                     <option value="ParanaBank">ParanaBank</option>
+                    <option value="PresencaBank">PresencaBank</option>
                     <option value="Safra">Safra</option>
                     <option value="Santander">Santander</option>
                     <option value="Ole">Ole</option>

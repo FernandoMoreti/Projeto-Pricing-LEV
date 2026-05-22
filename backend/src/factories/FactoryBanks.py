@@ -5,6 +5,7 @@ from ..services.Santander import SantanderMapper
 from ..services.Pan import PanMapper
 from ..services.PanLafy import PanLafyMapper
 from ..services.ParanaBank import ParanaBankMapper
+from ..services.PresencaBank import PresencaBankMapper
 from ..services.Ole import OleMapper
 
 class FactoryBank:
@@ -14,6 +15,7 @@ class FactoryBank:
         "pan": PanMapper(),
         "panlafy": PanLafyMapper(),
         "paranabank": ParanaBankMapper(),
+        "presencabank": PresencaBankMapper(),
         "safra": SafraMapper(),
         "santander": SantanderMapper(),
         "ole": OleMapper(),
