@@ -52,10 +52,43 @@ class PresencaBankMapper(Bank):
             percent = convertValues(row["Comissão"])
             percent_work = convertValues(row["% Comissão"])
 
-            if percent != percent_work:
+            percent, bonus, tribut = self.get_retencao(percent)
+
+            if "PRIVADO CLT" in row["Tabela Nome"]:
+                tribut = 0.5
+                bonus = 1
+                percent = percent - 1.5
+
+            row["bonus"] = bonus
+            row["tributo"] = tribut
+
+            if round(percent, 2) != round(percent_work, 2):
                 list_to_close_and_open.append(row)
 
         return list_of_open_tables, list_of_close_tables, list_to_close_and_open
+
+    def get_retencao(self, percent):
+
+        bonus = 0
+        tribut = 0
+
+        if percent >= 8 and percent < 25:
+            bonus = 0.5
+        elif percent >= 25 and percent <= 40:
+            bonus = 1
+
+        if percent >= 1 and percent < 3:
+            tribut = 0.5
+        elif percent >= 4 and percent < 14:
+            tribut = 1
+        elif percent >= 14 and percent < 25:
+            tribut = 1.5
+        elif percent >= 25 and percent < 40:
+            tribut = 2
+
+        percent = percent - (tribut + bonus)
+
+        return percent, bonus, tribut
 
     def extract_city(self, product):
         product = str(product).upper().strip()
@@ -147,7 +180,6 @@ class PresencaBankMapper(Bank):
             product = row["Tabela Nome"]
             convenio = self.get_convenio(product)
 
-
             if "-" in convenio:
                 agreement = convenio.split("-")[0].strip()
             else:
@@ -157,6 +189,13 @@ class PresencaBankMapper(Bank):
             group = group_convenio[family]
 
             percent = convertValues(row["Comissão"])
+
+            percent, bonus, tribut = self.get_retencao(percent)
+
+            if group == "CLT":
+                tribut = 0.5
+                bonus = 1
+                percent = percent - 1.5
 
             operation = row["Tipo Crédito"]
 
@@ -196,6 +235,11 @@ class PresencaBankMapper(Bank):
             new_row["Id Tabela Banco"] = row["Tabela Id"]
             new_row["Atualizações"] = "INCLUSÃO"
             new_row["Val. Base Produção"] = new_row["Base Comissão"]
+            new_row["RESERVA TRIBUTO"] = f"{str(tribut)} | LIQUIDO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
+            new_row["REPASSE RESERVA TRIBUTO"] = "0,00 | 0,00 | 0,00"
+            if bonus != 0:
+                new_row["BONUS VIP"] = f"{str(bonus)} | LIQUIDO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
+                new_row["REPASSE BONUS VIP"] = "0,00 | 0,00 | 0,00"
 
             list_of_convert_rows.append(new_row)
 
