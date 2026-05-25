@@ -5,6 +5,7 @@ def convertValues(value):
     valor_str = value
 
     v = str(value).replace("R$", "").strip()
+    v = str(value).replace("%", "").strip()
     if "," in v and "." in v:
         v = v.replace(".", "").replace(",", ".")
     elif "," in v:
