@@ -77,30 +77,16 @@ class CapitalConsigMapper(Bank):
 
         return list_of_open_tables, list_of_close_tables, list_to_close_and_open
 
-    def extract_city(self, rest_of_product):
-        rest_of_product = str(rest_of_product).upper().strip()
+    def extract_city(self, product):
+        product = str(product).upper().strip()
+        product = remover_acentos(product)
 
-        cidade = rest_of_product.split("_")[0]
-
-        sep = " "
-
-        if sep in cidade:
-            cidade = cidade.split(" ")[0]
-
-        if cidade in ["CAMPINA", "PORTO", "SANTA", "SAO", "BELO"]:
-            cidade = rest_of_product.split("_")[0] + " " + rest_of_product.split("_")[1]
-
-        cidade = remover_acentos(cidade)
-
-        if cidade.startswith("PREV "):
-            cidade = cidade.split(" ")[1]
-            city = "DE " + citys.get(cidade, "")
-            return city
-
-        if cidade == "IPAM":
-            return ""
-
-        city = citys.get(cidade, "")
+        for nome_cidade in sorted(citys.keys(), key=len, reverse=True):
+            if nome_cidade in product:
+                city = citys[nome_cidade]
+                break
+            else:
+                city = ""
 
         return city
 
@@ -133,7 +119,7 @@ class CapitalConsigMapper(Bank):
         categorias = {
             "GOV-": ["GOV ", "GOV_", "GOV.", "SPPREV_"],
             "FEDERAL SIAPE": ["SIAPE ", "SIAPE_", "SIAPE."],
-            "PREF. ": ["PREF ", "PREF_", "PREF."],
+            "PREF. ": ["PREF ", "PREF_", "PREF.", "IPREV"],
             "TJ | ": ["TJ ", "TJ_", "TJ."]
         }
 
@@ -149,7 +135,7 @@ class CapitalConsigMapper(Bank):
                     return convenio
 
                 if convenio == "PREF. ":
-                    city = self.extract_city(rest_of_product)
+                    city = self.extract_city(product)
                     uf = self.extract_uf_of_city(city)
 
                     if city == "":
