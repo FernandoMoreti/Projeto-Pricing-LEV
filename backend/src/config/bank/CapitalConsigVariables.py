@@ -85,6 +85,7 @@ convenio_mapper = {
 family_product = {
     "SIAPE": "FEDERAIS",
     "PREFEITURA": "PREFEITURAS",
+    "IPREV": "PREFEITURAS",
     "PREF.": "PREFEITURAS",
     "GOVERNO": "GOVERNOS",
     "T.J": "TRIBUNAIS",
