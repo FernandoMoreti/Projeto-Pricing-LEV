@@ -1,5 +1,6 @@
 from .Bank import Bank
 from datetime import datetime, timedelta
+import numpy as np
 import pandas as pd
 import io
 from ..utils.utils import convertValues, formatar_br, remover_acentos
@@ -23,11 +24,18 @@ class PanLafyMapper(Bank):
         mask = ~df_bank["Operação"].isin(excecoes)
         df_bank.loc[mask, "Operação"] = df_bank.loc[mask, "Operação"].map(operation).fillna("")
 
+        faixas_bank = ["1,00-999.999,99"]
+        faixas_work = ["1,00-999.999,99"]
+
+        df_bank["HasSeguro"] = np.where(df_bank["Faixa Val. Seguro"].isin(faixas_bank), "SIM", "NÃO")
+
+        df_work["HasSeguro"] = np.where(df_work["Faixa Val. Seguro"].isin(faixas_work), "SIM", "NÃO")
+
         df_result = pd.merge(
             df_bank,
             df_work,
-            left_on=["Produto", "Complemento", "Parc. Atual", "Operação", "Faixa Val. Seguro", "Venda Digital", "Idade"],
-            right_on=["Produto", "Complemento", "Parc. Atual", "Operação", "Faixa Val. Seguro", "Venda Digital", "Idade"],
+            left_on=["Produto", "Operação", "Complemento", "Parc. Atual", "HasSeguro", "Venda Digital", "Idade"],
+            right_on=["Produto", "Operação", "Complemento", "Parc. Atual", "HasSeguro", "Venda Digital", "Idade"],
             how="outer",
             indicator=True
         )
@@ -99,23 +107,14 @@ class PanLafyMapper(Bank):
 
     def extract_city(self, product):
         product = str(product).upper().strip()
+        product = remover_acentos(product)
 
-        if product.split("_")[0] in ["IPREM", "IPSEMG", "IPSM", "PM", "POL"]:
-            return citys.get(product.split("_")[0], "")
-
-        if "_" in product:
-            cidade = product.split("_")[1]
-            if cidade in ["CAMPINA", "PORTO", "SANTA", "SAO", "BELO"]:
-                cidade = product.split("_")[1] + " " + product.split("_")[2]
-
-        elif product.split(" ")[1] == "PREF":
-            cidade = product.split(" ")[2]
-            if cidade in ["CAMPINA", "PORTO", "SANTA", "SAO", "BELO"]:
-                cidade = product.split(" ")[2] + " " + product.split(" ")[3]
-
-        cidade = remover_acentos(cidade)
-
-        city = citys.get(cidade, "")
+        for nome_cidade in sorted(citys.keys(), key=len, reverse=True):
+            if nome_cidade in product:
+                city = citys[nome_cidade]
+                break
+            else:
+                city = ""
 
         return city
 
@@ -133,7 +132,6 @@ class PanLafyMapper(Bank):
         state = str(rest_of_product).upper().strip()
 
         if state.startswith("CARTAO"):
-            print(rest_of_product)
             if len(state.split(" ")) > 2:
                 if len(state.split(" ")[2]) == 2:
                     return state.split(" ")[2]
@@ -309,10 +307,11 @@ class PanLafyMapper(Bank):
             new_row["% Comissão"] = percent
             new_row["Vigência"] = datetime.now().strftime("%d/%m/%Y")
             new_row["Complemento"] = row["Complemento"]
-            new_row["Id Tabela Banco"] = row["Complemento"]
+            new_row["Id Tabela Banco"] = row["Id Tabela Banco_x"]
             new_row["Venda Digital"] = row["Venda Digital"]
-            new_row["Faixa Val. Seguro"] = row["Faixa Val. Seguro"]
+            new_row["Faixa Val. Seguro"] = row["Faixa Val. Seguro_x"]
             new_row["Faixa Val. Contrato"] = 0
+            new_row["SEGURO PAN"] = row["SEGURO_CONSIG"]
             new_row["Idade"] = row["Idade"]
             new_row["Atualizações"] = "INCLUSÃO"
 
@@ -328,18 +327,16 @@ class PanLafyMapper(Bank):
 
         list_of_convert_rows = []
 
-
         for index, row in list_of_close_tables.iterrows():
 
             row["Término_y"] = (datetime.now() - timedelta(days=1)).strftime("%d/%m/%Y")
             row["Atualizações"] = "ENCERRAMENTO"
 
-
             list_of_convert_rows.append(row)
 
         df = pd.DataFrame(list_of_convert_rows)
 
-        df = df.drop(['ID_x', 'Instituição_x', 'Família Produto_x', 'Grupo Convênio_x', 'Convênio_x', 'Parc. Refin._x', '% PMT Pagas_x', '% Taxa_x', '% Comissão_x', '-_x', 'Base Comissão_x', '% Mínima_x', '% Intermediária_x', '% Máxima_x', '% Fator_x', '% TAC_x', 'Val. Teto TAC_x', 'Vigência_x', 'Término_x', 'Visualização Restrita_x', 'Val. Base Produção_x', 'Val. Base Produção_x', 'Id Tabela Banco_x', 'ATIVAÇÃO_x', 'REPASSE ATIVAÇÃO_x', '_merge'], axis=1)
+        df = df.drop(['ID_x', 'Instituição_x', 'Família Produto_x', 'Grupo Convênio_x', 'Convênio_x', 'Parc. Refin._x', '% PMT Pagas_x', '% Taxa_x', '% Comissão_x', '-_x', 'Base Comissão_x', '% Mínima_x', '% Intermediária_x', '% Máxima_x', '% Fator_x', '% TAC_x', 'Val. Teto TAC_x', 'Vigência_x', 'Término_x', 'Visualização Restrita_x', 'Val. Base Produção_x', 'Val. Base Produção_x', 'Id Tabela Banco_x', 'ATIVAÇÃO_x', 'REPASSE ATIVAÇÃO_x', '_merge'], axis=1, errors='ignore')
         df.columns = df.columns.str.replace('_y', '')
 
         return df
@@ -393,8 +390,8 @@ class PanLafyMapper(Bank):
         df.columns = df.columns.str.replace('_y', '')
         df2.columns = df.columns.str.replace('_y', '')
 
-        df = df.drop(colunas_remover, axis=1)
-        df2 = df2.drop(colunas_remover, axis=1)
+        df = df.drop(colunas_remover, axis=1, errors='ignore')
+        df2 = df2.drop(colunas_remover, axis=1, errors='ignore')
 
         return df, df2
 
@@ -440,10 +437,10 @@ class PanLafyMapper(Bank):
                 df_open = self.create_open_tables(list_of_open_tables, model)
             if len(list_of_close_tables) > 0:
                 print(f"Foram encontradas {len(list_of_close_tables)} tabelas para fechar.")
-                # df_close = self.create_close_tables(list_of_close_tables)
+                df_close = self.create_close_tables(list_of_close_tables)
             if len(list_to_close_and_open) > 0:
                 print(f"Foram encontradas {len(list_to_close_and_open)} tabelas para fechar e abrir.")
-                # df_close2, df_open2 = self.create_close_open_tables(list_to_close_and_open)
+                df_close2, df_open2 = self.create_close_open_tables(list_to_close_and_open)
 
             print("Iniciando processo de junção dos arquivos...")
             columns_in_order = df_open.columns.tolist()
