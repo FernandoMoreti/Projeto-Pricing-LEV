@@ -218,7 +218,7 @@ class PanLafyMapper(Bank):
             new_row["BONUS EXTRA"] = None
 
         if pd.notna(new_row["BONUS EXTRA"]):
-            new_row["REPASSE BÔNUS EXTRA"] = "0,00 | 0,00 | 0,00"
+            new_row["REPASSE BONUS EXTRA"] = "0,00 | 0,00 | 0,00"
 
         new_row["ATIVAÇÃO"] = row["ATIVAÇÃO_x"]
         if pd.notna(new_row["ATIVAÇÃO"]):
@@ -311,9 +311,39 @@ class PanLafyMapper(Bank):
             new_row["Venda Digital"] = row["Venda Digital"]
             new_row["Faixa Val. Seguro"] = row["Faixa Val. Seguro_x"]
             new_row["Faixa Val. Contrato"] = 0
-            new_row["SEGURO PAN"] = row["SEGURO_CONSIG"]
             new_row["Idade"] = row["Idade"]
             new_row["Atualizações"] = "INCLUSÃO"
+
+            if operation == "CARTÃO" or operation == "SAQUE COMPL.":
+                if pd.notna(row["AD_DIF"]) and row["AD_DIF"] != None and row["AD_DIF"] != 0:
+                    new_row["ANTECIPAÇÃO"] = row["AD_DIF"].split(" ")[0] + " | LIQUIDO | 100,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
+                    new_row["REPASSE ANTECIPAÇÃO"] = "0,00 | 0,00 | 0,00"
+
+                if pd.notna(row["ATIVAÇÃO_x"]) and row["ATIVAÇÃO_x"] != None and row["ATIVAÇÃO_x"] != 0:
+                    new_row["ATIVAÇÃO"] = row["ATIVAÇÃO_x"].split(" ")[0] + " | FIXO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
+
+                    if "50" in row["ATIVAÇÃO_x"]:
+                        new_row["REPASSE ATIVAÇÃO"] = "35,00 | 40,00 | 45,00"
+                    elif "80" in row["ATIVAÇÃO_x"]:
+                        new_row["REPASSE ATIVAÇÃO"] = "55,00 | 64,00 | 72,00"
+                    else:
+                        new_row["REPASSE ATIVAÇÃO"] = "25,00 | 30,00 | 35,00"
+
+                if pd.notna(row["PRE_ADESÃO"]) and row["PRE_ADESÃO"] != None and row["PRE_ADESÃO"] != 0:
+                    new_row["PRÉ-ADESÃO"] = row["PRE_ADESÃO"].split(" ")[0] + " | FIXO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
+
+                    if "50" in row["PRE_ADESÃO"]:
+                        new_row["REPASSE PRÉ-ADESÃO"] = "35,00 | 40,00 | 45,00"
+                    elif "80" in row["PRE_ADESÃO"]:
+                        new_row["REPASSE PRÉ-ADESÃO"] = "55,00 | 64,00 | 72,00"
+                    elif "160" in row["PRE_ADESÃO"]:
+                        new_row["REPASSE PRÉ-ADESÃO"] = "110,00 | 128,00 | 144,00"
+                    elif "300" in row["PRE_ADESÃO"]:
+                        new_row["REPASSE PRÉ-ADESÃO"] = "210,00 | 240,00 | 270,00"
+
+                if pd.notna(row["SEGURO_CARTÃO"]) and row["SEGURO_CARTÃO"] != None and row["SEGURO_CARTÃO"] != 0:
+                    new_row["SEGURO PAN"] = row["SEGURO_CARTÃO"]
+                    new_row["REPASSE SEGURO PAN"] = "1,15 | 1,30 | 1,50"
 
             new_row = self.adding_values(new_row, row)
 
