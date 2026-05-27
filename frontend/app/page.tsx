@@ -170,6 +170,7 @@ export default function Home() {
                   >
                     <option value="" disabled>Selecione uma opção...</option>
                     <option value="Amigoz">Amigoz</option>
+                    <option value="BRBRed">BRBRed</option>
                     <option value="Capital Consig">Capital Consig</option>
                     <option value="Pan">Pan</option>
                     <option value="PanLafy">PanLafy</option>
