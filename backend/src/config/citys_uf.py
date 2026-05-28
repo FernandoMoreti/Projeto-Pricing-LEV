@@ -5294,6 +5294,10 @@ citys_uf = {
     "ESP": "ES"
 }
 citys = {
+    "PREVIJUNO": "JUAZEIRO DO NORTE",
+    "IPREF": "GUARULHOS",
+    "IPAM_RCC_TAXA": "PORTO VELHO",
+    "IPAM": "PORTO VELHO",
     "S.": "SAO PAULO",
     "SEC": "SAO PAULO",
     "UNICAMP": "CAMPINAS",
@@ -10625,13 +10629,14 @@ citys = {
 
 states = {
     "RIO": "RJ", "IPSEMG": "MG", "UEPB": "PB", "PBPREV": "PB",
-    "RIOPREV": "RJ", "PMESP": "SP", "PMMG": "MG", "CBMG": "MG",
+    "RIOPREV": "RJ", "PMESP": "SP", "PMMG": "MG", "CBMG": "MG", "AMPREV": "AP", "TRT": "AL",
+    "PM": "SP", "IGEPREV": "TO", "SPPREV": "SP",
 
-    "AC": "AC", "AL": "AL", "AP": "AP", "AM": "AM", "BA": "BA", 
-    "CE": "CE", "DF": "DF", "ES": "ES", "GO": "GO", "MA": "MA", 
-    "MT": "MT", "MS": "MS", "MG": "MG", "PA": "PA", "PB": "PB", 
-    "PR": "PR", "PE": "PE", "PI": "PI", "RJ": "RJ", "RN": "RN", 
-    "RS": "RS", "RO": "RO", "RR": "RR", "SC": "SC", "SP": "SP", 
+    "AC": "AC", "AL": "AL", "AP": "AP", "AM": "AM", "BA": "BA",
+    "CE": "CE", "DF": "DF", "ES": "ES", "GO": "GO", "MA": "MA",
+    "MT": "MT", "MS": "MS", "MG": "MG", "PA": "PA", "PB": "PB",
+    "PR": "PR", "PE": "PE", "PI": "PI", "RJ": "RJ", "RN": "RN",
+    "RS": "RS", "RO": "RO", "RR": "RR", "SC": "SC", "SP": "SP",
     "SE": "SE", "TO": "TO",
 
     "ACRE": "AC", "ALAGOAS": "AL", "AMAPA": "AP", "AMAZONAS": "AM",

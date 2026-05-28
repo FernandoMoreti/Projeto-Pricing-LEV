@@ -1,7 +1,8 @@
 from ..services.Amigoz import AmigozMapper
 from ..services.BrbRed import BRBRedMapper
-from ..services.Safra import SafraMapper
 from ..services.CapitalConsig import CapitalConsigMapper
+from ..services.KardBank import KardBankMapper
+from ..services.Safra import SafraMapper
 from ..services.Santander import SantanderMapper
 from ..services.Pan import PanMapper
 from ..services.PanLafy import PanLafyMapper
@@ -14,6 +15,7 @@ class FactoryBank:
         "amigoz": AmigozMapper(),
         "brbred": BRBRedMapper(),
         "capitalconsig": CapitalConsigMapper(),
+        "kardbank": KardBankMapper(),
         "pan": PanMapper(),
         "panlafy": PanLafyMapper(),
         "paranabank": ParanaBankMapper(),
