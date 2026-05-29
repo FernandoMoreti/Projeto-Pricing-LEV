@@ -7,6 +7,7 @@ from ..services.Santander import SantanderMapper
 from ..services.Pan import PanMapper
 from ..services.PanLafy import PanLafyMapper
 from ..services.ParanaBank import ParanaBankMapper
+from ..services.Phtech import PhtechMapper
 from ..services.PresencaBank import PresencaBankMapper
 from ..services.Ole import OleMapper
 
@@ -18,6 +19,7 @@ class FactoryBank:
         "kardbank": KardBankMapper(),
         "pan": PanMapper(),
         "panlafy": PanLafyMapper(),
+        "phtech": PhtechMapper(),
         "paranabank": ParanaBankMapper(),
         "presencabank": PresencaBankMapper(),
         "safra": SafraMapper(),

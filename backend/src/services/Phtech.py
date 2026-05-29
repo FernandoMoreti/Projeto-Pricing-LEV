@@ -4,11 +4,11 @@ import numpy as np
 import pandas as pd
 import io
 from ..utils.utils import convertValues, formatar_br, remover_acentos
-from ..config.bank.KardBankVariables import family_product, group_convenio, operation
+from ..config.bank.PhtechVariables import family_product, group_convenio, operation
 from ..config.citys_uf import citys, citys_uf, states
 from ..config.grade import grade
 
-class KardBankMapper(Bank):
+class PhtechMapper(Bank):
 
     def read_archive(self, file):
         df = pd.read_excel(io.BytesIO(file))
@@ -26,23 +26,35 @@ class KardBankMapper(Bank):
         elif percent > 15 and percent <= 20:
             bonus = 1.5
             percent = percent - bonus
-        elif percent > 20:
+        elif percent > 20 and percent < 25:
             bonus = 2
+            percent = percent - bonus
+        elif percent > 25 and percent < 30:
+            bonus = 2.5
+            percent = percent - bonus
+        elif percent > 30:
+            bonus = 3
             percent = percent - bonus
 
         return percent, bonus
 
     def compare_archive(self, df_work, df_bank):
 
-        df_bank['Tabela/Nome do Produto'] = df_bank['Tabela/Nome do Produto'].str.strip()
+        df_bank['Produto'] = df_bank['Produto'].str.strip()
         df_work["Produto"] = df_work["Produto"].str.strip()
 
         df_bank["Prazo Final"] = df_bank["Prazo Inicial"].astype(str) + '-' + df_bank["Prazo Final"].astype(str)
 
+        df_bank = df_bank[df_bank["Tipo de operação"] != "Compra de Divida"]
+        df_bank = df_bank[df_bank["Tipo de operação"] != "Compra de divida"]
+        df_bank = df_bank[df_bank["Tipo de operação"] != "Refin/Compra"]
+        df_bank = df_bank[df_bank["Tipo de operação"] != "Refin/Quitação"]
+        df_bank = df_bank[df_bank["Tipo de operação"] != "Quitação"]
+
         df_result = pd.merge(
             df_bank,
             df_work,
-            left_on=["Tabela/Nome do Produto", "Prazo Final"],
+            left_on=["Produto", "Prazo Final"],
             right_on=["Produto", "Parc. Atual"],
             how="outer",
             indicator=True
@@ -63,9 +75,9 @@ class KardBankMapper(Bank):
 
         for index, row in df_matches.iterrows():
 
-            percent = convertValues(row["À Vista Empresa"])
+            percent = round(convertValues(row["Sou Parceiro"]) * 100, 2)
 
-            if row["Operação"] == "NOVO":
+            if row["Tipo de operação"] == "Privado":
                 bonus = 0.25
                 percent = percent - bonus
             else:
@@ -75,7 +87,7 @@ class KardBankMapper(Bank):
 
             row["retencao"] = bonus
 
-            if percent != percent_work:
+            if round(percent, 2) != percent_work:
                 list_to_close_and_open.append(row)
 
         return list_of_open_tables, list_of_close_tables, list_to_close_and_open
@@ -118,25 +130,18 @@ class KardBankMapper(Bank):
         return result
 
     def get_convenio(self, product):
-        if "-" in product:
-            firstProduct = str(product).upper().split("-")[0].strip()
-        else:
-            firstProduct = product
         categorias = {
-            "GOV-": ["GOV", "GOV_", "GOV.", "SPPREV_", "AMA", "PMESP", "PMMG", "IPSEMG", "IPSM", "PM", "POL", "CBMG", "PIAUI", "CEARÁ", "AMPREV_", "IGEPREV_AS_TAXA"],
+            "GOV-": ["GOV", "GOVERNO", "POLICIA"],
             "FEDERAL SIAPE": ["SIAPE", "SIA"],
-            "TJ | ": ["TJ ", "TJ_", "TJ.", "TRT"],
-            "PREF. ": ["PREF", "PREF_", "PREF.", "IPREM", "RCC", "IPAM", "IPREF", "COMISSIONADOS"],
+            "TJ | ": ["TJ ", "TJ_", "TJ."],
+            "PREF. ": ["PREFEITURA", "PREF", "INSTITUTO"],
         }
 
-        if firstProduct in ["AERONAUTICA", "MARINHA", "FGTS", "INSS", "CLT", "INSSC15"]:
-            return firstProduct
-
-        if "IPMO_RMC_TAXA" in product:
-            return "PREF. OSASCO SP"
+        if product ==  "CONSIGNADO PRIVADO CLT":
+            return "CLT"
 
         for categoria, prefixos in categorias.items():
-            prefixo_encontrado = next((p for p in prefixos if p in firstProduct), None)
+            prefixo_encontrado = next((p for p in prefixos if p in product), None)
             if prefixo_encontrado:
                 convenio = categoria
 
@@ -182,7 +187,7 @@ class KardBankMapper(Bank):
 
         for row in list_of_open_tables:
 
-            product = row["Tabela/Nome do Produto"]
+            product = row["Convênio_x"]
             convenio = self.get_convenio(product)
 
             if "-" in convenio:
@@ -193,26 +198,26 @@ class KardBankMapper(Bank):
             family = family_product[agreement]
             group = group_convenio[family]
 
-            percent = convertValues(row["À Vista Empresa"])
+            percent = round(convertValues(row["Sou Parceiro"]) * 100, 2)
 
             percent, bonus = self.get_retencao(percent)
 
-            operation = self.getOperation(row["Tipo de Contrato"])
+            operation = self.getOperation(row["Tipo de operação"])
 
             grades = grade.get(operation, "")
 
             new_row = model.copy()
 
             new_row["Operação"] = operation
-            new_row["Produto"] = row["Tabela/Nome do Produto"]
+            new_row["Produto"] = row["Produto"]
             new_row["Família Produto"] = family
             new_row["Grupo Convênio"] = group
             new_row["Convênio"] = convenio
             new_row["Parc. Atual"] = row["Prazo Final"]
-            new_row["% Mínima"] = percent * grades["min"]
-            new_row["% Intermediária"] = percent * grades["med"]
-            new_row["% Máxima"] = percent * grades["max"]
-            new_row["% Comissão"] = percent
+            new_row["% Mínima"] = round(percent, 2) * grades["min"]
+            new_row["% Intermediária"] = round(percent, 2) * grades["med"]
+            new_row["% Máxima"] = round(percent, 2) * grades["max"]
+            new_row["% Comissão"] = round(percent, 2)
             new_row["Vigência"] = datetime.now().strftime("%d/%m/%Y")
             new_row["Atualizações"] = "INCLUSÃO"
 
@@ -239,14 +244,8 @@ class KardBankMapper(Bank):
 
         df = pd.DataFrame(list_of_convert_rows)
 
-        df = df.drop(['Convênio_x', 'Tabela/Nome do Produto', 'Código no Banco',
-            'Id de Vigência', 'Início', 'Fim', 'Prazo Inicial', 'Prazo Final',
-            'Tipo de Contrato', 'Tipo de Formalização', 'Fator', 'Taxa a.m',
-            'Id de Prazo/Faixa', 'Idade Mínima', 'Idade Máxima',
-            'Valor Contrato Inicial', 'Valor Contrato Final',
-            'Valor Contrato Referência', 'Taxa Inicial', 'Taxa Final',
-            'À Vista Empresa', 'Bônus Empresa', 'Diferido Empresa',
-            'À Vista Repasse 1', 'Bônus Repasse 1', 'Diferido Repasse 1', '_merge'], axis=1, errors='ignore')
+        df = df.drop(['Convênio_x', 'Tipo de operação', 'Prazo Inicial',
+       'Prazo Final', 'Sou Parceiro', 'Obs', '_merge'], axis=1, errors='ignore')
 
         df.columns = df.columns.str.replace('_y', '')
 
@@ -259,7 +258,7 @@ class KardBankMapper(Bank):
 
         for row in list_of_close_open:
 
-            percent = convertValues(row["À Vista Empresa"])
+            percent = convertValues(round(row["Sou Parceiro"] * 100, 2))
 
             percent, bonus = self.get_retencao(percent)
 
@@ -272,19 +271,17 @@ class KardBankMapper(Bank):
 
             row_open = row.copy()
 
-            product = row["Tabela/Nome do Produto"]
-
-            operation = self.getOperation(row["Tipo de Contrato"])
+            operation = self.getOperation(row["Tipo de operação"])
 
             grades = grade.get(operation, "")
 
             row_open["Término"] = ""
             row_open["Vigência"] = datetime.now().strftime("%d/%m/%Y")
             row_open["ID"] = ''
-            row_open["% Comissão"] = percent
-            row_open["% Mínima"] = percent * grades["min"]
-            row_open["% Intermediária"] = percent * grades["med"]
-            row_open["% Máxima"] = percent * grades["max"]
+            row_open["% Comissão"] = round(percent, 2)
+            row_open["% Mínima"] = round(percent, 2) * grades["min"]
+            row_open["% Intermediária"] = round(percent, 2) * grades["med"]
+            row_open["% Máxima"] = round(percent, 2) * grades["max"]
             row_open["Atualizações"] = "ALTERAÇÃO"
 
             if bonus != 0:
@@ -296,14 +293,8 @@ class KardBankMapper(Bank):
         df = pd.DataFrame(list_of_convert_close_rows)
         df2 = pd.DataFrame(list_of_convert_open_rows)
 
-        colunas_remover = ['Convênio_x', 'Tabela/Nome do Produto', 'Código no Banco',
-            'Id de Vigência', 'Início', 'Fim', 'Prazo Inicial', 'Prazo Final',
-            'Tipo de Contrato', 'Tipo de Formalização', 'Fator', 'Taxa a.m',
-            'Id de Prazo/Faixa', 'Idade Mínima', 'Idade Máxima',
-            'Valor Contrato Inicial', 'Valor Contrato Final',
-            'Valor Contrato Referência', 'Taxa Inicial', 'Taxa Final',
-            'À Vista Empresa', 'Bônus Empresa', 'Diferido Empresa',
-            'À Vista Repasse 1', 'Bônus Repasse 1', 'Diferido Repasse 1', '_merge']
+        colunas_remover = ['Convênio_x', 'Tipo de operação', 'Prazo Inicial',
+       'Prazo Final', 'Sou Parceiro', 'Obs', '_merge']
 
         df.columns = df.columns.str.replace('_y', '')
         df2.columns = df.columns.str.replace('_y', '')
@@ -315,7 +306,7 @@ class KardBankMapper(Bank):
 
     def input_standard_values(self, model):
 
-        model["Instituição"] = "KARDBANK"
+        model["Instituição"] = "PH TECH"
         model["Parc. Refin."] = "0-0"
         model["% PMT Pagas"] = "0,00-0,00"
         model["% Taxa"] = "0,00-0,00"
