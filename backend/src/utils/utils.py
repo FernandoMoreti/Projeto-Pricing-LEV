@@ -109,3 +109,25 @@ def formatar_centavos(valor):
     if "," not in valor and valor != "":
         return valor + ",00"
     return valor
+
+def formatar_faixa_valores(faixa_cru):
+    """
+    Transforma '6600.01-50000' em '6.600,01-50.000,00-LÍQUIDO' ou '-BRUTO'
+    """
+    texto = str(faixa_cru).strip()
+
+    if not texto or texto == "nan" or "-" not in texto:
+        return texto
+
+    partes = texto.split('-')
+
+    if len(partes) != 2:
+        return texto
+
+    num_esquerda = float(partes[0].strip())
+    num_direita = float(partes[1].strip())
+
+    str_esquerda = f"{num_esquerda:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+    str_direita = f"{num_direita:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+
+    return f"{str_esquerda}-{str_direita}"
