@@ -19,9 +19,9 @@ def login(page):
     page.locator('input[id="senha"]').fill(senha)
     page.locator('input[id="senha"]').press('Enter')
 
-    page.wait_for_timeout(1500)
+    # page.wait_for_timeout(1500)
 
-    page.get_by_role('button', name='OPERACIONAL').click()
+    # page.get_by_role('button', name='OPERACIONAL').click()
 
     page.wait_for_timeout(5000)
 
@@ -38,7 +38,7 @@ def login(page):
     if seletor.is_visible():
         seletor.click()
 
-def navegation(page):
+def navegation(page, content_work, filename, mime_type):
     page.get_by_role("link", name="  CADASTROS").click()
     page.wait_for_timeout(1000)
     page.get_by_role("link", name="Administrativo").click()
@@ -46,12 +46,22 @@ def navegation(page):
     page.get_by_role("link", name="Empresa").click()
     page.wait_for_timeout(1000)
     page.get_by_role("link", name="Tab. Comissão Empresa").click()
+    page.wait_for_timeout(5000)
+
+    file_payload = {
+        "name": filename,
+        "mimeType": mime_type,
+        "buffer": content_work
+    }
+
+    page.locator('input[type="file"]').set_input_files(file_payload)
+
     page.pause()
 
-def iniciar_robo_sync():
+def iniciar_robo_sync(content_work, filename, mime_type):
     with sync_playwright() as p:
         browser = p.chromium.launch(
-            headless=True,
+            headless=False,
             args=["--no-sandbox", "--disable-setuid-sandbox"],
         )
         url = os.getenv("URL_WORKBANK")
@@ -68,7 +78,7 @@ def iniciar_robo_sync():
             print("Logando...")
             login(page)
             print("Navegando...")
-            navegation(page)
+            navegation(page, content_work, filename, mime_type)
             print("Processo finalizado com sucesso!")
 
         except Exception as e:

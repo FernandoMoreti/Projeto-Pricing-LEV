@@ -103,3 +103,9 @@ def rename_duplicates(cols):
             counts[col] = 0
             new_cols.append(col)
     return new_cols
+
+def formatar_centavos(valor):
+    valor = valor.strip()
+    if "," not in valor and valor != "":
+        return valor + ",00"
+    return valor

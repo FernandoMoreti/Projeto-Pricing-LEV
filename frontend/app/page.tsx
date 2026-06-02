@@ -173,6 +173,7 @@ export default function Home() {
                     <option value="BRBRed">BRBRed</option>
                     <option value="Capital Consig">Capital Consig</option>
                     <option value="KardBank">KardBank</option>
+                    <option value="Ole">Ole</option>
                     <option value="Pan">Pan</option>
                     <option value="PanLafy">PanLafy</option>
                     <option value="ParanaBank">ParanaBank</option>
@@ -180,7 +181,7 @@ export default function Home() {
                     <option value="PresencaBank">PresencaBank</option>
                     <option value="Safra">Safra</option>
                     <option value="Santander">Santander</option>
-                    <option value="Ole">Ole</option>
+                    <option value="TotalCash">TotalCash</option>
                   </select>
 
                   <button
@@ -214,6 +215,7 @@ export default function Home() {
                       <option value="Safra">Safra</option>
                       <option value="Santander">Santander</option>
                       <option value="Ole">Ole</option>
+                      <option value="TotalCash">TotalCash</option>
                     </select>
                   </div>
 

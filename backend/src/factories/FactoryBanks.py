@@ -2,6 +2,7 @@ from ..services.Amigoz import AmigozMapper
 from ..services.BrbRed import BRBRedMapper
 from ..services.CapitalConsig import CapitalConsigMapper
 from ..services.KardBank import KardBankMapper
+from ..services.Ole import OleMapper
 from ..services.Safra import SafraMapper
 from ..services.Santander import SantanderMapper
 from ..services.Pan import PanMapper
@@ -9,7 +10,7 @@ from ..services.PanLafy import PanLafyMapper
 from ..services.ParanaBank import ParanaBankMapper
 from ..services.Phtech import PhtechMapper
 from ..services.PresencaBank import PresencaBankMapper
-from ..services.Ole import OleMapper
+from ..services.TotalCash import TotalCashMapper
 
 class FactoryBank:
     _factoryBanksMapper = {
@@ -17,6 +18,7 @@ class FactoryBank:
         "brbred": BRBRedMapper(),
         "capitalconsig": CapitalConsigMapper(),
         "kardbank": KardBankMapper(),
+        "ole": OleMapper(),
         "pan": PanMapper(),
         "panlafy": PanLafyMapper(),
         "phtech": PhtechMapper(),
@@ -24,7 +26,7 @@ class FactoryBank:
         "presencabank": PresencaBankMapper(),
         "safra": SafraMapper(),
         "santander": SantanderMapper(),
-        "ole": OleMapper(),
+        "totalcash": TotalCashMapper(),
     }
 
     @staticmethod

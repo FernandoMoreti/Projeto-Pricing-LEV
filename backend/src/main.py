@@ -80,9 +80,12 @@ async def input_pricing(
         content_work = await fileAtt.read()
         bank = bankWork.strip().lower().replace(" ", "")
 
+        filename = fileAtt.filename
+        mime_type = fileAtt.content_type
+
         print(f"Recebido arquivo para input: {fileAtt.filename} do banco: {bank}")
 
-        await run_in_threadpool(iniciar_robo_sync)
+        await run_in_threadpool(iniciar_robo_sync, content_work, filename, mime_type)
 
         return {"success": True, "message": "Robô executado com sucesso."}
 
