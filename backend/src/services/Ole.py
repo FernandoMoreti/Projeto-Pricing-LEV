@@ -62,12 +62,21 @@ class OleMapper(Bank):
 
         df_matches["Diferido"] = df_matches["percentual_comissao_diferido"]
 
-        mask_diff = df_matches["percent_converted"] != df_matches["percent_work_converted"]
-        df_diff = df_matches[mask_diff]
+        for index, row in df_matches.iterrows():
 
-        list_to_close_and_open.extend(df_diff.to_dict('records'))
+            percent_bank = row["percent_converted"]
+            percent_work = row["percent_work_converted"]
 
-        df_matches.drop(columns=["percent_converted", "percent_work_converted"], inplace=True)
+            diferido_bank = row["Diferido"]
+            if pd.isna(row["DIFERIMENTO"]):
+                diferido_work = 0.0
+            else:
+                diferido_work = float(str(row["DIFERIMENTO"]).split(" ")[0].replace(",", "."))
+
+            if percent_bank != percent_work:
+                list_to_close_and_open.append(row)
+            elif diferido_bank != float(diferido_work):
+                list_to_close_and_open.append(row)
 
         return list_of_open_tables, list_of_close_tables, list_to_close_and_open
 
@@ -297,8 +306,8 @@ class OleMapper(Bank):
             row_open["% Mínima"] = percent * grades["min"]
             row_open["% Intermediária"] = percent * grades["med"]
             row_open["% Máxima"] = percent * grades["max"]
+            row_open["DIFERIMENTO"] = f"{float(row_open["Diferido"]):.2f}".replace(".", ",") + " | LIQUIDO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
             row_open["Atualizações"] = "ALTERAÇÃO"
-
 
             list_of_convert_open_rows.append(row_open)
 
