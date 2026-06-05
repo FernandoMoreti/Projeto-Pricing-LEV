@@ -32,7 +32,7 @@ export default function Home() {
 
     setLoading(true);
     setMessage("");
-    const uri = "http://192.168.1.90:8001";
+    const uri = "http://127.0.0.1:8080";
     const form = new FormData();
     form.append('fileWork', fileWorkbank);
     form.append('fileBank', fileBank);
@@ -180,6 +180,7 @@ export default function Home() {
                     <option value="ParanaBank">ParanaBank</option>
                     <option value="Phtech">Phtech</option>
                     <option value="PresencaBank">PresencaBank</option>
+                    <option value="Sabemi">Sabemi</option>
                     <option value="Safra">Safra</option>
                     <option value="Santander">Santander</option>
                     <option value="TotalCash">TotalCash</option>

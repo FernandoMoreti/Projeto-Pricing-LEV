@@ -4,6 +4,7 @@ from ..services.CapitalConsig import CapitalConsigMapper
 from ..services.Evol import EvolMapper
 from ..services.KardBank import KardBankMapper
 from ..services.Ole import OleMapper
+from ..services.Sabemi import SabemiMapper
 from ..services.Safra import SafraMapper
 from ..services.Santander import SantanderMapper
 from ..services.Pan import PanMapper
@@ -26,6 +27,7 @@ class FactoryBank:
         "phtech": PhtechMapper(),
         "paranabank": ParanaBankMapper(),
         "presencabank": PresencaBankMapper(),
+        "sabemi": SabemiMapper(),
         "safra": SafraMapper(),
         "santander": SantanderMapper(),
         "totalcash": TotalCashMapper(),
