@@ -5294,6 +5294,9 @@ citys_uf = {
     "ESP": "ES"
 }
 citys = {
+    "PALMAS": "PALMAS",
+    "ITU": "ITU",
+    "SAO_LUIS": "SAO LUIZ",
     "PREVIJUNO": "JUAZEIRO DO NORTE",
     "IPREF": "GUARULHOS",
     "IPAM_RCC_TAXA": "PORTO VELHO",
@@ -5311,7 +5314,6 @@ citys = {
     "CAMPINA": "CAMPINA GRANDE",
     "BH": "BELO HORIZONTE",
     "IPMDC": "DUQUE DE CAXIAS",
-    "IPAM": "",
     "SP": "SAO PAULO",
     "PREVICON": "CONTAGEM",
     "TRANSCON": "CONTAGEM",
@@ -10624,7 +10626,8 @@ citys = {
     "IPSEMG": "BELO HORIZONTE",
     "IPSM": "BELO HORIZONTE",
     "PM": "SAO PAULO",
-    "POL": "SAO PAULO"
+    "POL": "SAO PAULO",
+    "SANTA_RITA": "SANTA RITA",
 }
 
 states = {

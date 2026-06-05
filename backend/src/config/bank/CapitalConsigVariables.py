@@ -84,12 +84,18 @@ convenio_mapper = {
 
 family_product = {
     "SIAPE": "FEDERAIS",
+    "FEDERAL": "FEDERAIS",
     "PREFEITURA": "PREFEITURAS",
     "IPREV": "PREFEITURAS",
+    "PF": "PREFEITURAS",
     "PREF.": "PREFEITURAS",
+    "PREF": "PREFEITURAS",
     "GOVERNO": "GOVERNOS",
     "T.J": "TRIBUNAIS",
+    "TJ": "TRIBUNAIS",
     "GOV": "GOVERNOS",
+    "INSS": "INSS",
+    "FGTS": "FGTS",
 }
 
 group_convenio = {

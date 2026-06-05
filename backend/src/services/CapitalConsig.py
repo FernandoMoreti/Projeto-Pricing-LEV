@@ -83,7 +83,7 @@ class CapitalConsigMapper(Bank):
 
         for nome_cidade in sorted(citys.keys(), key=len, reverse=True):
             if nome_cidade in product:
-                city = citys[nome_cidade]
+                city = citys[nome_cidade.strip()]
                 break
             else:
                 city = ""
@@ -116,10 +116,11 @@ class CapitalConsigMapper(Bank):
 
     def get_convenio(self, product):
         product = str(product).upper()
+
         categorias = {
-            "GOV-": ["GOV ", "GOV_", "GOV.", "SPPREV_"],
+            "GOV-": ["GOV ", "GOV_", "GOV.", "SPPREV_", "TOCANTINS_CC_AC_CCC"],
             "FEDERAL SIAPE": ["SIAPE ", "SIAPE_", "SIAPE."],
-            "PREF. ": ["PREF ", "PREF_", "PREF.", "IPREV"],
+            "PREF. ": ["PREF ", "PREF_", "PREF.", "IPREV", "PREV"],
             "TJ | ": ["TJ ", "TJ_", "TJ."]
         }
 
