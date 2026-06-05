@@ -132,7 +132,9 @@ class SafraMapper(Bank):
             "PREF. ": ["CAMPREV", "PREF", "PREF_", "PREF.", "IPREM", "UNICAMP"],
         }
 
-        if product in ["AERONAUTICA", "MARINHA", "FGTS", "INSS"]:
+        print(product)
+
+        if product in ["AERONAUTICA", "MARINHA", "FGTS", "INSS", "EXERCITO"]:
             return product
 
         for categoria, prefixos in categorias.items():
@@ -169,7 +171,6 @@ class SafraMapper(Bank):
                 continue
 
             product = row["Convenio"]
-
             convenio = self.get_convenio(product)
 
             agreement = row["Convenio"].strip().split(" ")[0]

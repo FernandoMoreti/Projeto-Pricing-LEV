@@ -22,6 +22,7 @@ prazo_convenio = {
 family_product = {
     "AERONAUTICA": "FORCAS ARMADAS",
     "MARINHA": "FORCAS ARMADAS",
+    "EXERCITO": "FORCAS ARMADAS",
     "FGTS": "FGTS",
     "INSS": "INSS",
     "SIAPE": "FEDERAIS",
