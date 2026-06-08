@@ -37,6 +37,8 @@ class KardBankMapper(Bank):
         df_bank['Tabela/Nome do Produto'] = df_bank['Tabela/Nome do Produto'].str.strip()
         df_work["Produto"] = df_work["Produto"].str.strip()
 
+        df_work = df_work[df_work["Parc. Atual"] != "0-1"]
+
         df_bank["Prazo Final"] = df_bank["Prazo Inicial"].astype(str) + '-' + df_bank["Prazo Final"].astype(str)
 
         df_result = pd.merge(
@@ -195,9 +197,13 @@ class KardBankMapper(Bank):
 
             percent = convertValues(row["À Vista Empresa"])
 
-            percent, bonus = self.get_retencao(percent)
-
             operation = self.getOperation(row["Tipo de Contrato"])
+
+            if operation == "NOVO":
+                bonus = 0.25
+                percent = percent - bonus
+            else:
+                percent, bonus = self.get_retencao(percent)
 
             grades = grade.get(operation, "")
 
@@ -379,6 +385,7 @@ class KardBankMapper(Bank):
             print(f"Sucesso! Total de linhas: {len(df_final)}")
 
             print("Processo concluído!")
+            df_final.to_excel("Add.xlsx", index=False)
             return df_final
 
         except Exception as e:
