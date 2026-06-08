@@ -126,7 +126,7 @@ class KardBankMapper(Bank):
             "GOV-": ["GOV", "GOV_", "GOV.", "SPPREV_", "AMA", "PMESP", "PMMG", "IPSEMG", "IPSM", "PM", "POL", "CBMG", "PIAUI", "CEARÁ", "AMPREV_", "IGEPREV_AS_TAXA"],
             "FEDERAL SIAPE": ["SIAPE", "SIA"],
             "TJ | ": ["TJ ", "TJ_", "TJ.", "TRT"],
-            "PREF. ": ["PREF", "PREF_", "PREF.", "IPREM", "RCC", "IPAM", "IPREF", "COMISSIONADOS"],
+            "PREF. ": ["PREF", "PREF_", "PREF.", "IPREM", "RCC", "IPAM", "IPREF", "COMISSIONADOS", "PREVIJUNO", "EMP"],
         }
 
         if firstProduct in ["AERONAUTICA", "MARINHA", "FGTS", "INSS", "CLT", "INSSC15"]:
