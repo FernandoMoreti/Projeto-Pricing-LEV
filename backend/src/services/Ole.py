@@ -306,7 +306,7 @@ class OleMapper(Bank):
             row_open["% Mínima"] = percent * grades["min"]
             row_open["% Intermediária"] = percent * grades["med"]
             row_open["% Máxima"] = percent * grades["max"]
-            row_open["DIFERIMENTO"] = f"{float(row_open["Diferido"]):.2f}".replace(".", ",") + " | LIQUIDO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
+            row_open["DIFERIMENTO"] = f"{float(row_open['Diferido']):.2f}".replace(".", ",") + " | LIQUIDO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
             row_open["Atualizações"] = "ALTERAÇÃO"
 
             list_of_convert_open_rows.append(row_open)
