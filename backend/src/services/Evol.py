@@ -14,6 +14,20 @@ class EvolMapper(Bank):
         df = pd.read_excel(io.BytesIO(file))
         return df
 
+    def get_bonus(self, family, percent):
+        if family == "FGTS":
+            percent = round(percent, 1)
+            return percent / 10
+        elif family in ["INSS", "CLT"]:
+            if percent > 0 and percent < 5:
+                return 0.5
+            elif percent >= 5 and percent < 10:
+                return 1
+            elif percent >= 10 and percent < 15:
+                return 1.5
+            else:
+                return 2
+
     def compare_archive(self, df_work, df_bank):
 
         df_bank["Prazo Máximo"] = df_bank["Prazo Mínimo"].astype(str) + "-" + df_bank["Prazo Máximo"].astype(str)
@@ -156,6 +170,9 @@ class EvolMapper(Bank):
 
             operation = self.get_operation(product)
 
+            bonus = self.get_bonus(family, percent)
+            percent = percent - bonus
+
             if "PORT" in operation:
                 base_commission = "BRUTO"
             else:
@@ -181,6 +198,8 @@ class EvolMapper(Bank):
             new_row["Vigência"] = datetime.now().strftime("%d/%m/%Y")
             new_row["Complemento"] = row["Id Tabela Principal"]
             new_row["Id Tabela Banco"] = row["Id Tabela Principal"]
+            new_row["BONUS VIP"] = f"{bonus:.2f}".replace(".", ",") + " | " + base_commission + " | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
+            new_row["REPASSE BONUS VIP"] = "0,00 | 0,00 | 0,00"
             new_row["Atualizações"] = "INCLUSÃO"
 
             list_of_convert_rows.append(new_row)
@@ -219,6 +238,8 @@ class EvolMapper(Bank):
         for row in list_of_close_open:
 
             percent = convertValues(row["Comissão"])
+            bonus = self.get_bonus(row["Família Produto"], percent)
+            percent = percent - bonus
 
             row_close = row.copy()
 
@@ -228,6 +249,11 @@ class EvolMapper(Bank):
             list_of_convert_close_rows.append(row_close)
 
             row_open = row.copy()
+
+            if "PORT" in operation:
+                base_commission = "BRUTO"
+            else:
+                base_commission = "LÍQUIDO"
 
             operation = self.get_operation(row["Nome Tabela"])
 
@@ -241,6 +267,8 @@ class EvolMapper(Bank):
             row_open["% Mínima"] = percent * grades["min"]
             row_open["% Intermediária"] = percent * grades["med"]
             row_open["% Máxima"] = percent * grades["max"]
+            row_open["BONUS VIP"] = f"{bonus:.2f}".replace(".", ",") + " | " + base_commission + " | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
+            row_open["REPASSE BONUS VIP"] = "0,00 | 0,00 | 0,00"
             row_open["Atualizações"] = "ALTERAÇÃO"
 
             list_of_convert_open_rows.append(row_open)
