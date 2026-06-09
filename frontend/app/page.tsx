@@ -172,6 +172,7 @@ export default function Home() {
                     <option value="Amigoz">Amigoz</option>
                     <option value="BRBRed">BRBRed</option>
                     <option value="Capital Consig">Capital Consig</option>
+                    <option value="EmpresteiCard">EmpresteiCard</option>
                     <option value="Evol">Evol</option>
                     <option value="KardBank">KardBank</option>
                     <option value="Ole">Ole</option>

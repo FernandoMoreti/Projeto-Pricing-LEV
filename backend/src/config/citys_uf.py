@@ -5279,6 +5279,7 @@ citys_uf = {
     "TURVELANDIA": "GO",
     "UIRAPURU": "GO",
     "URUACU": "GO",
+    "PINDARE MIRIM": "MA",
     "URUANA": "GO",
     "URUTAI": "GO",
     "VALPARAISO DE GOIAS": "GO",
@@ -5294,6 +5295,7 @@ citys_uf = {
     "ESP": "ES"
 }
 citys = {
+    "PINDARE MIRIM": "PINDARE MIRIM",
     "PALMAS": "PALMAS",
     "ITU": "ITU",
     "SAO_LUIS": "SAO LUIZ",
