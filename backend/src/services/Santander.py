@@ -146,8 +146,10 @@ class SantanderMapper(Bank):
         for categoria, prefixos in categorias.items():
 
             if product in ["SAO PAULO PREVIDENCIA", "CAMARA DOS DEPUTADOS", "FUND PRO SANGUE HEMOCENTRO SAO PAULO"]:
-                convenio = "GOV-"
-                prefixo_encontrado = True
+                if product == "CAMARA DOS DEPUTADOS":
+                    return "GOV-DF"
+                else:
+                    return "GOV-SP"
             else:
                 prefixo_encontrado = next((p for p in prefixos if p in product), None)
             if prefixo_encontrado:
