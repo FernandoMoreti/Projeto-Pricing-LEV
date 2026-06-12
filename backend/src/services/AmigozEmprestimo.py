@@ -7,7 +7,7 @@ from ..config.bank.PanVariables import family_product, group_convenio, operation
 from ..config.citys_uf import citys, citys_uf, states
 from ..config.grade import grade
 
-class AmigozMapper(Bank):
+class AmigozEmprestimoMapper(Bank):
 
     def read_archive(self, file):
         df = pd.read_excel(io.BytesIO(file), header=3)
@@ -15,16 +15,64 @@ class AmigozMapper(Bank):
 
     def compare_archive(self, df_work, df_bank):
 
-        df_bank["Nome Tabela"] = df_bank["Nome Tabela"].str.strip().upper()
-        df_bank["Prazo"] = df_bank["Prazo"].astype(str) + "-" + df_bank["Prazo"].astype(str)
+        novas_linhas = []
+        actual_convenio = ""
+
+        for index, row in df_bank.iterrows():
+            if row["Produto"] == "Cartão Consignado" or row["Produto"] == "Cartão Benefício":
+                convenio_formatado = (row["Convênio"] + ' - ' + row["Produto"]).upper()
+                row["Convênio"] = convenio_formatado
+                row["Prazo"] = str(row["Prazo"]) + '-' + str(row["Prazo"])
+                taxa_formatada = f"{row['Taxa %']:.2f}".replace('.', ',')
+                row["Taxa %"] = str(row["ID"]).strip() + ' | TX ' + taxa_formatada + '%'
+
+                row_cartao = row.copy()
+                row_cartao["Produto"] = "CARTÃO"
+                row_cartao["% Comissao"] = row["Saque%"] * 100
+                row_saque = row.copy()
+                row_saque["Produto"] = "SAQUE COMPL."
+                row_saque["% Comissao"] = row["Saque complementar %"] * 100
+                row_cartao_seguro = row.copy()
+                row_cartao_seguro["Produto"] = "CARTÃO"
+                row_cartao_seguro["% Comissao"] = row["Saque complementar %"] * 100
+                row_cartao_seguro["Taxa %"] = row_cartao_seguro["Taxa %"] + ' - COM SEGURO'
+                row_saque_seguro = row.copy()
+                row_saque_seguro["Produto"] = "SAQUE COMPL."
+                row_saque_seguro["% Comissao"] = row["Saque complementar %"] * 100
+                row_saque_seguro["Taxa %"] = row_saque_seguro["Taxa %"] + ' - COM SEGURO'
+
+                if row["Apenas cartão"] != 0 and convenio_formatado.strip() != actual_convenio.strip():
+                    temp = row["Convênio"]
+                    row["Produto"] = "CARTÃO"
+                    row["Convênio"] = row["Convênio"] + ' - PLASTICO'
+                    row["% Comissao"] = 0
+                    row_plastico = row.copy()
+                    row_plastico["Prazo"] = '0-1'
+                    novas_linhas.append(row_plastico)
+                    actual_convenio = convenio_formatado
+
+                novas_linhas.append(row_cartao)
+                novas_linhas.append(row_cartao_seguro)
+                novas_linhas.append(row_saque)
+                novas_linhas.append(row_saque_seguro)
+                actual_convenio = temp
+
+        if novas_linhas:
+            df_bank = pd.DataFrame(novas_linhas)
+
         df_work["Produto"] = df_work["Produto"].str.strip()
+
+        exclude_list = "CELETISTAS|CELET|LEI 500|TEMP C/DATA FIM|TEMPORARIOS"
+
+        df_work = df_work[~df_work["Produto"].str.contains(exclude_list, case=False, na=False)]
+
         df_bank = df_bank[df_bank["Status"] != "Bloqueado"]
 
         df_result = pd.merge(
             df_bank,
             df_work,
-            left_on=["Nome Tabela", "Prazo"],
-            right_on=["Produto", "Parc. Atual"],
+            left_on=["Convênio", "Produto", "Prazo", "Taxa %"],
+            right_on=["Produto", "Operação", "Parc. Atual", "Complemento"],
             how="outer",
             indicator=True
         )

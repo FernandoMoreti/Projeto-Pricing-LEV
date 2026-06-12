@@ -1,4 +1,5 @@
 from ..services.Amigoz import AmigozMapper
+from ..services.AmigozEmprestimo import AmigozEmprestimoMapper
 from ..services.BrbRed import BRBRedMapper
 from ..services.CapitalConsig import CapitalConsigMapper
 from ..services.EmpresteiCard import EmpresteiCardMapper
@@ -18,6 +19,7 @@ from ..services.TotalCash import TotalCashMapper
 class FactoryBank:
     _factoryBanksMapper = {
         "amigoz": AmigozMapper(),
+        "amigozemprestimo": AmigozEmprestimoMapper(),
         "brbred": BRBRedMapper(),
         "capitalconsig": CapitalConsigMapper(),
         "empresteicard": EmpresteiCardMapper(),
