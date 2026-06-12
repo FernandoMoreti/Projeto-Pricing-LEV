@@ -189,8 +189,8 @@ class EvolMapper(Bank):
             new_row["Base Comissão"] = base_commission
             new_row["Val. Base Produção"] = base_commission
             new_row["Convênio"] = convenio
-            new_row["Faixa Val. Contrato"] = "0,00-100.000,00-LÍQUIDO"
-            new_row["Parc. Atual"] = row["Valor Final"]
+            new_row["Faixa Val. Contrato"] = row["Valor Final"]
+            new_row["Parc. Atual"] = row["Prazo Máximo"]
             new_row["% Mínima"] = percent * grades["min"]
             new_row["% Intermediária"] = percent * grades["med"]
             new_row["% Máxima"] = percent * grades["max"]
@@ -353,6 +353,7 @@ class EvolMapper(Bank):
             print(f"Sucesso! Total de linhas: {len(df_final)}")
 
             print("Processo concluído!")
+            df_final.to_excel("adm.xlsx", index=False)
             return df_final
 
         except Exception as e:
