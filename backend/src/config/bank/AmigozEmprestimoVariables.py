@@ -19,6 +19,7 @@ group_convenio = {
 }
 
 operation = {
+    "Empréstimo": "NOVO",
     "Margem Livre": "NOVO",
     "Portabilidade Manual": "COMPRA DE DIVIDA",
     "Portabilidade": "PORTABILIDADE",

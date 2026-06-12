@@ -353,7 +353,6 @@ class EvolMapper(Bank):
             print(f"Sucesso! Total de linhas: {len(df_final)}")
 
             print("Processo concluído!")
-            df_final.to_excel("adm.xlsx", index=False)
             return df_final
 
         except Exception as e:

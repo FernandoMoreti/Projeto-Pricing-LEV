@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 import pandas as pd
 import io
 from ..utils.utils import convertValues, formatar_br, remover_acentos, limpar_zeros, rename_duplicates
-from ..config.bank.PanVariables import family_product, group_convenio, operation
+from ..config.bank.AmigozEmprestimoVariables import family_product, group_convenio, operation
 from ..config.citys_uf import citys, citys_uf, states
 from ..config.grade import grade
 
@@ -15,64 +15,16 @@ class AmigozEmprestimoMapper(Bank):
 
     def compare_archive(self, df_work, df_bank):
 
-        novas_linhas = []
-        actual_convenio = ""
-
-        for index, row in df_bank.iterrows():
-            if row["Produto"] == "Cartão Consignado" or row["Produto"] == "Cartão Benefício":
-                convenio_formatado = (row["Convênio"] + ' - ' + row["Produto"]).upper()
-                row["Convênio"] = convenio_formatado
-                row["Prazo"] = str(row["Prazo"]) + '-' + str(row["Prazo"])
-                taxa_formatada = f"{row['Taxa %']:.2f}".replace('.', ',')
-                row["Taxa %"] = str(row["ID"]).strip() + ' | TX ' + taxa_formatada + '%'
-
-                row_cartao = row.copy()
-                row_cartao["Produto"] = "CARTÃO"
-                row_cartao["% Comissao"] = row["Saque%"] * 100
-                row_saque = row.copy()
-                row_saque["Produto"] = "SAQUE COMPL."
-                row_saque["% Comissao"] = row["Saque complementar %"] * 100
-                row_cartao_seguro = row.copy()
-                row_cartao_seguro["Produto"] = "CARTÃO"
-                row_cartao_seguro["% Comissao"] = row["Saque complementar %"] * 100
-                row_cartao_seguro["Taxa %"] = row_cartao_seguro["Taxa %"] + ' - COM SEGURO'
-                row_saque_seguro = row.copy()
-                row_saque_seguro["Produto"] = "SAQUE COMPL."
-                row_saque_seguro["% Comissao"] = row["Saque complementar %"] * 100
-                row_saque_seguro["Taxa %"] = row_saque_seguro["Taxa %"] + ' - COM SEGURO'
-
-                if row["Apenas cartão"] != 0 and convenio_formatado.strip() != actual_convenio.strip():
-                    temp = row["Convênio"]
-                    row["Produto"] = "CARTÃO"
-                    row["Convênio"] = row["Convênio"] + ' - PLASTICO'
-                    row["% Comissao"] = 0
-                    row_plastico = row.copy()
-                    row_plastico["Prazo"] = '0-1'
-                    novas_linhas.append(row_plastico)
-                    actual_convenio = convenio_formatado
-
-                novas_linhas.append(row_cartao)
-                novas_linhas.append(row_cartao_seguro)
-                novas_linhas.append(row_saque)
-                novas_linhas.append(row_saque_seguro)
-                actual_convenio = temp
-
-        if novas_linhas:
-            df_bank = pd.DataFrame(novas_linhas)
-
+        df_bank["Nome Tabela"] = df_bank["Nome Tabela"].astype(str).str.strip().str.upper()
+        df_bank["Prazo"] = df_bank["Prazo"].astype(str) + "-" + df_bank["Prazo"].astype(str)
         df_work["Produto"] = df_work["Produto"].str.strip()
-
-        exclude_list = "CELETISTAS|CELET|LEI 500|TEMP C/DATA FIM|TEMPORARIOS"
-
-        df_work = df_work[~df_work["Produto"].str.contains(exclude_list, case=False, na=False)]
-
         df_bank = df_bank[df_bank["Status"] != "Bloqueado"]
 
         df_result = pd.merge(
             df_bank,
             df_work,
-            left_on=["Convênio", "Produto", "Prazo", "Taxa %"],
-            right_on=["Produto", "Operação", "Parc. Atual", "Complemento"],
+            left_on=["Nome Tabela", "Prazo"],
+            right_on=["Produto", "Parc. Atual"],
             how="outer",
             indicator=True
         )
@@ -86,17 +38,21 @@ class AmigozEmprestimoMapper(Bank):
 
         if not df_matches.empty:
             print(f"Encontrados {len(df_matches)} correspondências!")
-
+            print(f"Encontrados {len(df_open)} open!")
+            print(f"Encontrados {len(df_close)} close!")
+        
         list_of_open_tables = df_open.to_dict(orient="records")
         list_of_close_tables = df_close.to_dict(orient="records")
 
         # Validar matches
         for index, row in df_matches.iterrows():
 
-            percent = convertValues(row["% Comissao"])
-            percent_work = convertValues(row["% Comissao"])
+            percent = convertValues(row["À vista"] * 100)
+            percent_work = convertValues(row["% Comissão"])
 
-            if percent != percent_work:
+            if round(percent, 2) != percent_work:
+                print(percent)
+                print(percent_work)
                 list_to_close_and_open.append(row)
 
         return list_of_open_tables, list_of_close_tables, list_to_close_and_open
@@ -139,7 +95,7 @@ class AmigozEmprestimoMapper(Bank):
     def get_convenio(self, product):
 
         categorias = {
-            "GOV-": ["GOVERNO", "POLÍCIA", "POLICIA", "BOMBEIROS", "DEFENSORIA", "AMAZONPREV", "AMAZONPREV-AM", "IPER", "SPPREV", "IPSM"],
+            "GOV-": ["GOVERNO", "POLÍCIA", "POLICIA", "BOMBEIROS", "DEFENSORIA", "AMAZONPREV", "AMAZONPREV-AM", "IPER", "SPPREV", "IPSM", "GOV"],
             "FEDERAL SIAPE": ["SIAPE", "SIA"],
             "PREF. ": ["PREF", "PREFEITURA", "MARINGAPREV", "MANAUSPREV", "JFPREV", "ISSA", "IPVV", "IPSEM", "IPSA", "IPREM", "IPMO", "IPMC", "CAXIASPREV", "CAAPSML", "PREVISO"],
             "TJ | ": ["TRIBUNAL", "TJ", "TJ."],
@@ -199,16 +155,18 @@ class AmigozEmprestimoMapper(Bank):
             family = family_product[agreement]
             group = group_convenio[family]
 
-            percent = convertValues(row["% Comissao"])
+            percent = convertValues(round(row["À vista"] * 100, 2))
 
-            operation = row["Produto_x"]
+            operation1 = operation.get(row["Produto_x"])
 
-            grades = grade.get(operation, "")
+            grades = grade.get(operation1, "")
+
+            taxa = f"{row["Taxa %"] * 100:.2f}".replace(".", ",")
 
             new_row = model.copy()
 
-            new_row["Operação"] = operation
-            new_row["Produto"] = row["Convênio_x"]
+            new_row["Operação"] = operation1
+            new_row["Produto"] = row["Nome Tabela"]
             new_row["Família Produto"] = family
             new_row["Grupo Convênio"] = group
             new_row["Convênio"] = convenio
@@ -218,41 +176,12 @@ class AmigozEmprestimoMapper(Bank):
             new_row["% Máxima"] = percent * grades["max"]
             new_row["% Comissão"] = percent
             new_row["Vigência"] = datetime.now().strftime("%d/%m/%Y")
-            new_row["Complemento"] = row["Taxa %"]
-            new_row["Id Tabela Banco"] = row["ID_x"]
+            new_row["Complemento"] = "TX " + taxa + "%"
 
-            if "COM SEGURO" in row["Taxa %"]:
-                new_row["SEGURO DIAMANTE"] = "3,00 | LIQUIDO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
-                new_row["REPASSE SEGURO DIAMANTE"] = "2,40 | 2,70 | 2,85"
-                new_row["SEGURO SUPER DIAMANTE"] = "4,50 | LIQUIDO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
-                new_row["REPASSE SEGURO SUPER DIAMANTE"] = "3,60 | 4,05 | 4,25"
-                new_row["Faixa Val. Seguro"] = "2,00-5.000,00"
-            else:
-                new_row["Faixa Val. Seguro"] = "0,00-1,00"
-
-            if "PLASTICO" not in product:
-                new_row["BONUS EXTRA"] = "2,00 | LIQUIDO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
-                new_row["REPASSE BONUS EXTRA"] = "0,00 | 0,00 | 0,00"
-                new_row["Base Comissão"] = "LÍQUIDO"
-                new_row["Val. Base Produção"] = "LÍQUIDO"
-                new_row["-"] = "%"
-            else:
-                new_row["PRÉ-ADESÃO"] = f"{str(row['Apenas cartão'])} | FIXO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
-                if row['Apenas cartão'] == 0:
-                    new_row["REPASSE PRÉ-ADESÃO"] = "0,00 | 0,00 | 0,00"
-                elif row['Apenas cartão'] == 50:
-                    new_row["REPASSE PRÉ-ADESÃO"] = "35,00 | 40,00 | 45,00"
-                elif row['Apenas cartão'] == 70:
-                    new_row["REPASSE PRÉ-ADESÃO"] = "52,50 | 59,50 | 66,50"
-                elif row['Apenas cartão'] == 100:
-                    new_row["REPASSE PRÉ-ADESÃO"] = "70,00 | 80,00 | 90,00"
-                elif row['Apenas cartão'] == 150:
-                    new_row["REPASSE PRÉ-ADESÃO"] = "105,00 | 120,00 | 135,00"
-                elif row['Apenas cartão'] == 200:
-                    new_row["REPASSE PRÉ-ADESÃO"] = "140,00 | 160,00 | 180,00"
-                new_row["Base Comissão"] = "FIXO"
-                new_row["Val. Base Produção"] = "FIXO"
-                new_row["-"] = "$"
+            if row["Diferido"] != "-":
+                value = f"{row['Diferido'] * 100:.2f}".replace(".", ",")
+                new_row["DIFERIMENTO"] = value + " | LIQUIDO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
+                new_row["REPASSE DIFERIMENTO"] = "0,00 | 0,00 | 0,00"
 
             list_of_convert_rows.append(new_row)
 
@@ -268,16 +197,13 @@ class AmigozEmprestimoMapper(Bank):
 
             row["Término"] = (datetime.now() - timedelta(days=1)).strftime("%d/%m/%Y")
             row["Atualizações"] = "ENCERRAMENTO"
-            row["Val. Base Produção"] = row["Base Comissão"]
 
             list_of_convert_rows.append(row)
 
         df = pd.DataFrame(list_of_convert_rows)
 
-        df = df.drop(['ID_x', 'Convênio_x', 'Produto_x',
-       'Taxa %', 'Prazo', 'Saque%', 'Cartão no saque R$',
-       'Apenas cartão', 'Saque complementar %', 'REFIN %', 'Seguro Diamante', 'Seguro Super Diamante',
-       'Fator Multiplicador', 'Data Atualização', 'Status', 'Taxa Especial', '% Comissao'], axis=1)
+        df = df.drop(['Nome Tabela', 'Convênio_x', 'Produto_x', 'Taxa %', 'Prazo', 'À vista',
+       'Diferido', 'Data Atualização', 'Status', '_merge'], axis=1)
 
         df.columns = df.columns.str.replace('_y', '')
 
@@ -322,10 +248,8 @@ class AmigozEmprestimoMapper(Bank):
 
 
         colunas_para_dropar = [
-            'ID_x', 'Convênio_x', 'Produto_x',
-            'Taxa %', 'Prazo', 'Saque%', 'Cartão no saque R$',
-            'Apenas cartão', 'Saque complementar %', 'REFIN %', 'Seguro Diamante', 'Seguro Super Diamante',
-            'Fator Multiplicador', 'Data Atualização', 'Status', 'Taxa Especial', '% Comissao', '_merge', "Vigência"
+            'Nome Tabela', 'Convênio_x', 'Produto_x', 'Taxa %', 'Prazo', 'À vista',
+            'Diferido', 'Data Atualização', 'Status', '_merge'
         ]
 
 
@@ -344,6 +268,9 @@ class AmigozEmprestimoMapper(Bank):
         model["% PMT Pagas"] = "0,00-0,00"
         model["% Taxa"] = "0,00-0,00"
         model["Idade"] = "0-80"
+        model["Base Comissão"] = "LIQUÍDO"
+        model["Val. Base Produção"] = "LIQUÍDO"
+        model["-"] = "%"
         model["% Fator"] = "0,000000000"
         model["% TAC"] = "0,000000"
         model["Val. Teto TAC"] = "0,000000"
