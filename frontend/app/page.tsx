@@ -170,6 +170,7 @@ export default function Home() {
                   >
                     <option value="" disabled>Selecione uma opção...</option>
                     <option value="Amigoz">Amigoz</option>
+                    <option value="Amigoz Emprestimo">Amigoz Emprestimo</option>
                     <option value="BRBRed">BRBRed</option>
                     <option value="Capital Consig">Capital Consig</option>
                     <option value="EmpresteiCard">EmpresteiCard</option>
@@ -181,7 +182,7 @@ export default function Home() {
                     <option value="ParanaBank">ParanaBank</option>
                     <option value="Phtech">Phtech</option>
                     <option value="PresencaBank">PresencaBank</option>
-                    <option value="Sabemi">Sabemi</option>
+                    {/* <option value="Sabemi">Sabemi</option> */}
                     <option value="Safra">Safra</option>
                     <option value="Santander">Santander</option>
                     <option value="TotalCash">TotalCash</option>

@@ -132,8 +132,6 @@ class SafraMapper(Bank):
             "PREF. ": ["CAMPREV", "PREF", "PREF_", "PREF.", "IPREM", "UNICAMP"],
         }
 
-        print(product)
-
         if product in ["AERONAUTICA", "MARINHA", "FGTS", "INSS", "EXERCITO"]:
             return product
 
