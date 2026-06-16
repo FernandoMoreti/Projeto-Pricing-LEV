@@ -182,7 +182,7 @@ export default function Home() {
                     <option value="ParanaBank">ParanaBank</option>
                     <option value="Phtech">Phtech</option>
                     <option value="PresencaBank">PresencaBank</option>
-                    {/* <option value="Sabemi">Sabemi</option> */}
+                    <option value="Sabemi">Sabemi</option>
                     <option value="Safra">Safra</option>
                     <option value="Santander">Santander</option>
                     <option value="TotalCash">TotalCash</option>

@@ -37,12 +37,23 @@ class SabemiMapper(Bank):
                 'Coluna2': 'Id da tabela',
                 'Coluna3': 'comissao',
                 'Coluna4': 'taxa',
-                'Coluna5': 'nome tabela'
+                'Coluna5': 'nome tabela',
+                'Coluna6': 'com',
+                'Coluna7': 'family',
+                'Coluna8': 'base'
             })
 
             df['Aba Origem'] = nome_da_aba
 
-            df = df[['Aba Origem', 'Taxa', 'Id da tabela', 'comissao', 'taxa', 'nome tabela']]
+            if nome_da_aba.upper() == "FUTURO":
+                df['base'] = df['family']
+                df['family'] = "VALOR_QUE_VOCE_QUER"
+
+            colunas_desejadas = ['Aba Origem', 'Taxa', 'Id da tabela', 'comissao', 'taxa', 'nome tabela', 'com', 'family', 'base']
+
+            colunas_existentes = [col for col in colunas_desejadas if col in df.columns]
+
+            df = df[colunas_existentes]
 
             df = df[df["Aba Origem"] != "FATORES DAS TABELAS VARIÁVEIS"]
             df = df[df["Aba Origem"] != "L'ARCA"]
@@ -60,13 +71,13 @@ class SabemiMapper(Bank):
                     type = str(row["Id da tabela"]).strip()
                 if pd.notna(row["nome tabela"]):
                     if row["Aba Origem"] == "RP" and row["nome tabela"] != "Operação e Prazo":
-                        product = "RP - " + type + " - " + " ".join(row["nome tabela"].split(" ")[2:])
+                        product = "RP - " + type + " - " + " ".join(row["nome tabela"].split(" ")[1:])
                     elif row["Aba Origem"] == "RP - CLIENTE NOVO" and row["nome tabela"] != "Operação e Prazo":
-                        product = "RP - CLIENTE NOVO - " + type + " - " + " ".join(row["nome tabela"].split(" ")[2:])
+                        product = "RP - CLIENTE NOVO - " + type + " - " + " ".join(row["nome tabela"].split(" ")[1:])
                     elif row["Aba Origem"] == "FUTURO" and row["nome tabela"] != "Operação e Prazo":
-                        product = "FUTUROPREV - " + type + " - " + " ".join(row["nome tabela"].split(" ")[2:])
+                        product = "FUTURO PREV - " + type + " - " + " ".join(row["nome tabela"].split(" ")[1:])
                     elif row["Aba Origem"] == "SIMPALA" and row["nome tabela"] != "Operação e Prazo":
-                        product = "SIMPALA - " + type + " - " + " ".join(row["nome tabela"].split(" ")[2:])
+                        product = "SIMPALA - " + type + " - " + " ".join(row["nome tabela"].split(" ")[1:])
 
                     if str(row["nome tabela"]).split(" ")[1] in ['ML', 'ME', 'CDV', 'RFN']:
                         ope = operation[str(row["nome tabela"]).split(" ")[1]]
@@ -80,13 +91,15 @@ class SabemiMapper(Bank):
         df_bank = df_bank[df_bank["nome tabela"] != "Operação e Prazo"]
         df_bank = df_bank.dropna(subset=["nome tabela"])
 
+        df_bank["Prazo"] = df_bank["nome tabela"].astype(str).str.split(" ").str[0].str.replace("X", "") + "-" + df_bank["nome tabela"].astype(str).str.split(" ").str[0].str.replace("X", "")
+
         df_work["Produto"] = df_work["Produto"].str.strip()
 
         df_result = pd.merge(
             df_bank,
             df_work,
-            left_on=["Product", "Operation"],
-            right_on=["Produto", "Operação"],
+            left_on=["Product", "Prazo"],
+            right_on=["Produto", "Parc. Atual"],
             how="outer",
             indicator=True
         )
@@ -103,14 +116,12 @@ class SabemiMapper(Bank):
             print(f"Encontrados {len(df_open)} open!")
             print(f"Encontrados {len(df_close)} close!")
 
-        df_open.to_excel("open.xlsx", index=False)
-
         list_of_open_tables = df_open.to_dict(orient="records")
         list_of_close_tables = df_close.to_dict(orient="records")
 
         for index, row in df_matches.iterrows():
 
-            percent = round(convertValues(row["Data"]) * 100, 2)
+            percent = round(convertValues(row["comissao"]) * 100, 2)
             percent_work = convertValues(row["% Comissão"])
 
             if round(percent, 2) != percent_work:
@@ -156,28 +167,28 @@ class SabemiMapper(Bank):
         return result
 
     def get_convenio(self, product):
-        if "-" in product:
-            firstProduct = str(product).upper().split("-")[0].strip()
-        else:
-            firstProduct = product
+
         categorias = {
-            "GOV-": ["GOV", "GOV_", "GOV.", "SPPREV_", "AMA", "PMESP", "PMMG", "IPSEMG", "IPSM", "PM", "POL", "CBMG", "PIAUI", "CEARÁ", "AMPREV_", "IGEPREV_AS_TAXA"],
+            "AERONAUTICA": ["AERO"],
+            "EXERCITO": ["EXÉRCITO"],
+            "MARINHA": ["MARINHA"],
             "FEDERAL SIAPE": ["SIAPE", "SIA"],
+            "GOV-": ["GOV", "GOV_", "GOV.", "SPPREV_", "AMA", "PMESP", "PMMG", "IPSEMG", "IPSM", "PM", "POL", "CBMG", "PIAUI", "CEARÁ", "AMPREV_", "IGEPREV_AS_TAXA"],
             "TJ | ": ["TJ ", "TJ_", "TJ.", "TRT"],
             "PREF. ": ["PREF", "PREF_", "PREF.", "IPREM", "RCC", "IPAM", "IPREF", "COMISSIONADOS"],
         }
 
-        if firstProduct in ["AERONAUTICA", "MARINHA", "FGTS", "INSS", "CLT", "INSSC15"]:
-            return firstProduct
-
-        if "IPMO_RMC_TAXA" in product:
-            return "PREF. OSASCO SP"
-
         for categoria, prefixos in categorias.items():
-            prefixo_encontrado = next((p for p in prefixos if p in firstProduct), None)
+            prefixo_encontrado = next((p for p in prefixos if p in product), None)
             if prefixo_encontrado:
                 convenio = categoria
 
+                if convenio == "AERONAUTICA":
+                    return convenio
+                if convenio == "EXERCITO":
+                    return convenio
+                if convenio == "MARINHA":
+                    return convenio
                 if convenio == "FEDERAL SIAPE":
                     return convenio
 
@@ -202,25 +213,13 @@ class SabemiMapper(Bank):
                     return convenio
         return "CONVENIO DESCONHECIDO"
 
-    def getOperation(self, product):
-        product = str(product).strip()
-
-        for operator in sorted(operation.keys(), key=len, reverse=True):
-            if operator in product:
-                result = operation[operator]
-                break
-            else:
-                result = ""
-
-        return result
-
     def create_open_tables(self, list_of_open_tables, model):
 
         list_of_convert_rows = []
 
         for row in list_of_open_tables:
 
-            product = row["Tabela/Nome do Produto"]
+            product = row["Product"]
             convenio = self.get_convenio(product)
 
             if "-" in convenio:
@@ -231,32 +230,35 @@ class SabemiMapper(Bank):
             family = family_product[agreement]
             group = group_convenio[family]
 
-            percent = convertValues(row["À Vista Empresa"])
+            percent = round(convertValues(row["comissao"]) * 100, 2)
 
-            percent, bonus = self.get_retencao(percent)
-
-            operation = self.getOperation(row["Tipo de Contrato"])
+            operation = row["Operation"]
 
             grades = grade.get(operation, "")
+            try:
+                taxa_numerica = float(str(row["taxa"]).replace(',', '.'))
+                taxa_formatada = f"{(taxa_numerica * 100):.2f}".replace('.', ',')
+            except (ValueError, TypeError):
+                taxa_formatada = "0,00"
 
             new_row = model.copy()
 
             new_row["Operação"] = operation
-            new_row["Produto"] = row["Tabela/Nome do Produto"]
+            new_row["Produto"] = product
             new_row["Família Produto"] = family
             new_row["Grupo Convênio"] = group
             new_row["Convênio"] = convenio
-            new_row["Parc. Atual"] = row["Prazo Final"]
+            new_row["Base Comissão"] = row["base"]
+            new_row["Val. Base Produção"] = row["base"]
+            new_row["Parc. Atual"] = row["Prazo"]
             new_row["% Mínima"] = percent * grades["min"]
             new_row["% Intermediária"] = percent * grades["med"]
             new_row["% Máxima"] = percent * grades["max"]
             new_row["% Comissão"] = percent
             new_row["Vigência"] = datetime.now().strftime("%d/%m/%Y")
+            new_row["Complemento"] = f"{row['Id da tabela']} | TX {taxa_formatada}%"
+            new_row["Id Tabela Banco"] = row["Id da tabela"]
             new_row["Atualizações"] = "INCLUSÃO"
-
-            if bonus != 0:
-                new_row["BONUS VIP"] = "{:.2f}".format(bonus).replace('.', ',') + " | LIQUIDO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
-                new_row["REPASSE BONUS VIP"] = "0,00 | 0,00 | 0,00"
 
             list_of_convert_rows.append(new_row)
 
@@ -277,14 +279,8 @@ class SabemiMapper(Bank):
 
         df = pd.DataFrame(list_of_convert_rows)
 
-        df = df.drop(['Convênio_x', 'Tabela/Nome do Produto', 'Código no Banco',
-            'Id de Vigência', 'Início', 'Fim', 'Prazo Inicial', 'Prazo Final',
-            'Tipo de Contrato', 'Tipo de Formalização', 'Fator', 'Taxa a.m',
-            'Id de Prazo/Faixa', 'Idade Mínima', 'Idade Máxima',
-            'Valor Contrato Inicial', 'Valor Contrato Final',
-            'Valor Contrato Referência', 'Taxa Inicial', 'Taxa Final',
-            'À Vista Empresa', 'Bônus Empresa', 'Diferido Empresa',
-            'À Vista Repasse 1', 'Bônus Repasse 1', 'Diferido Repasse 1', '_merge'], axis=1, errors='ignore')
+        df = df.drop(['Aba Origem', 'Taxa', 'Id da tabela', 'comissao', 'taxa', 'nome tabela',
+            'com', 'family', 'base', 'Product', 'Operation', 'Prazo', '_merge'], axis=1, errors='ignore')
 
         df.columns = df.columns.str.replace('_y', '')
 
@@ -297,9 +293,7 @@ class SabemiMapper(Bank):
 
         for row in list_of_close_open:
 
-            percent = convertValues(row["À Vista Empresa"])
-
-            percent, bonus = self.get_retencao(percent)
+            percent = round(convertValues(row["comissao"]) * 100, 2)
 
             row_close = row.copy()
 
@@ -310,9 +304,7 @@ class SabemiMapper(Bank):
 
             row_open = row.copy()
 
-            product = row["Tabela/Nome do Produto"]
-
-            operation = self.getOperation(row["Tipo de Contrato"])
+            operation = row["Operation"]
 
             grades = grade.get(operation, "")
 
@@ -325,23 +317,13 @@ class SabemiMapper(Bank):
             row_open["% Máxima"] = percent * grades["max"]
             row_open["Atualizações"] = "ALTERAÇÃO"
 
-            if bonus != 0:
-                row_open["BONUS VIP"] = "{:.2f}".format(bonus).replace('.', ',') + " | LIQUIDO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
-                row_open["REPASSE BONUS VIP"] = "0,00 | 0,00 | 0,00"
-
             list_of_convert_open_rows.append(row_open)
 
         df = pd.DataFrame(list_of_convert_close_rows)
         df2 = pd.DataFrame(list_of_convert_open_rows)
 
-        colunas_remover = ['Convênio_x', 'Tabela/Nome do Produto', 'Código no Banco',
-            'Id de Vigência', 'Início', 'Fim', 'Prazo Inicial', 'Prazo Final',
-            'Tipo de Contrato', 'Tipo de Formalização', 'Fator', 'Taxa a.m',
-            'Id de Prazo/Faixa', 'Idade Mínima', 'Idade Máxima',
-            'Valor Contrato Inicial', 'Valor Contrato Final',
-            'Valor Contrato Referência', 'Taxa Inicial', 'Taxa Final',
-            'À Vista Empresa', 'Bônus Empresa', 'Diferido Empresa',
-            'À Vista Repasse 1', 'Bônus Repasse 1', 'Diferido Repasse 1', '_merge']
+        colunas_remover = ['Aba Origem', 'Taxa', 'Id da tabela', 'comissao', 'taxa', 'nome tabela',
+            'com', 'family', 'base', 'Product', 'Operation', 'Prazo', '_merge']
 
         df.columns = df.columns.str.replace('_y', '')
         df2.columns = df.columns.str.replace('_y', '')
@@ -353,20 +335,18 @@ class SabemiMapper(Bank):
 
     def input_standard_values(self, model):
 
-        model["Instituição"] = "KARDBANK"
+        model["Instituição"] = "SABEMI"
         model["Parc. Refin."] = "0-0"
         model["% PMT Pagas"] = "0,00-0,00"
         model["% Taxa"] = "0,00-0,00"
         model["Idade"] = "0-80"
         model["-"] = "%"
-        model["Base Comissão"] = "LIQUÍDO"
-        model["Val. Base Produção"] = "LIQUÍDO"
         model["% Fator"] = "0,000000000"
         model["% TAC"] = "0,000000"
         model["Val. Teto TAC"] = "0,000000"
         model["Faixa Val. Contrato"] = "0,00-100.000,00-LÍQUIDO"
         model["Faixa Val. Seguro"] = "0,00-0,00"
-        model["Venda Digital"] = "SIM"
+        model["Venda Digital"] = "NÃO"
         model["Visualização Restrita"] = "NÃO"
 
         return model

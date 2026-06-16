@@ -1,6 +1,9 @@
 family_product = {
+    "MARINHA": "FORCAS ARMADAS",
+    "EXERCITO": "FORCAS ARMADAS",
+    "AERONAUTICA": "FORCAS ARMADAS",
     "PRIVADO": "CLT",
-    "FEDERAIS": "FEDERAIS",
+    "FEDERAL": "FEDERAIS",
     "FGTS": "FGTS",
     "INSS": "INSS",
     "GOVERNOS": "GOVERNOS",
@@ -9,6 +12,7 @@ family_product = {
 }
 
 group_convenio = {
+    "FORCAS ARMADAS": "FORCAS ARMADAS",
     "CLT": "CLT",
     "FGTS": "FGTS",
     "INSS": "INSS",
