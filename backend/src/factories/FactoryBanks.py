@@ -5,6 +5,7 @@ from ..services.CapitalConsig import CapitalConsigMapper
 from ..services.EmpresteiCard import EmpresteiCardMapper
 from ..services.Evol import EvolMapper
 from ..services.KardBank import KardBankMapper
+from ..services.MeucashCard import MeucashCardMapper
 from ..services.Ole import OleMapper
 from ..services.Sabemi import SabemiMapper
 from ..services.Safra import SafraMapper
@@ -25,6 +26,7 @@ class FactoryBank:
         "empresteicard": EmpresteiCardMapper(),
         "evol": EvolMapper(),
         "kardbank": KardBankMapper(),
+        "meucashcard": MeucashCardMapper(),
         "ole": OleMapper(),
         "pan": PanMapper(),
         "panlafy": PanLafyMapper(),
