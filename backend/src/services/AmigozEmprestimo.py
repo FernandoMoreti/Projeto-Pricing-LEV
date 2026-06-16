@@ -161,7 +161,7 @@ class AmigozEmprestimoMapper(Bank):
 
             grades = grade.get(operation1, "")
 
-            taxa = f"{row["Taxa %"] * 100:.2f}".replace(".", ",")
+            taxa = f"{row['Taxa %'] * 100:.2f}".replace(".", ",")
 
             new_row = model.copy()
 
