@@ -216,7 +216,7 @@ class SantanderMapper(Bank):
             seguro = self.get_seguro(row["descricao_regra"])
 
             codigo_str = str(row["codigo_convenio"]).strip()
-            complement = f"{codigo_str}{seguro}{int(float(row['codigo_regra']))}"
+            complement = f"{int(float(codigo_str[4:]))}{seguro}{int(float(row['codigo_regra']))}"
 
             grades = grade.get(operation, "")
 
