@@ -24,6 +24,8 @@ operation = {
     "Cartao Beneficio - Especial": "CARTÃO",
     "Cartao Consignado": "CARTÃO",
     "Cartao Consignado - Especial": "CARTÃO",
+    "Cartão novo": "CARTÃO",
+    "Cartão novo - Especial": "CARTÃO",
     "Emprestimo": "NOVO",
     "Emprestimo - Especial": "NOVO",
     "Privado": "NOVO",
