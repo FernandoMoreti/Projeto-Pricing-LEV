@@ -187,6 +187,7 @@ export default function Home() {
                     <option value="Safra">Safra</option>
                     <option value="Santander">Santander</option>
                     <option value="TotalCash">TotalCash</option>
+                    <option value="WebCash">WebCash</option>
                   </select>
 
                   <button

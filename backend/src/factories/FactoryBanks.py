@@ -16,6 +16,7 @@ from ..services.ParanaBank import ParanaBankMapper
 from ..services.Phtech import PhtechMapper
 from ..services.PresencaBank import PresencaBankMapper
 from ..services.TotalCash import TotalCashMapper
+from ..services.WebCash import WebCashMapper
 
 class FactoryBank:
     _factoryBanksMapper = {
@@ -37,6 +38,7 @@ class FactoryBank:
         "safra": SafraMapper(),
         "santander": SantanderMapper(),
         "totalcash": TotalCashMapper(),
+        "webcash": WebCashMapper(),
     }
 
     @staticmethod

@@ -4,6 +4,11 @@ grade = {
         "med": 0.95,
         "max": 1,
     },
+    "ADIANTAMENTO SALARIAL": {
+        "min": 0.7,
+        "med": 0.95,
+        "max": 1,
+    },
     "REFIN": {
         "min": 0.7,
         "med": 0.85,
