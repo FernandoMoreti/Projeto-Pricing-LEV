@@ -206,6 +206,8 @@ class PresencaBankMapper(Bank):
 
             grades = grade.get(operation, "")
 
+            valor_tributo = f"{float(tribut):.2f}".replace(".", ",")
+
             new_row = model.copy()
             if agreement in ["INSS", "FEDERAL SIAPE", "CLT"]:
                 new_row["Base Comissão"] = "BRUTO"
@@ -235,10 +237,11 @@ class PresencaBankMapper(Bank):
             new_row["Id Tabela Banco"] = row["Tabela Id"]
             new_row["Atualizações"] = "INCLUSÃO"
             new_row["Val. Base Produção"] = new_row["Base Comissão"]
-            new_row["RESERVA TRIBUTO"] = f"{str(tribut)} | LIQUIDO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
+            new_row["RESERVA TRIBUTO"] = f"{valor_tributo} | LIQUIDO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
             new_row["REPASSE RESERVA TRIBUTO"] = "0,00 | 0,00 | 0,00"
             if bonus != 0:
-                new_row["BONUS VIP"] = f"{str(bonus)} | LIQUIDO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
+                valor_bonus = f"{float(bonus):.2f}".replace(".", ",")
+                new_row["BONUS VIP"] = f"{valor_bonus} | LIQUIDO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
                 new_row["REPASSE BONUS VIP"] = "0,00 | 0,00 | 0,00"
 
             list_of_convert_rows.append(new_row)
@@ -304,6 +307,8 @@ class PresencaBankMapper(Bank):
 
             grades = grade.get(operation, "")
 
+            valor_tributo = f"{float(tribut):.2f}".replace(".", ",")
+
             row_open["Término"] = ''
             row_open["Vigência"] = datetime.now().strftime("%d/%m/%Y")
             row_open["ID"] = ''
@@ -312,10 +317,11 @@ class PresencaBankMapper(Bank):
             row_open["% Mínima"] = percent * grades["min"]
             row_open["% Intermediária"] = percent * grades["med"]
             row_open["% Máxima"] = percent * grades["max"]
-            row_open["RESERVA TRIBUTO"] = f"{str(tribut)} | LIQUIDO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
+            row_open["RESERVA TRIBUTO"] = f"{valor_tributo} | LIQUIDO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
             row_open["REPASSE RESERVA TRIBUTO"] = "0,00 | 0,00 | 0,00"
             if bonus != 0:
-                row_open["BONUS VIP"] = f"{str(bonus)} | LIQUIDO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
+                valor_bonus = f"{float(bonus):.2f}".replace(".", ",")
+                row_open["BONUS VIP"] = f"{valor_bonus} | LIQUIDO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
                 row_open["REPASSE BONUS VIP"] = "0,00 | 0,00 | 0,00"
             row_open["Atualizações"] = "ALTERAÇÃO"
 
