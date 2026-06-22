@@ -23,10 +23,9 @@ class EmpresteiCardMapper(Bank):
 
         if " - " in valor_taxa:
             parte = valor_taxa.split(" - ")[0]
-            taxa_formatada = f"{parte}".replace(".", ",")
-            print(taxa_formatada)
-            
-            row1["Taxa"] = f"{taxa_formatada}-{taxa_formatada}"
+            taxa_formatada = float(f"{parte}".replace(",", "."))
+
+            row1["Taxa"] = f"{taxa_formatada:.2f}-{taxa_formatada:.2f}".replace(".", ",")
             row1["Revision"] = ""
         else:
             valor_float = float(valor_taxa)
@@ -227,6 +226,9 @@ class EmpresteiCardMapper(Bank):
             group = group_convenio[family]
 
             percent = convertValues(row["Percent"])
+            valor_str = row["Taxa"].split("-")[0]
+
+            valor_float = float(valor_str.replace(',', '.'))
 
             operation = "CARTÃO"
 
@@ -246,7 +248,7 @@ class EmpresteiCardMapper(Bank):
             new_row["% Comissão"] = percent
             new_row["% Taxa"] = row["Taxa"]
             new_row["Vigência"] = datetime.now().strftime("%d/%m/%Y")
-            new_row["Complemento"] = "TX " + row["Taxa"].split("-")[0] + "%"
+            new_row["Complemento"] = f"TX {valor_float:.2f}%".replace('.', ',')
             new_row["Revision"] = row["Revision"]
             new_row["Atualizações"] = "INCLUSÃO"
 
@@ -401,6 +403,7 @@ class EmpresteiCardMapper(Bank):
 
             df_final = self.paint_row(df_final, "Revision")
             print("Processo concluído!")
+            df_final.to_excel("abs.xlsx", index=False)
             return df_final
 
         except Exception as e:
