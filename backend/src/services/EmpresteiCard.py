@@ -400,7 +400,6 @@ class EmpresteiCardMapper(Bank):
             print(f"Sucesso! Total de linhas: {len(df_final)}")
 
             df_final = self.paint_row(df_final, "Revision")
-            df_final = df_final.drop(columns=['Revision'])
             print("Processo concluído!")
             return df_final
 
