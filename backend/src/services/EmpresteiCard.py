@@ -18,7 +18,22 @@ class EmpresteiCardMapper(Bank):
 
         row1["Prazo"] = prazo
         row1["Percent"] = row[percent]
-        row1["Taxa"] = f"{float(row[taxa]):.2f}".replace(".", ",") + "-" + f"{float(row[taxa]):.2f}".replace(".", ",")
+
+        valor_taxa = str(row[taxa])
+
+        if " - " in valor_taxa:
+            parte = valor_taxa.split(" - ")[0]
+            taxa_formatada = f"{parte}".replace(".", ",")
+            print(taxa_formatada)
+            
+            row1["Taxa"] = f"{taxa_formatada}-{taxa_formatada}"
+            row1["Revision"] = ""
+        else:
+            valor_float = float(valor_taxa)
+            taxa_formatada = f"{valor_float:.2f}".replace(".", ",")
+            
+            row1["Taxa"] = f"{taxa_formatada}-{taxa_formatada}"
+            row1["Revision"] = "False"
 
         return row1
 
@@ -232,6 +247,8 @@ class EmpresteiCardMapper(Bank):
             new_row["% Taxa"] = row["Taxa"]
             new_row["Vigência"] = datetime.now().strftime("%d/%m/%Y")
             new_row["Complemento"] = "TX " + row["Taxa"].split("-")[0] + "%"
+            new_row["Revision"] = row["Revision"]
+            new_row["Atualizações"] = "INCLUSÃO"
 
             list_of_convert_rows.append(new_row)
 
@@ -248,6 +265,7 @@ class EmpresteiCardMapper(Bank):
             row["Término"] = (datetime.now() - timedelta(days=1)).strftime("%d/%m/%Y")
             row["Atualizações"] = "ENCERRAMENTO"
             row["Val. Base Produção"] = row["Base Comissão"]
+            row["Revision"] = "False"
 
             list_of_convert_rows.append(row)
 
@@ -381,6 +399,8 @@ class EmpresteiCardMapper(Bank):
             df_final = pd.concat(dfs_para_juntar, axis=0, ignore_index=True, sort=False)
             print(f"Sucesso! Total de linhas: {len(df_final)}")
 
+            df_final = self.paint_row(df_final, "Revision")
+            df_final = df_final.drop(columns=['Revision'])
             print("Processo concluído!")
             return df_final
 
