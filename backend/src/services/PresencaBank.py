@@ -52,12 +52,12 @@ class PresencaBankMapper(Bank):
             percent = convertValues(row["Comissão"])
             percent_work = convertValues(row["% Comissão"])
 
-            percent, bonus, tribut = self.get_retencao(percent)
-
             if "PRIVADO CLT" in row["Tabela Nome"]:
                 tribut = 0.5
-                bonus = 1
-                percent = percent - 1.5
+                bonus = 0.5
+                percent = percent - 1
+            else:
+                percent, bonus, tribut = self.get_retencao(percent)
 
             row["bonus"] = bonus
             row["tributo"] = tribut
@@ -77,7 +77,7 @@ class PresencaBankMapper(Bank):
         elif percent >= 25 and percent <= 40:
             bonus = 1
 
-        if percent >= 1 and percent < 3:
+        if percent >= 1 and percent < 4:
             tribut = 0.5
         elif percent >= 4 and percent < 14:
             tribut = 1
@@ -190,12 +190,12 @@ class PresencaBankMapper(Bank):
 
             percent = convertValues(row["Comissão"])
 
-            percent, bonus, tribut = self.get_retencao(percent)
-
             if group == "CLT":
                 tribut = 0.5
-                bonus = 1
-                percent = percent - 1.5
+                bonus = 0.5
+                percent = percent - 1
+            else:
+                percent, bonus, tribut = self.get_retencao(percent)
 
             operation = row["Tipo Crédito"]
 
@@ -279,6 +279,13 @@ class PresencaBankMapper(Bank):
 
             percent = convertValues(row["Comissão"])
 
+            if  row["Grupo Convênio"] == "CLT":
+                tribut = 0.5
+                bonus = 0.5
+                percent = percent - 1
+            else:
+                percent, bonus, tribut = self.get_retencao(percent)
+
             row_close = row.copy()
 
             row_close["Término"] = (datetime.now() - timedelta(days=1)).strftime("%d/%m/%Y")
@@ -305,6 +312,11 @@ class PresencaBankMapper(Bank):
             row_open["% Mínima"] = percent * grades["min"]
             row_open["% Intermediária"] = percent * grades["med"]
             row_open["% Máxima"] = percent * grades["max"]
+            row_open["RESERVA TRIBUTO"] = f"{str(tribut)} | LIQUIDO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
+            row_open["REPASSE RESERVA TRIBUTO"] = "0,00 | 0,00 | 0,00"
+            if bonus != 0:
+                row_open["BONUS VIP"] = f"{str(bonus)} | LIQUIDO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
+                row_open["REPASSE BONUS VIP"] = "0,00 | 0,00 | 0,00"
             row_open["Atualizações"] = "ALTERAÇÃO"
 
             list_of_convert_open_rows.append(row_open)
