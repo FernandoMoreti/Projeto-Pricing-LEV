@@ -80,7 +80,7 @@ class EmpresteiCardMapper(Bank):
                 row = self.create_row("Taxa Operação.1", "Unnamed: 11", "48-59", row)
                 novas_linhas.append(row)
             if pd.notna(row["Unnamed: 12"]):
-                row = self.create_row("Taxa Operação.1", "Unnamed: 11", "36-47", row)
+                row = self.create_row("Taxa Operação.1", "Unnamed: 12", "36-47", row)
                 novas_linhas.append(row)
             if pd.notna(row["Qtd Parcelas .1"]):
                 row = self.create_row("Taxa Operação.2", "Qtd Parcelas .1", "6-6", row)
