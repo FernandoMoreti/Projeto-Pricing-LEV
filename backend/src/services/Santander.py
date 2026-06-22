@@ -9,7 +9,16 @@ from ..config.grade import grade
 class SantanderMapper(Bank):
 
     def read_archive(self, file):
-        df = pd.read_excel(io.BytesIO(file), sheet_name="Condições_comerciais")
+        file_buffer = io.BytesIO(file)
+        sheet_names = ["Condições Comerciais", "Condições_comerciais"]
+
+        df = None
+        for name in sheet_names:
+            try:
+                df = pd.read_excel(file_buffer, sheet_name=name)
+                break
+            except ValueError:
+                continue
         return df
 
     def get_retencao(self, value):
