@@ -38,8 +38,8 @@ class CapitalConsigMapper(Bank):
         df_result = pd.merge(
             df_bank,
             df_work,
-            left_on=["CÓD  ", "NOMENCLATURA FUNÇÃO", "prazo_formatado"],
-            right_on=["Id Tabela Banco", "Produto", "Parc. Atual"],
+            left_on=["CÓD  ", "prazo_formatado"],
+            right_on=["Id Tabela Banco", "Parc. Atual"],
             how="outer",
             indicator=True
         )
