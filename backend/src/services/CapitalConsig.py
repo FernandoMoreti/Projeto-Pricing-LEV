@@ -108,6 +108,8 @@ class CapitalConsigMapper(Bank):
         state = remover_acentos(state)
 
         if len(state) == 2:
+            if state == "CB":
+                return "SP"
             return state
 
         uf = states.get(state, "")
