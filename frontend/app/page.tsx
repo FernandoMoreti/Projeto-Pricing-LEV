@@ -61,6 +61,9 @@ export default function Home() {
 
       setMessage("Arquivo com as Alterações gerado com sucesso");
       setIsSuccess(true);
+      setFileWorkbank(null)
+      setFileBank(null)
+      setBank("")
     } catch (err) {
       setMessage("Falha na comunicação com o serviço de fila.");
       setIsSuccess(false);
