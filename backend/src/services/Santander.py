@@ -238,7 +238,7 @@ class SantanderMapper(Bank):
             if operation == "PORTABILIDADE":
                 new_row["Base Comissão"] = "BRUTO"
             else:
-                new_row["Base Comissão"] = "LIQUÍDO"
+                new_row["Base Comissão"] = "LÍQUIDO"
 
             if convenio == 'PREF. Sem convenio ' or convenio == 'TJ | ':
                 new_row["Convênio"] = ''
@@ -253,6 +253,7 @@ class SantanderMapper(Bank):
             new_row["Família Produto"] = family
             new_row["Grupo Convênio"] = group
             new_row["Operação"] = operation
+            new_row["Val. Base Produção"] = new_row["Base Comissão"]
             new_row["Parc. Atual"] = row["faixa_parcela"]
             new_row["% Mínima"] = percent * grades["min"]
             new_row["% Intermediária"] = percent * grades["med"]
@@ -346,7 +347,6 @@ class SantanderMapper(Bank):
         model["Faixa Val. Seguro"] = "0,00-0,00"
         model["Venda Digital"] = "SIM"
         model["Visualização Restrita"] = "NÃO"
-        model["Val. Base Produção"] = "LÍQUIDO"
 
         return model
 
