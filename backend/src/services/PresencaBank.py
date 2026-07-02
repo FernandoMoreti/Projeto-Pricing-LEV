@@ -212,7 +212,7 @@ class PresencaBankMapper(Bank):
             if agreement in ["INSS", "FEDERAL SIAPE", "CLT"]:
                 new_row["Base Comissão"] = "BRUTO"
             else:
-                new_row["Base Comissão"] = "LIQUÍDO"
+                new_row["Base Comissão"] = "LÍQUIDO"
 
             limite_min = str(row["Limite Operacional Mínimo"]).replace("R$", "").strip()
             limite_max = str(row["Limite Operacional Máximo"]).replace("R$", "").strip()

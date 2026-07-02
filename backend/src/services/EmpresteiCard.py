@@ -30,7 +30,7 @@ class EmpresteiCardMapper(Bank):
         else:
             valor_float = float(valor_taxa)
             taxa_formatada = f"{valor_float:.2f}".replace(".", ",")
-            
+
             row1["Taxa"] = f"{taxa_formatada}-{taxa_formatada}"
             row1["Revision"] = "False"
 
@@ -344,7 +344,7 @@ class EmpresteiCardMapper(Bank):
         model["% PMT Pagas"] = "0,00-0,00"
         model["Idade"] = "0-80"
         model["-"] = "%"
-        model["Base Comissão"] = "LIQUÍDO"
+        model["Base Comissão"] = "LÍQUIDO"
         model["% Fator"] = "0,000000000"
         model["% TAC"] = "0,000000"
         model["Val. Teto TAC"] = "0,000000"
@@ -352,7 +352,7 @@ class EmpresteiCardMapper(Bank):
         model["Faixa Val. Seguro"] = "0,00-0,00"
         model["Venda Digital"] = "SIM"
         model["Visualização Restrita"] = "NÃO"
-        model["Val. Base Produção"] = "LIQUÍDO"
+        model["Val. Base Produção"] = "LÍQUIDO"
 
         return model
 

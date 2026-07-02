@@ -42,7 +42,7 @@ class EvolMapper(Bank):
             if "Bruto" in str(row["Tipo Comissão"]):
                 sufix = "BRUTO"
             else:
-                sufix = "LIQUÍDO"
+                sufix = "LÍQUIDO"
 
             value = str(row["Valor Inicial"]) + "-" + str(row["Valor Final"])
             faixa = formatar_faixa_valores(value)
