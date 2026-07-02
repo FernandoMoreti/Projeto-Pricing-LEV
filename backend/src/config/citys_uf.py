@@ -5292,9 +5292,11 @@ citys_uf = {
     "UEPB": "PB",
     "PBPREV": "PB",
     "IPMDC": "RJ",
-    "ESP": "ES"
+    "ESP": "ES",
+    "MARANHAO": "MA"
 }
 citys = {
+    "MARANHAO": "MARANHAO",
     "PINDARE MIRIM": "PINDARE MIRIM",
     "PALMAS": "PALMAS",
     "ITU": "ITU",
