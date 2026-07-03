@@ -44,6 +44,9 @@ class EmpresteiCardMapper(Bank):
 
         for index, row in df_bank.iterrows():
 
+            if "Suspenso" in str(row["CONVÊNIOS "]):
+                continue
+
             if row["CONVÊNIOS "] == "CANOAS PREV - RS":
                 row["CONVÊNIOS "] = "CANOAS PREV. - CARTAO"
             elif row["CONVÊNIOS "] == "GOIAS (GOV.)":
