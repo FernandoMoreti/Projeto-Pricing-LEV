@@ -1,7 +1,7 @@
 from ..services.Amigoz import AmigozMapper
 from ..services.AmigozEmprestimo import AmigozEmprestimoMapper
 from ..services.BrbRed import BRBRedMapper
-from ..services.CapitalConsig import CapitalConsigMapper
+from ..services.AgoraConsig import AgoraConsigMapper
 from ..services.EmpresteiCard import EmpresteiCardMapper
 from ..services.Evol import EvolMapper
 from ..services.KardBank import KardBankMapper
@@ -23,7 +23,7 @@ class FactoryBank:
         "amigoz": AmigozMapper(),
         "amigozemprestimo": AmigozEmprestimoMapper(),
         "brbred": BRBRedMapper(),
-        "capitalconsig": CapitalConsigMapper(),
+        "agoraconsig": AgoraConsigMapper(),
         "empresteicard": EmpresteiCardMapper(),
         "evol": EvolMapper(),
         "kardbank": KardBankMapper(),

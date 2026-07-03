@@ -3,11 +3,11 @@ from datetime import datetime, timedelta
 import pandas as pd
 import io
 from ..utils.utils import convertValues, remover_acentos
-from ..config.bank.CapitalConsigVariables import family_product, group_convenio
+from ..config.bank.AgoraConsigVariables import family_product, group_convenio
 from ..config.citys_uf import citys, citys_uf, states
 from ..config.grade import grade
 
-class CapitalConsigMapper(Bank):
+class AgoraConsigMapper(Bank):
 
     def read_archive(self, file):
         df = pd.read_excel(io.BytesIO(file))
@@ -266,7 +266,7 @@ class CapitalConsigMapper(Bank):
 
     def input_standard_values(self, model):
 
-        model["Instituição"] = "CAPITAL CONSIG"
+        model["Instituição"] = "AGORA CONSIG"
         model["Parc. Refin."] = "0-0"
         model["% PMT Pagas"] = "0,00-0,00"
         model["% Taxa"] = "0,00-0,00"
