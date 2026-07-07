@@ -51,6 +51,8 @@ class EmpresteiCardMapper(Bank):
                 row["CONVÊNIOS "] = "CANOAS PREV. - CARTAO"
             elif row["CONVÊNIOS "] == "GOIAS (GOV.)":
                 row["CONVÊNIOS "] = "GOV. GO - CARTAO"
+            elif row["CONVÊNIOS "] == "MARANHÃO (GOV.) - MA":
+                row["CONVÊNIOS "] = "GOV. MA - CARTAO"
             else:
                 row["CONVÊNIOS "] = "PREF. " + remover_acentos(row["CONVÊNIOS "].split("-")[0]) + " - CARTAO"
 
@@ -168,7 +170,7 @@ class EmpresteiCardMapper(Bank):
     def get_convenio(self, product):
 
         categorias = {
-            "GOV-": ["GOVERNO", "POLÍCIA", "POLICIA", "BOMBEIROS", "DEFENSORIA", "AMAZONPREV", "AMAZONPREV-AM", "IPER", "SPPREV", "IPSM"],
+            "GOV-": ["GOVERNO", "GOV", "POLÍCIA", "POLICIA", "BOMBEIROS", "DEFENSORIA", "AMAZONPREV", "AMAZONPREV-AM", "IPER", "SPPREV", "IPSM"],
             "FEDERAL SIAPE": ["SIAPE", "SIA"],
             "PREF. ": ["PREF", "PREFEITURA", "MARINGAPREV", "MANAUSPREV", "JFPREV", "ISSA", "IPVV", "IPSEM", "IPSA", "IPREM", "IPMO", "IPMC", "CAXIASPREV", "CAAPSML", "PREVISO"],
             "TJ | ": ["TRIBUNAL", "TJ", "TJ."],
