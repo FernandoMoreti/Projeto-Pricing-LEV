@@ -352,7 +352,6 @@ class PanMapper(Bank):
             product = row["Empregador"]
             convenio = self.get_convenio(product)
 
-
             if "-" in convenio:
                 agreement = convenio.split("-")[0].strip()
             else:
@@ -361,9 +360,16 @@ class PanMapper(Bank):
             family = family_product[agreement]
             group = group_convenio[family]
 
-            percent = convertValues(row["Flat"])
+            percent = row["Flat"]
+            if percent == "-" or percent == 0:
+                continue
+
+            percent = convertValues(percent)
 
             operation = row["Operação"].strip()
+
+            if operation == "":
+                operation = "REFIN"
 
             if (operation == "CARTÃO") or (operation == "SAQUE COMPL."):
                 percent = percent * 100
