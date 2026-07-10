@@ -193,6 +193,7 @@ class SafraMapper(Bank):
                 new_row["Operação"] = row["Produto_x"]
 
             operation = new_row["Operação"]
+
             grades = grade.get(operation, "")
 
             if diferido != "0,00":
@@ -210,11 +211,10 @@ class SafraMapper(Bank):
             new_row["% Máxima"] = percent * grades["max"]
             new_row["% Comissão"] = percent
             new_row["Vigência"] = datetime.now().strftime("%d/%m/%Y")
-            new_row["Complemento"] = int(row["Id Tabela Nova"])
-            new_row["Id Tabela Banco"] = int(row["Id Tabela Nova"])
+            new_row["Complemento"] = row["Id Tabela Nova"]
+            new_row["Id Tabela Banco"] = row["Id Tabela Nova"]
             new_row["Faixa Val. Contrato"] = f"{tkt_min}-{tkt_max}-LÍQUIDO"
             new_row["Atualizações"] = "INCLUSÃO"
-
 
             list_of_convert_rows.append(new_row)
 
