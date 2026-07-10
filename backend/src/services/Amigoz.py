@@ -141,7 +141,7 @@ class AmigozMapper(Bank):
         categorias = {
             "GOV-": ["GOVERNO", "POLÍCIA", "POLICIA", "BOMBEIROS", "DEFENSORIA", "AMAZONPREV", "AMAZONPREV-AM", "IPER", "SPPREV", "IPSM"],
             "FEDERAL SIAPE": ["SIAPE", "SIA"],
-            "PREF. ": ["PREF", "PREFEITURA", "MARINGAPREV", "MANAUSPREV", "JFPREV", "ISSA", "IPVV", "IPSEM", "IPSA", "IPREM", "IPMO", "IPMC", "CAXIASPREV", "CAAPSML", "PREVISO", "IPREV"],
+            "PREF. ": ["PREF", "PREFEITURA", "MARINGAPREV", "MANAUSPREV", "JFPREV", "ISSA", "IPVV", "IPSEM", "IPSA", "IPREM", "IPMO", "IPMC", "CAXIASPREV", "PREV.", "CAAPSML", "PREVISO", "IPREV"],
             "TJ | ": ["TRIBUNAL", "TJ", "TJ."],
         }
 
@@ -189,7 +189,9 @@ class AmigozMapper(Bank):
         for row in list_of_open_tables:
 
             product = row["Convênio_x"]
+            print(product)
             convenio = self.get_convenio(product)
+            print(convenio)
 
             if "-" in convenio:
                 agreement = convenio.split("-")[0].strip()
