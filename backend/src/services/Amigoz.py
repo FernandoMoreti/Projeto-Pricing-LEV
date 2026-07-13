@@ -18,9 +18,14 @@ class AmigozMapper(Bank):
         novas_linhas = []
         actual_convenio = ""
 
+        max_prazos = df_bank.groupby("ID")["Prazo"].max().to_dict()
+
         for index, row in df_bank.iterrows():
             if row["Produto"] == "Cartão Consignado" or row["Produto"] == "Cartão Benefício":
-                convenio_formatado = (row["Convênio"] + ' - ' + row["Produto"]).upper()
+                if row["Produto"] in row["Convênio"]:
+                    convenio_formatado = row["Convênio"].upper()
+                else:
+                    convenio_formatado = (row["Convênio"] + ' - ' + row["Produto"]).upper()
                 row["Convênio"] = convenio_formatado
                 row["Prazo"] = str(row["Prazo"]) + '-' + str(row["Prazo"])
                 taxa_formatada = f"{row['Taxa %']:.2f}".replace('.', ',')
@@ -41,15 +46,19 @@ class AmigozMapper(Bank):
                 row_saque_seguro["% Comissao"] = row["Saque complementar %"] * 100
                 row_saque_seguro["Taxa %"] = row_saque_seguro["Taxa %"] + ' - COM SEGURO'
 
-                if row["Apenas cartão"] != 0 and convenio_formatado.strip() != actual_convenio.strip():
+                concat = str(row["ID"]) + "-" + row["Produto"]
+
+                if row["Apenas cartão"] != 0 and concat.strip() != actual_convenio.strip():
+                    id_atual = row["ID"]
+                    n = max_prazos.get(id_atual, 0)
                     temp = row["Convênio"]
                     row["Produto"] = "CARTÃO"
                     row["Convênio"] = row["Convênio"] + ' - PLASTICO'
                     row["% Comissao"] = 0
                     row_plastico = row.copy()
-                    row_plastico["Prazo"] = '0-1'
+                    row_plastico["Prazo"] = f'0-{n}'
                     novas_linhas.append(row_plastico)
-                    actual_convenio = convenio_formatado
+                    actual_convenio = concat
 
                 novas_linhas.append(row_cartao)
                 novas_linhas.append(row_cartao_seguro)
@@ -62,9 +71,9 @@ class AmigozMapper(Bank):
 
         df_work["Produto"] = df_work["Produto"].str.strip()
 
-        exclude_list = "CELETISTAS|CELET|LEI 500|TEMP C/DATA FIM|TEMPORARIOS"
+        # exclude_list = "CELETISTAS|CELET|LEI 500|TEMP C/DATA FIM|TEMPORARIOS"
 
-        df_work = df_work[~df_work["Produto"].str.contains(exclude_list, case=False, na=False)]
+        # df_work = df_work[~df_work["Produto"].str.contains(exclude_list, case=False, na=False)]
 
         df_bank = df_bank[df_bank["Status"] != "Bloqueado"]
 
@@ -80,6 +89,8 @@ class AmigozMapper(Bank):
         df_open = df_result[df_result["_merge"] == "left_only"]
         df_close = df_result[df_result["_merge"] == "right_only"]
         df_matches = df_result[df_result["_merge"] == "both"]
+        # df_matches.to_excel("match.xlsx", index=False)
+        # df_close.to_excel("close.xlsx", index=False)
         list_to_close_and_open = []
         list_of_open_tables = []
         list_of_close_tables = []
@@ -189,9 +200,7 @@ class AmigozMapper(Bank):
         for row in list_of_open_tables:
 
             product = row["Convênio_x"]
-            print(product)
             convenio = self.get_convenio(product)
-            print(convenio)
 
             if "-" in convenio:
                 agreement = convenio.split("-")[0].strip()
