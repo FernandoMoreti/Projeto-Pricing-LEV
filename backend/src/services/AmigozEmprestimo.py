@@ -40,7 +40,7 @@ class AmigozEmprestimoMapper(Bank):
             print(f"Encontrados {len(df_matches)} correspondências!")
             print(f"Encontrados {len(df_open)} open!")
             print(f"Encontrados {len(df_close)} close!")
-        
+
         list_of_open_tables = df_open.to_dict(orient="records")
         list_of_close_tables = df_close.to_dict(orient="records")
 

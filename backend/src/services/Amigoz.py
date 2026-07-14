@@ -37,6 +37,7 @@ class AmigozMapper(Bank):
                 row["Convênio"] = convenio_formatado
                 row["Prazo"] = str(row["Prazo"]) + '-' + str(row["Prazo"])
                 taxa_formatada = f"{row['Taxa %']:.2f}".replace('.', ',')
+                row["Taxa Especial"] = taxa_formatada + "-" + taxa_formatada
                 row["Taxa %"] = str(row["ID"]).strip().replace("-", " - ").replace("  -  ", " - ") + ' | TX ' + taxa_formatada + '%'
 
                 if justSaque == False:
@@ -48,19 +49,18 @@ class AmigozMapper(Bank):
                     row_saque["% Comissao"] = row["Saque complementar %"] * 100
                     row_cartao_seguro = row.copy()
                     row_cartao_seguro["Produto"] = "CARTÃO"
-                    row_cartao_seguro["% Comissao"] = row["Saque complementar %"] * 100
+                    row_cartao_seguro["% Comissao"] = row["Saque%"] * 100
                     row_cartao_seguro["Taxa %"] = row_cartao_seguro["Taxa %"] + ' - COM SEGURO'
                     row_saque_seguro = row.copy()
                     row_saque_seguro["Produto"] = "SAQUE COMPL."
                     row_saque_seguro["% Comissao"] = row["Saque complementar %"] * 100
                     row_saque_seguro["Taxa %"] = row_saque_seguro["Taxa %"] + ' - COM SEGURO'
 
-                    concat = str(row["ID"]) + "-" + row["Produto"]
+                    concat = str(row["ID"]) + "-" + row["Convênio"]
 
                     if concat.strip() != actual_convenio.strip():
                         id_atual = row["ID"]
                         n = max_prazos.get(id_atual, 0)
-                        temp = row["Convênio"]
                         row["Produto"] = "CARTÃO"
                         row["Convênio"] = row["Convênio"] + ' - PLASTICO'
                         row["% Comissao"] = 0
@@ -73,7 +73,6 @@ class AmigozMapper(Bank):
                     novas_linhas.append(row_cartao_seguro)
                     novas_linhas.append(row_saque)
                     novas_linhas.append(row_saque_seguro)
-                    actual_convenio = temp
                 else:
                     row_saque = row.copy()
                     row_saque["Produto"] = "SAQUE COMPL."
@@ -165,7 +164,7 @@ class AmigozMapper(Bank):
         categorias = {
             "GOV-": ["GOVERNO", "POLÍCIA", "POLICIA", "BOMBEIROS", "DEFENSORIA", "AMAZONPREV", "AMAZONPREV-AM", "IPER", "SPPREV", "IPSM"],
             "FEDERAL SIAPE": ["SIAPE", "SIA"],
-            "PREF. ": ["PREF", "PREFEITURA", "MARINGAPREV", "MANAUSPREV", "JFPREV", "ISSA", "IPVV", "IPSEM", "IPSA", "IPREM", "IPMO", "IPMC", "CAXIASPREV", "PREV.", "CAAPSML", "PREVISO", "IPREV"],
+            "PREF. ": ["PREF", "PREVINI", "PREFEITURA", "MARINGAPREV", "MANAUSPREV", "JFPREV", "ISSA", "IPVV", "IPSEM", "IPSA", "IPREM", "IPMO", "IPMC", "CAXIASPREV", "PREV.", "CAAPSML", "PREVISO", "IPREV"],
             "TJ | ": ["TRIBUNAL", "TJ", "TJ."],
         }
 
@@ -236,6 +235,7 @@ class AmigozMapper(Bank):
             new_row["Família Produto"] = family
             new_row["Grupo Convênio"] = group
             new_row["Convênio"] = convenio
+            new_row["% Taxa"] = row["Taxa Especial"]
             new_row["Parc. Atual"] = row["Prazo"]
             new_row["% Mínima"] = percent * grades["min"]
             new_row["% Intermediária"] = percent * grades["med"]
@@ -366,7 +366,6 @@ class AmigozMapper(Bank):
         model["Instituição"] = "AMIGOZ"
         model["Parc. Refin."] = "0-0"
         model["% PMT Pagas"] = "0,00-0,00"
-        model["% Taxa"] = "0,00-0,00"
         model["Idade"] = "0-80"
         model["% Fator"] = "0,000000000"
         model["% TAC"] = "0,000000"
