@@ -48,7 +48,7 @@ class AmigozMapper(Bank):
 
                 concat = str(row["ID"]) + "-" + row["Produto"]
 
-                if row["Apenas cartão"] != 0 and concat.strip() != actual_convenio.strip():
+                if concat.strip() != actual_convenio.strip():
                     id_atual = row["ID"]
                     n = max_prazos.get(id_atual, 0)
                     temp = row["Convênio"]
@@ -70,6 +70,7 @@ class AmigozMapper(Bank):
             df_bank = pd.DataFrame(novas_linhas)
 
         df_work["Produto"] = df_work["Produto"].str.strip()
+        df_work = df_work[df_work["Operação"] != "NOVO"]
 
         # exclude_list = "CELETISTAS|CELET|LEI 500|TEMP C/DATA FIM|TEMPORARIOS"
 
@@ -89,8 +90,6 @@ class AmigozMapper(Bank):
         df_open = df_result[df_result["_merge"] == "left_only"]
         df_close = df_result[df_result["_merge"] == "right_only"]
         df_matches = df_result[df_result["_merge"] == "both"]
-        # df_matches.to_excel("match.xlsx", index=False)
-        # df_close.to_excel("close.xlsx", index=False)
         list_to_close_and_open = []
         list_of_open_tables = []
         list_of_close_tables = []
@@ -410,6 +409,7 @@ class AmigozMapper(Bank):
             print(f"Sucesso! Total de linhas: {len(df_final)}")
 
             print("Processo concluído!")
+            df_final.to_excel("abd.xlsx", index=False)
             return df_final
 
         except Exception as e:
