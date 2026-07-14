@@ -18,9 +18,17 @@ class AmigozMapper(Bank):
         novas_linhas = []
         actual_convenio = ""
 
+        df_bank = df_bank[df_bank["Status"] != "Bloqueado"]
+
         max_prazos = df_bank.groupby("ID")["Prazo"].max().to_dict()
 
         for index, row in df_bank.iterrows():
+
+            justSaque = False
+
+            if row["Status"] == "Bloqueado - Saque autorizado e Cartão / Ativo - Refinanciamento e Saque complementar":
+                justSaque = True
+
             if row["Produto"] == "Cartão Consignado" or row["Produto"] == "Cartão Benefício":
                 if row["Produto"] in row["Convênio"]:
                     convenio_formatado = row["Convênio"].upper()
@@ -31,40 +39,47 @@ class AmigozMapper(Bank):
                 taxa_formatada = f"{row['Taxa %']:.2f}".replace('.', ',')
                 row["Taxa %"] = str(row["ID"]).strip().replace("-", " - ").replace("  -  ", " - ") + ' | TX ' + taxa_formatada + '%'
 
-                row_cartao = row.copy()
-                row_cartao["Produto"] = "CARTÃO"
-                row_cartao["% Comissao"] = row["Saque%"] * 100
-                row_saque = row.copy()
-                row_saque["Produto"] = "SAQUE COMPL."
-                row_saque["% Comissao"] = row["Saque complementar %"] * 100
-                row_cartao_seguro = row.copy()
-                row_cartao_seguro["Produto"] = "CARTÃO"
-                row_cartao_seguro["% Comissao"] = row["Saque complementar %"] * 100
-                row_cartao_seguro["Taxa %"] = row_cartao_seguro["Taxa %"] + ' - COM SEGURO'
-                row_saque_seguro = row.copy()
-                row_saque_seguro["Produto"] = "SAQUE COMPL."
-                row_saque_seguro["% Comissao"] = row["Saque complementar %"] * 100
-                row_saque_seguro["Taxa %"] = row_saque_seguro["Taxa %"] + ' - COM SEGURO'
+                if justSaque == False:
+                    row_cartao = row.copy()
+                    row_cartao["Produto"] = "CARTÃO"
+                    row_cartao["% Comissao"] = row["Saque%"] * 100
+                    row_saque = row.copy()
+                    row_saque["Produto"] = "SAQUE COMPL."
+                    row_saque["% Comissao"] = row["Saque complementar %"] * 100
+                    row_cartao_seguro = row.copy()
+                    row_cartao_seguro["Produto"] = "CARTÃO"
+                    row_cartao_seguro["% Comissao"] = row["Saque complementar %"] * 100
+                    row_cartao_seguro["Taxa %"] = row_cartao_seguro["Taxa %"] + ' - COM SEGURO'
+                    row_saque_seguro = row.copy()
+                    row_saque_seguro["Produto"] = "SAQUE COMPL."
+                    row_saque_seguro["% Comissao"] = row["Saque complementar %"] * 100
+                    row_saque_seguro["Taxa %"] = row_saque_seguro["Taxa %"] + ' - COM SEGURO'
 
-                concat = str(row["ID"]) + "-" + row["Produto"]
+                    concat = str(row["ID"]) + "-" + row["Produto"]
 
-                if concat.strip() != actual_convenio.strip():
-                    id_atual = row["ID"]
-                    n = max_prazos.get(id_atual, 0)
-                    temp = row["Convênio"]
-                    row["Produto"] = "CARTÃO"
-                    row["Convênio"] = row["Convênio"] + ' - PLASTICO'
-                    row["% Comissao"] = 0
-                    row_plastico = row.copy()
-                    row_plastico["Prazo"] = f'0-{n}'
-                    novas_linhas.append(row_plastico)
-                    actual_convenio = concat
+                    if concat.strip() != actual_convenio.strip():
+                        id_atual = row["ID"]
+                        n = max_prazos.get(id_atual, 0)
+                        temp = row["Convênio"]
+                        row["Produto"] = "CARTÃO"
+                        row["Convênio"] = row["Convênio"] + ' - PLASTICO'
+                        row["% Comissao"] = 0
+                        row_plastico = row.copy()
+                        row_plastico["Prazo"] = f'0-{n}'
+                        novas_linhas.append(row_plastico)
+                        actual_convenio = concat
 
-                novas_linhas.append(row_cartao)
-                novas_linhas.append(row_cartao_seguro)
-                novas_linhas.append(row_saque)
-                novas_linhas.append(row_saque_seguro)
-                actual_convenio = temp
+                    novas_linhas.append(row_cartao)
+                    novas_linhas.append(row_cartao_seguro)
+                    novas_linhas.append(row_saque)
+                    novas_linhas.append(row_saque_seguro)
+                    actual_convenio = temp
+                else:
+                    row_saque = row.copy()
+                    row_saque["Produto"] = "SAQUE COMPL."
+                    row_saque["% Comissao"] = row["Saque complementar %"] * 100
+
+                    novas_linhas.append(row_saque)
 
         if novas_linhas:
             df_bank = pd.DataFrame(novas_linhas)
@@ -76,7 +91,6 @@ class AmigozMapper(Bank):
 
         # df_work = df_work[~df_work["Produto"].str.contains(exclude_list, case=False, na=False)]
 
-        df_bank = df_bank[df_bank["Status"] != "Bloqueado"]
 
         df_result = pd.merge(
             df_bank,
