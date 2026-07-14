@@ -29,7 +29,7 @@ class AmigozMapper(Bank):
                 row["Convênio"] = convenio_formatado
                 row["Prazo"] = str(row["Prazo"]) + '-' + str(row["Prazo"])
                 taxa_formatada = f"{row['Taxa %']:.2f}".replace('.', ',')
-                row["Taxa %"] = str(row["ID"]).strip() + ' | TX ' + taxa_formatada + '%'
+                row["Taxa %"] = str(row["ID"]).strip().replace("-", " - ").replace("  -  ", " - ") + ' | TX ' + taxa_formatada + '%'
 
                 row_cartao = row.copy()
                 row_cartao["Produto"] = "CARTÃO"
