@@ -54,7 +54,7 @@ class EmpresteiCardMapper(Bank):
             elif row["CONVÊNIOS "] == "MARANHÃO (GOV.) - MA":
                 row["CONVÊNIOS "] = "GOV. MA - CARTAO"
             else:
-                row["CONVÊNIOS "] = "PREF. " + remover_acentos(row["CONVÊNIOS "].split("-")[0]) + " - CARTAO"
+                row["CONVÊNIOS "] = "PREF. " + remover_acentos(row["CONVÊNIOS "].split("-")[0])
 
             if pd.notna(row["Qtd de Parcelas "]):
                 row = self.create_row("Taxa Operação", "Qtd de Parcelas ", "96-96", row)
@@ -235,7 +235,7 @@ class EmpresteiCardMapper(Bank):
 
             valor_float = float(valor_str.replace(',', '.'))
 
-            operation = "CARTÃO"
+            operation = "NOVO"
 
             grades = grade.get(operation, "")
 

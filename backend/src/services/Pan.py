@@ -41,61 +41,61 @@ class PanMapper(Bank):
                 novas_linhas.append(row_copy2)
                 novas_linhas.append(row_copy3)
 
-        df_bank_cartao = df_bank["Cartão"]
-        df_bank_cartao.columns = df_bank_cartao.iloc[0]
-        df_bank_cartao = df_bank_cartao[1:]
+        # df_bank_cartao = df_bank["Cartão"]
+        # df_bank_cartao.columns = df_bank_cartao.iloc[0]
+        # df_bank_cartao = df_bank_cartao[1:]
 
-        df_bank_cartao.columns = rename_duplicates(df_bank_cartao.columns)
+        # df_bank_cartao.columns = rename_duplicates(df_bank_cartao.columns)
 
-        colunas_base = ['Convênio', 'Empregador', 'Prazo', 'Tipo', 'Código da tabela']
+        # colunas_base = ['Convênio', 'Empregador', 'Prazo', 'Tipo', 'Código da tabela']
 
-        dados_final = []
+        # dados_final = []
 
-        # Fragmentar linhas
-        for index, row in df_bank_cartao.iterrows():
-            linha_cartao = {col: row[col] for col in colunas_base}
+        # # Fragmentar linhas
+        # for index, row in df_bank_cartao.iterrows():
+        #     linha_cartao = {col: row[col] for col in colunas_base}
 
-            if pd.notna(row["Flat"]):
-                linha_cartao['Operação'] = 'CARTÃO'
-                linha_cartao['Flat'] = row['Flat']
-                linha_cartao['PMT'] = row['PMT']
-                linha_cartao['Seguro'] = row['Seguro']
-                linha_cartao["base_comissao"] = "LÍQUIDO"
-                linha_cartao["Venda"] = row["Venda"]
-                linha_cartao["Ativacao"] = row["Ativacao"]
+        #     if pd.notna(row["Flat"]):
+        #         linha_cartao['Operação'] = 'CARTÃO'
+        #         linha_cartao['Flat'] = row['Flat']
+        #         linha_cartao['PMT'] = row['PMT']
+        #         linha_cartao['Seguro'] = row['Seguro']
+        #         linha_cartao["base_comissao"] = "LÍQUIDO"
+        #         linha_cartao["Venda"] = row["Venda"]
+        #         linha_cartao["Ativacao"] = row["Ativacao"]
 
-                if row["Venda"] != 0:
-                    linha_plastico = linha_cartao.copy()
-                    linha_plastico["Empregador"] = linha_plastico["Empregador"] + " - PLASTICO"
-                    linha_plastico["Flat"] = 0
-                    linha_plastico["PMT"] = 0
-                    linha_plastico["base_comissao"] = "FIXO "
-                    linha_plastico["Venda"] = row["Venda"]
-                    linha_plastico["Ativacao"] = row["Ativacao"]
-                    dados_final.append(linha_plastico)
+        #         if row["Venda"] != 0:
+        #             linha_plastico = linha_cartao.copy()
+        #             linha_plastico["Empregador"] = linha_plastico["Empregador"] + " - PLASTICO"
+        #             linha_plastico["Flat"] = 0
+        #             linha_plastico["PMT"] = 0
+        #             linha_plastico["base_comissao"] = "FIXO "
+        #             linha_plastico["Venda"] = row["Venda"]
+        #             linha_plastico["Ativacao"] = row["Ativacao"]
+        #             dados_final.append(linha_plastico)
 
-                if row["Seguro"] == "S":
-                    linha_cartao_seguro = linha_cartao.copy()
-                    linha_cartao_seguro['teste_seguro'] = "1,47 | LIQUIDO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
-                    dados_final.append(linha_cartao_seguro)
-                dados_final.append(linha_cartao)
+        #         if row["Seguro"] == "S":
+        #             linha_cartao_seguro = linha_cartao.copy()
+        #             linha_cartao_seguro['teste_seguro'] = "1,47 | LIQUIDO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
+        #             dados_final.append(linha_cartao_seguro)
+        #         dados_final.append(linha_cartao)
 
-            linha_saque = {col: row[col] for col in colunas_base}
+        #     linha_saque = {col: row[col] for col in colunas_base}
 
-            if pd.notna(row["Flat.1"]):
-                linha_saque['Operação'] = 'SAQUE COMPL.'
-                linha_saque['Flat'] = row['Flat.1']
-                linha_saque['PMT'] = row['PMT.1']
-                linha_saque['Seguro'] = row['Seguro.1']
-                linha_saque["base_comissao"] = "LÍQUIDO"
+        #     if pd.notna(row["Flat.1"]):
+        #         linha_saque['Operação'] = 'SAQUE COMPL.'
+        #         linha_saque['Flat'] = row['Flat.1']
+        #         linha_saque['PMT'] = row['PMT.1']
+        #         linha_saque['Seguro'] = row['Seguro.1']
+        #         linha_saque["base_comissao"] = "LÍQUIDO"
 
-                if row["Seguro"] == "S":
-                    linha_saque_seguro = linha_saque.copy()
-                    linha_saque_seguro['teste_seguro'] = "1,47 | LIQUIDO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
-                    dados_final.append(linha_saque_seguro)
-                dados_final.append(linha_saque)
+        #         if row["Seguro"] == "S":
+        #             linha_saque_seguro = linha_saque.copy()
+        #             linha_saque_seguro['teste_seguro'] = "1,47 | LIQUIDO | 0,00 | NÃO | SEM VIG. INÍCIO | SEM VIG. TÉRMINO"
+        #             dados_final.append(linha_saque_seguro)
+        #         dados_final.append(linha_saque)
 
-        df_bank_cartao = pd.DataFrame(dados_final)
+        # df_bank_cartao = pd.DataFrame(dados_final)
 
         dfs_para_juntar = []
 
@@ -103,7 +103,7 @@ class PanMapper(Bank):
             df_bank_b2b if 'df_bank_b2b' in locals() else None,
             df_bank_b2b_privado if 'df_bank_b2b_privado' in locals() else None,
             df_bank_fgts if 'df_bank_fgts' in locals() else None,
-            df_bank_cartao if 'df_bank_cartao' in locals() else None
+            # df_bank_cartao if 'df_bank_cartao' in locals() else None
         ]
 
         for df in candidatos:
@@ -120,7 +120,7 @@ class PanMapper(Bank):
             df_bank = pd.concat([df_bank, pd.DataFrame(novas_linhas)], ignore_index=True)
 
         df_bank["Tabela Financiamento"] = df_bank["Tabela Financiamento"].str.strip()
-        df_bank_cartao["Empregador"] = df_bank_cartao["Empregador"].str.strip()
+        # df_bank_cartao["Empregador"] = df_bank_cartao["Empregador"].str.strip()
         df_work["Produto"] = df_work["Produto"].str.strip()
 
         excecoes = ["Refinanciamento de Portabilidade Pós"]
@@ -142,8 +142,8 @@ class PanMapper(Bank):
 
             df_bank.at[index, "Plano"] = novo_valor
 
-        df_work_cartao = df_work[(df_work['Operação'] == 'CARTÃO') | (df_work['Operação'] == 'SAQUE COMPL.')]
-        df_bank_cartao["Prazo"] = "1-" + df_bank_cartao["Prazo"].astype(str).str.replace(".0", "")
+        # df_work_cartao = df_work[(df_work['Operação'] == 'CARTÃO') | (df_work['Operação'] == 'SAQUE COMPL.')]
+        # df_bank_cartao["Prazo"] = "1-" + df_bank_cartao["Prazo"].astype(str).str.replace(".0", "")
 
         df_work_all = df_work[(df_work['Operação'] != 'CARTÃO') & (df_work['Operação'] != 'SAQUE COMPL.')]
         df_bank = df_bank[(df_bank['Operação'] != 'CARTÃO') & (df_bank['Operação'] != 'SAQUE COMPL.')]
@@ -151,8 +151,8 @@ class PanMapper(Bank):
         df_result = pd.merge(
             df_bank,
             df_work_all,
-            left_on=["Tabela Financiamento", "Operação", "Plano", "teste_seguro"],
-            right_on=["Produto", "Operação", "Parc. Atual", "SEGURO PAN"],
+            left_on=["Tabela Financiamento", "Plano", "teste_seguro"],
+            right_on=["Produto", "Parc. Atual", "SEGURO PAN"],
             how="outer",
             indicator=True
         )
@@ -166,6 +166,8 @@ class PanMapper(Bank):
 
         if not df_matches.empty:
             print(f"Encontrados {len(df_matches)} correspondências!")
+            print(f"Encontrados {len(df_open)} correspondências!")
+            print(f"Encontrados {len(df_close)} correspondências!")
 
         list_of_open_tables = df_open.to_dict(orient="records")
         list_of_close_tables = df_close.to_dict(orient="records")
@@ -191,75 +193,75 @@ class PanMapper(Bank):
             elif diferimento != diferimento_work:
                 list_to_close_and_open.append(row)
 
-        df_result = pd.merge(
-            df_bank_cartao,
-            df_work_cartao,
-            left_on=["Empregador", "Prazo", "Operação", "base_comissao", "teste_seguro"],
-            right_on=["Produto", "Parc. Atual", "Operação", "Base Comissão", "SEGURO PAN"],
-            how="outer",
-            indicator=True
-        )
+        # df_result = pd.merge(
+        #     df_bank_cartao,
+        #     df_work_cartao,
+        #     left_on=["Empregador", "Prazo", "Operação", "base_comissao", "teste_seguro"],
+        #     right_on=["Produto", "Parc. Atual", "Operação", "Base Comissão", "SEGURO PAN"],
+        #     how="outer",
+        #     indicator=True
+        # )
 
-        df_open = df_result[df_result["_merge"] == "left_only"]
-        df_close = df_result[df_result["_merge"] == "right_only"]
-        df_matches = df_result[df_result["_merge"] == "both"]
+        # df_open = df_result[df_result["_merge"] == "left_only"]
+        # df_close = df_result[df_result["_merge"] == "right_only"]
+        # df_matches = df_result[df_result["_merge"] == "both"]
 
-        for index, row in df_close.iterrows():
-            list_of_close_tables.append(row)
+        # for index, row in df_close.iterrows():
+        #     list_of_close_tables.append(row)
 
-        for index, row in df_open.iterrows():
-            list_of_open_tables.append(row)
+        # for index, row in df_open.iterrows():
+        #     list_of_open_tables.append(row)
 
-        # Validar matches
-        for index, row in df_matches.iterrows():
+        # # Validar matches
+        # for index, row in df_matches.iterrows():
 
-            percent = convertValues(row["Flat"]) * 100
-            percent_work = convertValues(row["% Comissão"])
+        #     percent = convertValues(row["Flat"]) * 100
+        #     percent_work = convertValues(row["% Comissão"])
 
-            if pd.notna(row["PMT"]):
-                diferimento = round(convertValues(row["PMT"]) * 100, 2)
-            else:
-                diferimento = 0.0
+        #     if pd.notna(row["PMT"]):
+        #         diferimento = round(convertValues(row["PMT"]) * 100, 2)
+        #     else:
+        #         diferimento = 0.0
 
-            if pd.notna(row["DIFERIMENTO"]):
-                diferimento_work = convertValues(row["DIFERIMENTO"].split("|")[0].strip())
-            else:
-                diferimento_work = 0.0
+        #     if pd.notna(row["DIFERIMENTO"]):
+        #         diferimento_work = convertValues(row["DIFERIMENTO"].split("|")[0].strip())
+        #     else:
+        #         diferimento_work = 0.0
 
-            if pd.notna(row["Venda"]):
-                if row["Venda"] == "":
-                    pre_adesao = 0.0
-                else:
-                    pre_adesao = convertValues(row["Venda"])
-            else:
-                pre_adesao = 0.0
+        #     if pd.notna(row["Venda"]):
+        #         if row["Venda"] == "":
+        #             pre_adesao = 0.0
+        #         else:
+        #             pre_adesao = convertValues(row["Venda"])
+        #     else:
+        #         pre_adesao = 0.0
 
-            if pd.notna(row["PRÉ-ADESÃO"]):
-                pre_adesao_work = convertValues(row["PRÉ-ADESÃO"].split("|")[0].strip())
-            else:
-                pre_adesao_work = 0.0
+        #     if pd.notna(row["PRÉ-ADESÃO"]):
+        #         pre_adesao_work = convertValues(row["PRÉ-ADESÃO"].split("|")[0].strip())
+        #     else:
+        #         pre_adesao_work = 0.0
 
-            if pd.notna(row["Ativacao"]):
-                if row["Ativacao"] == "":
-                    ativacao = 0.0
-                else:
-                    ativacao = convertValues(row["Ativacao"])
-            else:
-                ativacao = 0.0
+        #     if pd.notna(row["Ativacao"]):
+        #         if row["Ativacao"] == "":
+        #             ativacao = 0.0
+        #         else:
+        #             ativacao = convertValues(row["Ativacao"])
+        #     else:
+        #         ativacao = 0.0
 
-            if pd.notna(row["ATIVAÇÃO"]):
-                ativacao_work = convertValues(row["ATIVAÇÃO"].split("|")[0].strip())
-            else:
-                ativacao_work = 0.0
+        #     if pd.notna(row["ATIVAÇÃO"]):
+        #         ativacao_work = convertValues(row["ATIVAÇÃO"].split("|")[0].strip())
+        #     else:
+        #         ativacao_work = 0.0
 
-            if percent != percent_work:
-                list_to_close_and_open.append(row)
-            elif diferimento != diferimento_work:
-                list_to_close_and_open.append(row)
-            elif pre_adesao != pre_adesao_work:
-                list_to_close_and_open.append(row)
-            elif ativacao != ativacao_work:
-                list_to_close_and_open.append(row)
+        #     if percent != percent_work:
+        #         list_to_close_and_open.append(row)
+        #     elif diferimento != diferimento_work:
+        #         list_to_close_and_open.append(row)
+        #     elif pre_adesao != pre_adesao_work:
+        #         list_to_close_and_open.append(row)
+        #     elif ativacao != ativacao_work:
+        #         list_to_close_and_open.append(row)
 
         return list_of_open_tables, list_of_close_tables, list_to_close_and_open
 
@@ -303,7 +305,7 @@ class PanMapper(Bank):
         firstProduct = str(product).upper().split(" ")[0].strip()
 
         categorias = {
-            "GOV-": ["GOV", "GOV_", "GOV.", "GOV ", "SPPREV_", "AMA", "PMESP", "IPSEMG", "RIO", "CBMG", "IPSM", "PMMG", "SPPREV"],
+            "GOV-": ["GOV", "GOV_", "GOV.", "PM", "DEF", "GOV ", "SPPREV_", "AMA", "PMESP", "IPSEMG", "RIO", "CBMG", "IPSM", "PMMG", "SPPREV"],
             "FEDERAL SIAPE": ["SIAPE", "SIA"],
             "PREF. ": ["PREF", "PREF_", "PREF.", "PREF ", "IPREM", "PRE_"],
             "TJ | ": ["TJ ", "TJ_", "TJ."],
@@ -366,7 +368,7 @@ class PanMapper(Bank):
 
             percent = convertValues(percent)
 
-            operation = row["Operação"].strip()
+            operation = row["Operação_x"].strip()
 
             if operation == "":
                 operation = "REFIN"
@@ -523,15 +525,15 @@ class PanMapper(Bank):
 
         df = pd.DataFrame(list_of_convert_rows)
 
-        df['Vigência_y'] = df['Vigência_y'].combine_first(df['Vigência'])
+        df['Vigência_y'] = df['Vigência_y'].combine_first(df['Vigência_x'])
 
-        df = df.drop(['Convênio_x', 'Empregador', 'Cód Tabela',
+        df = df.drop(['Convênio_x', 'Empregador', 'Operação_x', 'Cód Tabela',
        'Tabela Financiamento', 'Tipo Tabela', 'Plano', 'Taxa Início',
        'Taxa Fim', 'Flat', 'Pmt', 'Fator Antecipação', 'Vp Antecipada',
-       'VP Total', 'Port', 'MinOperacao', 'MaxOperacao', 'MinParcela',
-       'Seguro', '% Fator Seguro', 'Prêmio', 'Comissão Seguro',
-       'Comissão Seguro + VP ', 'Vigência_x', 'Observação', 'teste_seguro', 'Prazo',
-       'Tipo', 'Código da tabela', 'PMT', 'base_comissao', 'Venda', 'Ativacao', 'Vigência'], axis=1)
+       'VP Total', 'MinOperacao', 'MaxOperacao', 'MinParcela', 'Seguro',
+       '% Fator Seguro', 'Prêmio', 'Comissão Seguro', 'Comissão Seguro + VP ',
+       'Vigência_x', 'Observação', 'Tipo', 'Região', 'UF', 'Port',
+       'teste_seguro', '_merge'], axis=1)
 
         df.columns = df.columns.str.replace('_y', '')
 
@@ -555,7 +557,7 @@ class PanMapper(Bank):
 
             row_open = row.copy()
 
-            operation = row["Operação"]
+            operation = row["Operação_x"]
 
             if operation == "PORTABILIDADE":
                 row_open["Base Comissão"] = "BRUTO"
@@ -585,22 +587,21 @@ class PanMapper(Bank):
         df = pd.DataFrame(list_of_convert_close_rows)
         df2 = pd.DataFrame(list_of_convert_open_rows)
 
-        colunas_para_dropar = [
-            'Convênio_x', 'Empregador', 'Cód Tabela',
+        colunas_para_dropar = ['Convênio_x', 'Empregador', 'Operação', 'Cód Tabela',
             'Tabela Financiamento', 'Tipo Tabela', 'Plano', 'Taxa Início',
-            'Taxa Fim', 'Flat', 'Pmt', 'Fator Antecipação',
-            'Vp Antecipada', 'VP Total', 'Port', 'MinOperacao',
-            'MaxOperacao', 'MinParcela', 'Seguro', '% Fator Seguro',
-            'Prêmio', 'Comissão Seguro', 'Comissão Seguro + VP',
-            'Vigência_x', 'Observação', 'teste_seguro', '_merge', 'Vigência'
+            'Taxa Fim', 'Flat', 'Pmt', 'Fator Antecipação', 'Vp Antecipada',
+            'VP Total', 'MinOperacao', 'MaxOperacao', 'MinParcela', 'Seguro',
+            '% Fator Seguro', 'Prêmio', 'Comissão Seguro', 'Comissão Seguro + VP ',
+            'Vigência_x', 'Observação', 'Tipo', 'Região', 'UF', 'Port',
+            'teste_seguro', '_merge'
         ]
-
 
         df = df.drop(colunas_para_dropar, axis=1, errors='ignore')
         df2 = df2.drop(colunas_para_dropar, axis=1, errors='ignore')
 
         df.columns = df.columns.str.replace('_y', '')
         df2.columns = df2.columns.str.replace('_y', '')
+
 
         return df, df2
 

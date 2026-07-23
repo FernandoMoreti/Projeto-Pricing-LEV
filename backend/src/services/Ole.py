@@ -164,7 +164,6 @@ class OleMapper(Bank):
                 prefixo_encontrado = next((p for p in prefixos if p in product), None)
             if prefixo_encontrado:
                 convenio = categoria
-                print(convenio)
 
                 if convenio in ["FEDERAL SIAPE", "AERONAUTIICA", "CGI - IMOB", ""]:
                     return convenio
@@ -326,7 +325,7 @@ class OleMapper(Bank):
         df = pd.DataFrame(list_of_convert_close_rows)
         df2 = pd.DataFrame(list_of_convert_open_rows)
 
-        colunas_remover = ["codigo_convenio", "nome_convenio", "rede", "regional", "status_convenio", "codigo_regra", "descricao_regra", "data_inicio_validade", "data_fim_validade", "tipo_conta_corrente", "sequencia_faixa", "range_faixa_taxa", "faixa_parcela", "taxa_juros_sem_seguro", "taxa_juros_com_seguro", "categoria_corban_para_comissao", "percentual_comissao_a_vista", "percentual_comissao_diferido", "percentual_comissao_total", "produto_regra", "canal_regra", '_merge', 'percent_converted', 'percent_work_converted', 'Diferido']
+        colunas_remover = ["qt_parc_paga", "ds_taxa_flex", "codigo_convenio", "nome_convenio", "rede", "regional", "status_convenio", "codigo_regra", "descricao_regra", "data_inicio_validade", "data_fim_validade", "tipo_conta_corrente", "sequencia_faixa", "range_faixa_taxa", "faixa_parcela", "taxa_juros_sem_seguro", "taxa_juros_com_seguro", "categoria_corban_para_comissao", "percentual_comissao_a_vista", "percentual_comissao_diferido", "percentual_comissao_total", "produto_regra", "canal_regra", '_merge', 'percent_converted', 'percent_work_converted', 'Diferido']
 
         df = df.drop(colunas_remover, axis=1)
         df2 = df2.drop(colunas_remover, axis=1)
@@ -396,6 +395,7 @@ class OleMapper(Bank):
 
             print("Processo concluído!")
             df_final = self.paint_row(df_final, "Convênio")
+
             return df_final
 
         except Exception as e:

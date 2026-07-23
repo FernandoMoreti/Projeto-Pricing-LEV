@@ -6,6 +6,7 @@ from ..utils.utils import convertValues, remover_acentos
 from ..config.bank.SantanderVariables import family_product, group_convenio, operation
 from ..config.citys_uf import citys, citys_uf, states
 from ..config.grade import grade
+
 class SantanderMapper(Bank):
 
     def read_archive(self, file):
@@ -302,7 +303,6 @@ class SantanderMapper(Bank):
             row_close["Término"] = (datetime.now() - timedelta(days=1)).strftime("%d/%m/%Y")
             row_close["Atualizações"] = "ALTERAÇÃO"
 
-
             list_of_convert_close_rows.append(row_close)
 
             row_open = row.copy()
@@ -395,7 +395,6 @@ class SantanderMapper(Bank):
 
             print("Processo concluído!")
             df_final = self.paint_row(df_final, "Convênio")
-
             return df_final
 
         except Exception as e:
