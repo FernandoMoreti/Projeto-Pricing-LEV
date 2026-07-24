@@ -52,7 +52,7 @@ class PresencaBankMapper(Bank):
             percent = convertValues(row["Comissão"])
             percent_work = convertValues(row["% Comissão"])
 
-            if "PRIVADO CLT" in row["Tabela Nome"]:
+            if "Privado CLT" in row["Tabela Nome"]:
                 tribut = 0.5
                 bonus = 0.5
                 percent = percent - 1
@@ -408,6 +408,7 @@ class PresencaBankMapper(Bank):
             print(f"Sucesso! Total de linhas: {len(df_final)}")
 
             print("Processo concluído!")
+            df_final.to_excel("abs.xlsx", index=False)
             return df_final
 
         except Exception as e:
