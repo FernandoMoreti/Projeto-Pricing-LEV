@@ -26,6 +26,7 @@ family_product = {
     "FGTS": "FGTS",
     "INSS": "INSS",
     "SIAPE": "FEDERAIS",
+    "FEDERAL": "FEDERAIS",
     "PREFEITURA": "PREFEITURAS",
     "IPREM": "PREFEITURAS",
     "PREF": "PREFEITURAS",

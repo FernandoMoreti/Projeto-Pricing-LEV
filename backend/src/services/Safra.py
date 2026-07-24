@@ -73,7 +73,10 @@ class SafraMapper(Bank):
 
     def extract_city(self, product):
         product = str(product).upper().strip()
-        partes = product.split(" ")
+        if " - " in product:
+            partes = product.split(" - ")
+        else:
+            partes = product.split(" ")
 
         if not partes: # Se a string for vazia
             return ""
@@ -127,7 +130,7 @@ class SafraMapper(Bank):
     def get_convenio(self, product):
         product = str(product).upper()
         categorias = {
-            "GOV-": ["GOV", "GOV_", "GOV.", "SPPREV_"],
+            "GOV-": ["GOV", "GOV_", "GOV.", "SPPREV_", "IPASP"],
             "FEDERAL SIAPE": ["SIAPE"],
             "PREF. ": ["CAMPREV", "PREF", "PREF_", "PREF.", "IPREM", "UNICAMP"],
         }
@@ -172,6 +175,8 @@ class SafraMapper(Bank):
             convenio = self.get_convenio(product)
 
             agreement = row["Convenio"].strip().split(" ")[0]
+            if agreement == "IPASP":
+                agreement = "GOV"
             family = family_product[agreement]
             group = group_convenio[family]
             percent = convertValues(row["ComissaoAto"] * 100)
