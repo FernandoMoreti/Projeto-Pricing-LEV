@@ -125,7 +125,7 @@ class KardBankMapper(Bank):
         else:
             firstProduct = product
         categorias = {
-            "GOV-": ["GOV", "GOV_", "GOV.", "SPPREV_", "AMA", "PMESP", "PMMG", "IPSEMG", "IPSM", "PM", "POL", "CBMG", "PIAUI", "CEARÁ", "AMPREV_", "IGEPREV_AS_TAXA"],
+            "GOV-": ["GOV", "GOV_", "GOV.", "SPPREV_", "AMA", "PMESP", "PMMG", "IPSEMG", "IPSM", "PM", "POL", "CBMG", "PIAUI", "CEARÁ", "AMPREV_", "IGEPREV_AS_TAXA", "RMC", "RCC"],
             "FEDERAL SIAPE": ["SIAPE", "SIA"],
             "TJ | ": ["TJ ", "TJ_", "TJ.", "TRT"],
             "PREF. ": ["PREF", "PREF_", "PREF.", "IPREM", "RCC", "IPAM", "IPREF", "COMISSIONADOS", "PREVIJUNO", "EMP"],
@@ -385,7 +385,6 @@ class KardBankMapper(Bank):
             print(f"Sucesso! Total de linhas: {len(df_final)}")
 
             print("Processo concluído!")
-            df_final.to_excel("Add.xlsx", index=False)
             return df_final
 
         except Exception as e:
