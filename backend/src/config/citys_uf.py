@@ -1790,7 +1790,6 @@ citys_uf = {
     "BAIANOPOLIS": "BA",
     "BAIXA GRANDE": "BA",
     "BANZAE": "BA",
-    "BARRA": "BA",
     "BARRA DA ESTIVA": "BA",
     "BARRA DO CHOCA": "BA",
     "BARRA DO MENDES": "BA",
@@ -5293,9 +5292,12 @@ citys_uf = {
     "PBPREV": "PB",
     "IPMDC": "RJ",
     "ESP": "ES",
-    "MARANHAO": "MA"
+    "MARANHAO": "MA",
+    "BARRA": "BA",
+    "CACHOERINHA": "RS",
 }
 citys = {
+    "CACHOERINHA": "CACHOERINHA",
     "MARANHAO": "MARANHAO",
     "PINDARE MIRIM": "PINDARE MIRIM",
     "PALMAS": "PALMAS",
