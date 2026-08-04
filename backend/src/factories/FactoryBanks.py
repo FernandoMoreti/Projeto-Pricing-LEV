@@ -7,6 +7,7 @@ from ..services.Evol import EvolMapper
 from ..services.KardBank import KardBankMapper
 from ..services.MeucashCard import MeucashCardMapper
 from ..services.Ole import OleMapper
+from ..services.Qualibank import QualibankMapper
 from ..services.Sabemi import SabemiMapper
 from ..services.Safra import SafraMapper
 from ..services.Santander import SantanderMapper
@@ -29,6 +30,7 @@ class FactoryBank:
         "kardbank": KardBankMapper(),
         "meucashcard": MeucashCardMapper(),
         "ole": OleMapper(),
+        "qualibank": QualibankMapper(),
         "pan": PanMapper(),
         "panlafy": PanLafyMapper(),
         "phtech": PhtechMapper(),

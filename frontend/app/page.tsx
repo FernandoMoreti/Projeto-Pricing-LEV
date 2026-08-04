@@ -178,6 +178,7 @@ export default function Home() {
                     <option value="BRBRed">BRBRed</option>
                     <option value="EmpresteiCard">EmpresteiCard</option>
                     <option value="Evol">Evol</option>
+                    <option value="Qualibank">Qualibank</option>
                     <option value="KardBank">KardBank</option>
                     <option value="MeucashCard">MeucashCard</option>
                     <option value="Ole">Ole</option>
@@ -207,42 +208,20 @@ export default function Home() {
 
               <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-6 mb-5">
                 <h2 className="text-xl font-semibold mb-4">Entrada no Workbank</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
-                  <div className="flex flex-col gap-2">
-                    <label className="block text-[10px] uppercase font-bold text-slate-500 tracking-widest ml-1">Instituição</label>
-                    <select
-                      value={bankWork}
-                      onChange={(e) => setBankWork(e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-xl p-4 text-sm text-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
-                    >
-                      <option value="" disabled>Selecione...</option>
-                      <option value="Agora Consig">Agora Consig</option>
-                      <option value="Amigoz">Amigoz</option>
-                      <option value="Pan">Pan</option>
-                      <option value="PanLafy">PanLafy</option>
-                      <option value="ParanaBank">ParanaBank</option>
-                      <option value="Safra">Safra</option>
-                      <option value="Santander">Santander</option>
-                      <option value="Ole">Ole</option>
-                      <option value="TotalCash">TotalCash</option>
-                    </select>
-                  </div>
-
-                  <div className="flex flex-col gap-2">
-                    <label className="block text-[10px] uppercase font-bold text-slate-500 tracking-widest ml-1">Arquivo Input</label>
-                    <div className="border-2 border-dashed border-slate-800 rounded-xl h-13.5 flex items-center hover:border-blue-500/30 transition-all hover:bg-slate-950/50">
-                      <input
-                        type="file"
-                        className="hidden"
-                        id="fileAtt"
-                        onChange={(e) => setFileAtt(e.target.files?.[0] || null)}
-                      />
-                      <label htmlFor="fileAtt" className="cursor-pointer w-full text-center truncate">
-                        <p className="text-xs font-medium text-slate-400">
-                          {fileAtt ? fileAtt.name : "Clique p/ anexar"}
-                        </p>
-                      </label>
-                    </div>
+                <div className="flex flex-col gap-2">
+                  <label className="block text-[10px] uppercase font-bold text-slate-500 tracking-widest ml-1">Arquivo Input</label>
+                  <div className="border-2 border-dashed border-slate-800 rounded-xl h-13.5 flex items-center hover:border-blue-500/30 transition-all hover:bg-slate-950/50">
+                    <input
+                      type="file"
+                      className="hidden"
+                      id="fileAtt"
+                      onChange={(e) => setFileAtt(e.target.files?.[0] || null)}
+                    />
+                    <label htmlFor="fileAtt" className="cursor-pointer w-full text-center truncate">
+                      <p className="text-xs font-medium text-slate-400">
+                        {fileAtt ? fileAtt.name : "Clique p/ anexar"}
+                      </p>
+                    </label>
                   </div>
                 </div>
 
