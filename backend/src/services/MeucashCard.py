@@ -268,7 +268,7 @@ class MeucashCardMapper(Bank):
             new_row["Vigência"] = datetime.now().strftime("%d/%m/%Y")
             new_row["Id Tabela Banco"] = "INCLUSÃO"
             new_row["Complemento"] = f"{row['CÓDIGO']} | TX {taxa_formatada}%"
-            new_row["Atualizações"] = row['CÓDIGO']
+            new_row["Atualizações"] = "INCLUSÃO"
 
             list_of_convert_rows.append(new_row)
 
@@ -355,7 +355,7 @@ class MeucashCardMapper(Bank):
 
     def input_standard_values(self, model):
 
-        model["Instituição"] = "KARDBANK"
+        model["Instituição"] = "MEUCASHCARD"
         model["Parc. Refin."] = "0-0"
         model["% PMT Pagas"] = "0,00-0,00"
         model["% Taxa"] = "0,00-0,00"
