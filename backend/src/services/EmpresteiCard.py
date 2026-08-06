@@ -10,11 +10,42 @@ from ..config.grade import grade
 class EmpresteiCardMapper(Bank):
 
     def read_archive(self, file):
-        df = pd.read_excel(io.BytesIO(file), header=1)
+        df = pd.read_excel(io.BytesIO(file), header=[1, 2])
+
+        df.columns = [
+            "_".join([str(cat).strip() for cat in tupla if str(cat) and not str(cat).startswith('Unnamed')])
+            for tupla in df.columns
+        ]
+
+        new_columns = []
+        value = 1
+
+        for i in df.columns:
+            if i == "Taxa Operação":
+                i = "Taxa Operação" + str(value)
+                value += 1
+                new_columns.append(i)
+            else:
+                new_columns.append(i)
+
+        df.columns = new_columns
+
         return df
 
     def create_row(self, taxa, percent, prazo, row):
         row1 = row.copy()
+
+        if row["CONVÊNIOS"] == "CANOAS PREV - RS":
+            row["CONVÊNIOS"] = "CANOAS PREV. - RS"
+        elif row["CONVÊNIOS"] == "GOIAS (GOV.)":
+            row["CONVÊNIOS"] = "GOV. GOIAS - GO"
+        elif row["CONVÊNIOS"] == "MARANHÃO (GOV.) - MA":
+            row["CONVÊNIOS"] = "GOV. MARANHAO - MA"
+        elif row["CONVÊNIOS"] == "AMAZONAS (GOV.)":
+            row["CONVÊNIOS"] = "GOV. AMAZONAS - AM"
+        else:
+            row["CONVÊNIOS"] = "PREF. " + remover_acentos(row["CONVÊNIOS"])
+
 
         row1["Prazo"] = prazo
         row1["Percent"] = row[percent]
@@ -40,67 +71,67 @@ class EmpresteiCardMapper(Bank):
 
         novas_linhas = []
 
-        df_bank = df_bank[pd.notna(df_bank["CONVÊNIOS "])]
+        df_bank = df_bank[pd.notna(df_bank["CONVÊNIOS"])]
 
         for index, row in df_bank.iterrows():
 
-            if "Suspenso" in str(row["CONVÊNIOS "]):
+            if "Suspenso" in str(row["CONVÊNIOS"]):
                 continue
 
-            if row["CONVÊNIOS "] == "CANOAS PREV - RS":
-                row["CONVÊNIOS "] = "CANOAS PREV. - CARTAO"
-            elif row["CONVÊNIOS "] == "GOIAS (GOV.)":
-                row["CONVÊNIOS "] = "GOV. GO - CARTAO"
-            elif row["CONVÊNIOS "] == "MARANHÃO (GOV.) - MA":
-                row["CONVÊNIOS "] = "GOV. MA - CARTAO"
-            else:
-                row["CONVÊNIOS "] = "PREF. " + remover_acentos(row["CONVÊNIOS "].split("-")[0])
-
-            if pd.notna(row["Qtd de Parcelas "]):
-                row = self.create_row("Taxa Operação", "Qtd de Parcelas ", "96-96", row)
+            if pd.notna(row["Qtd de Parcelas_96"]):
+                row = self.create_row("Taxa Operação1", "Qtd de Parcelas_96", "96-96", row)
                 novas_linhas.append(row)
-            if pd.notna(row["Unnamed: 3"]):
-                row = self.create_row("Taxa Operação", "Unnamed: 3", "84-95", row)
+            if pd.notna(row["Qtd de Parcelas_84"]):
+                row = self.create_row("Taxa Operação1", "Qtd de Parcelas_84", "84-95", row)
                 novas_linhas.append(row)
-            if pd.notna(row["Unnamed: 4"]):
-                row = self.create_row("Taxa Operação", "Unnamed: 4", "72-83", row)
+            if pd.notna(row["Qtd de Parcelas_72"]):
+                row = self.create_row("Taxa Operação1", "Qtd de Parcelas_72", "72-83", row)
                 novas_linhas.append(row)
-            if pd.notna(row["Unnamed: 5"]):
-                row = self.create_row("Taxa Operação", "Unnamed: 5", "60-71", row)
+            if pd.notna(row["Qtd de Parcelas_60"]):
+                row = self.create_row("Taxa Operação1", "Qtd de Parcelas_60", "60-71", row)
                 novas_linhas.append(row)
-            if pd.notna(row["Unnamed: 6"]):
-                row = self.create_row("Taxa Operação", "Unnamed: 6", "48-59", row)
+            if pd.notna(row["Qtd de Parcelas_48"]):
+                row = self.create_row("Taxa Operação1", "Qtd de Parcelas_48", "48-59", row)
                 novas_linhas.append(row)
-            if pd.notna(row["Unnamed: 7"]):
-                row = self.create_row("Taxa Operação", "Unnamed: 7", "36-47", row)
+            if pd.notna(row["Qtd de Parcelas_36"]):
+                row = self.create_row("Taxa Operação1", "Qtd de Parcelas_36", "36-47", row)
                 novas_linhas.append(row)
-            if pd.notna(row["Qtd Parcelas "]):
-                row = self.create_row("Taxa Operação.1", "Qtd Parcelas ", "96-96", row)
+            if pd.notna(row["Qtd de Parcelas_24"]):
+                row = self.create_row("Taxa Operação1", "Qtd de Parcelas_24", "24-35", row)
                 novas_linhas.append(row)
-            if pd.notna(row["Unnamed: 10"]):
-                row = self.create_row("Taxa Operação.1", "Unnamed: 10", "60-95", row)
+            if pd.notna(row["Qtd Parcelas_96"]):
+                row = self.create_row("Taxa Operação2", "Qtd Parcelas_96", "96-96", row)
                 novas_linhas.append(row)
-            if pd.notna(row["Unnamed: 11"]):
-                row = self.create_row("Taxa Operação.1", "Unnamed: 11", "48-59", row)
+            if pd.notna(row["Qtd Parcelas_60"]):
+                row = self.create_row("Taxa Operação2", "Qtd Parcelas_60", "60-95", row)
                 novas_linhas.append(row)
-            if pd.notna(row["Unnamed: 12"]):
-                row = self.create_row("Taxa Operação.1", "Unnamed: 12", "36-47", row)
+            if pd.notna(row["Qtd Parcelas_48"]):
+                row = self.create_row("Taxa Operação2", "Qtd Parcelas_48", "48-59", row)
                 novas_linhas.append(row)
-            if pd.notna(row["Qtd Parcelas .1"]):
-                row = self.create_row("Taxa Operação.2", "Qtd Parcelas .1", "6-6", row)
+            if pd.notna(row["Qtd Parcelas_36"]):
+                row = self.create_row("Taxa Operação2", "Qtd Parcelas_36", "36-47", row)
+                novas_linhas.append(row)
+            if pd.notna(row["Qtd Parcelas_24"]):
+                row = self.create_row("Taxa Operação2", "Qtd Parcelas_24", "24-35", row)
+                novas_linhas.append(row)
+            if pd.notna(row["Qtd Parcelas_6"]):
+                row = self.create_row("Taxa Operação2", "Qtd Parcelas_6", "6-6", row)
                 novas_linhas.append(row)
 
         if novas_linhas:
             df_bank = pd.DataFrame(novas_linhas)
 
-        df_bank = df_bank[~df_bank["CONVÊNIOS "].str.contains("Suspenso", case=False, na=False)]
+        df_bank = df_bank[~df_bank["CONVÊNIOS"].str.contains("Suspenso", case=False, na=False)]
+
+        padrao = "GOV. GO|GOV. AM|GOV. MA|PREF|PREV\\."
+        df_bank = df_bank[df_bank["CONVÊNIOS"].str.contains(padrao, case=False, na=False)]
 
         df_work["Produto"] = df_work["Produto"].str.strip()
 
         df_result = pd.merge(
             df_bank,
             df_work,
-            left_on=["CONVÊNIOS ", "Prazo", "Taxa"],
+            left_on=["CONVÊNIOS", "Prazo", "Taxa"],
             right_on=["Produto", "Parc. Atual", "% Taxa"],
             how="outer",
             indicator=True
@@ -219,7 +250,7 @@ class EmpresteiCardMapper(Bank):
 
         for row in list_of_open_tables:
 
-            product = row["CONVÊNIOS "]
+            product = row["CONVÊNIOS"]
             convenio = self.get_convenio(product)
 
             if "-" in convenio:
@@ -242,7 +273,7 @@ class EmpresteiCardMapper(Bank):
             new_row = model.copy()
 
             new_row["Operação"] = operation
-            new_row["Produto"] = row["CONVÊNIOS "]
+            new_row["Produto"] = row["CONVÊNIOS"]
             new_row["Família Produto"] = family
             new_row["Grupo Convênio"] = group
             new_row["Convênio"] = convenio
@@ -278,11 +309,14 @@ class EmpresteiCardMapper(Bank):
 
         df = pd.DataFrame(list_of_convert_rows)
 
-        df = df.drop(['CONVÊNIOS ', 'Taxa Operação', 'Qtd de Parcelas ', 'Unnamed: 3',
-            'Unnamed: 4', 'Unnamed: 5', 'Unnamed: 6', 'Unnamed: 7',
-            'Taxa Operação.1', 'Qtd Parcelas ', 'Unnamed: 10', 'Unnamed: 11',
-            'Unnamed: 12', 'Taxa Operação.2', 'Qtd Parcelas .1', 'SITUAÇÃO',
-            'Prazo', 'Percent', 'Taxa', '_merge'], axis=1)
+        df = df.drop(['CONVÊNIOS', 'Taxa Operação1', 'Qtd de Parcelas_96',
+            'Qtd de Parcelas_84', 'Qtd de Parcelas_72', 'Qtd de Parcelas_60',
+            'Qtd de Parcelas_48', 'Qtd de Parcelas_36', 'Qtd de Parcelas_24',
+            'Taxa Operação2', 'Qtd Parcelas_96', 'Qtd Parcelas_60',
+            'Qtd Parcelas_48', 'Qtd Parcelas_36', 'Qtd Parcelas_24',
+            'Taxa Operação3', 'Qtd Parcelas_6', 'SITUAÇÃO', 'Prazo', 'Percent',
+            'Taxa', 'Revision', '_merge'
+        ], axis=1)
 
         df.columns = df.columns.str.replace('_y', '')
 
@@ -326,11 +360,13 @@ class EmpresteiCardMapper(Bank):
         df2 = pd.DataFrame(list_of_convert_open_rows)
 
         colunas_para_dropar = [
-            'CONVÊNIOS ', 'Taxa Operação', 'Qtd de Parcelas ', 'Unnamed: 3',
-            'Unnamed: 4', 'Unnamed: 5', 'Unnamed: 6', 'Unnamed: 7',
-            'Taxa Operação.1', 'Qtd Parcelas ', 'Unnamed: 10', 'Unnamed: 11',
-            'Unnamed: 12', 'Taxa Operação.2', 'Qtd Parcelas .1', 'SITUAÇÃO',
-            'Prazo', 'Percent', 'Taxa', '_merge'
+            'CONVÊNIOS', 'Taxa Operação1', 'Qtd de Parcelas_96',
+            'Qtd de Parcelas_84', 'Qtd de Parcelas_72', 'Qtd de Parcelas_60',
+            'Qtd de Parcelas_48', 'Qtd de Parcelas_36', 'Qtd de Parcelas_24',
+            'Taxa Operação2', 'Qtd Parcelas_96', 'Qtd Parcelas_60',
+            'Qtd Parcelas_48', 'Qtd Parcelas_36', 'Qtd Parcelas_24',
+            'Taxa Operação3', 'Qtd Parcelas_6', 'SITUAÇÃO', 'Prazo', 'Percent',
+            'Taxa', 'Revision', '_merge'
         ]
 
 
