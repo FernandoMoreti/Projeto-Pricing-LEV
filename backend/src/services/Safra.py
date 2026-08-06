@@ -242,7 +242,7 @@ class SafraMapper(Bank):
 
         df = pd.DataFrame(list_of_convert_rows)
 
-        df = df.drop(['Atualizações', 'Convenio', 'Tabela', 'Produto', 'Produto_x', 'DataInicioVigencia', 'PrazoDe', 'PrazoAte', 'TktmMin', 'TktmMax', 'Taxa', 'TaxaMaxima', 'CalculoComissao', 'Id Tabela Nova', 'IdConvenio', 'ComissaoAto', 'CdvpDiferidoVp', 'CdvpDiferidoMensal', 'CdvpDiferidoFuturo', 'CintDiferidoVp', 'CintDiferidoMensal', 'CintDiferidoFuturo', 'CprodDiferidoVp', 'CprodDiferidoMensal', 'CprodDiferidoFuturo', 'CmutDiferidoVp', 'CmutDiferidoMensal', 'CmutDiferidoFuturo', 'TotalDiferidoVp', 'TotalDiferidoMensal', 'TotalDiferidoFuturo', 'prazo_formatado', '_merge'], axis=1)
+        df = df.drop(['Coeficientes', 'Unnamed: 31', 'Unnamed: 32', 'Unnamed: 33', 'Atualizações', 'Convenio', 'Tabela', 'Produto', 'Produto_x', 'DataInicioVigencia', 'PrazoDe', 'PrazoAte', 'TktmMin', 'TktmMax', 'Taxa', 'TaxaMaxima', 'CalculoComissao', 'Id Tabela Nova', 'IdConvenio', 'ComissaoAto', 'CdvpDiferidoVp', 'CdvpDiferidoMensal', 'CdvpDiferidoFuturo', 'CintDiferidoVp', 'CintDiferidoMensal', 'CintDiferidoFuturo', 'CprodDiferidoVp', 'CprodDiferidoMensal', 'CprodDiferidoFuturo', 'CmutDiferidoVp', 'CmutDiferidoMensal', 'CmutDiferidoFuturo', 'TotalDiferidoVp', 'TotalDiferidoMensal', 'TotalDiferidoFuturo', 'prazo_formatado', '_merge'], axis=1)
         df = df.rename(columns = {
             'Produto_y': 'Produto'
         })
@@ -287,7 +287,7 @@ class SafraMapper(Bank):
         df2 = pd.DataFrame(list_of_convert_open_rows)
 
 
-        colunas_remover = ['Atualizações', 'Convenio', 'Produto_y', 'Tabela', 'Produto_x', 'DataInicioVigencia', 'PrazoDe', 'PrazoAte', 'TktmMin', 'TktmMax', 'Taxa', 'TaxaMaxima', 'CalculoComissao', 'Id Tabela Nova', 'IdConvenio', 'ComissaoAto', 'CdvpDiferidoVp', 'CdvpDiferidoMensal', 'CdvpDiferidoFuturo', 'CintDiferidoVp', 'CintDiferidoMensal', 'CintDiferidoFuturo', 'CprodDiferidoVp', 'CprodDiferidoMensal', 'CprodDiferidoFuturo', 'CmutDiferidoVp', 'CmutDiferidoMensal', 'CmutDiferidoFuturo', 'TotalDiferidoVp', 'TotalDiferidoMensal', 'TotalDiferidoFuturo', 'prazo_formatado', '_merge', 'Diferido']
+        colunas_remover = ['Coeficientes', 'Unnamed: 31', 'Unnamed: 32', 'Unnamed: 33', 'Atualizações', 'Convenio', 'Produto_y', 'Tabela', 'Produto_x', 'DataInicioVigencia', 'PrazoDe', 'PrazoAte', 'TktmMin', 'TktmMax', 'Taxa', 'TaxaMaxima', 'CalculoComissao', 'Id Tabela Nova', 'IdConvenio', 'ComissaoAto', 'CdvpDiferidoVp', 'CdvpDiferidoMensal', 'CdvpDiferidoFuturo', 'CintDiferidoVp', 'CintDiferidoMensal', 'CintDiferidoFuturo', 'CprodDiferidoVp', 'CprodDiferidoMensal', 'CprodDiferidoFuturo', 'CmutDiferidoVp', 'CmutDiferidoMensal', 'CmutDiferidoFuturo', 'TotalDiferidoVp', 'TotalDiferidoMensal', 'TotalDiferidoFuturo', 'prazo_formatado', '_merge', 'Diferido']
 
         df = df.drop(colunas_remover, axis=1)
         df2 = df2.drop(colunas_remover, axis=1)
