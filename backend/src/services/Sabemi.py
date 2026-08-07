@@ -70,6 +70,8 @@ class SabemiMapper(Bank):
                 if str(row["Id da tabela"]).strip() in names:
                     type = str(row["Id da tabela"]).strip()
                 if pd.notna(row["nome tabela"]):
+                    # if row["nome tabela"] != "Operação e Prazo":
+                    #     product = nome_da_aba.strip() + " - " + type.strip() + " - " + " ".join(row["nome tabela"].split(" ")[1:])
                     if row["Aba Origem"] == "RP" and row["nome tabela"] != "Operação e Prazo":
                         product = "RP - " + type + " - " + " ".join(row["nome tabela"].split(" ")[1:])
                     elif row["Aba Origem"] == "RP - CLIENTE NOVO" and row["nome tabela"] != "Operação e Prazo":
@@ -78,6 +80,8 @@ class SabemiMapper(Bank):
                         product = "FUTURO PREV - " + type + " - " + " ".join(row["nome tabela"].split(" ")[1:])
                     elif row["Aba Origem"] == "SIMPALA" and row["nome tabela"] != "Operação e Prazo":
                         product = "SIMPALA - " + type + " - " + " ".join(row["nome tabela"].split(" ")[1:])
+                    elif row["Aba Origem"] == "KOVR" and row["nome tabela"] != "Operação e Prazo":
+                        product = "KOVR - " + type + " - " + " ".join(row["nome tabela"].split(" ")[1:])
 
                     if str(row["nome tabela"]).split(" ")[1] in ['ML', 'ME', 'CDV', 'RFN']:
                         ope = operation[str(row["nome tabela"]).split(" ")[1]]
