@@ -208,7 +208,7 @@ class QualibankMapper(Bank):
             if typeOfCommission == "$":
                 base_commission = "FIXO"
             else:
-                if "PORTABILIDADE" in operation:
+                if "PORTABILIDADE" in operation or "PORTAB/REFIN" in operation:
                     base_commission = "BRUTO"
                 else:
                     base_commission = "LÍQUIDO"
@@ -216,6 +216,9 @@ class QualibankMapper(Bank):
             grades = grade.get(operation, "")
 
             complement, name = self.get_nomenclature(row["MODALIDADE"], name)
+
+            if family == "INSS":
+                name = "INSS - " + name
 
             new_row = model.copy()
 
