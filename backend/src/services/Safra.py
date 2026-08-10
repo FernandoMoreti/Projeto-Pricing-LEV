@@ -194,6 +194,7 @@ class SafraMapper(Bank):
 
             if row["Produto_x"] == "REFIN_PORT":
                 new_row["Operação"] = "PORTAB/REFIN"
+                new_row["Base Comissão"] = "BRUTO"
             else:
                 new_row["Operação"] = row["Produto_x"]
 

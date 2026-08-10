@@ -340,15 +340,21 @@ class EvolMapper(Bank):
 
 
             print("Iniciando processo de junção dos arquivos...")
-            columns_in_order = df_open.columns.tolist()
-
             dfs_para_juntar = []
+            columns_in_order = None
 
             for df in [df_close, df_close2, df_open, df_open2]:
                 if df is not None and not df.empty:
                     df_temp = df.copy()
+                    if columns_in_order is None:
+                        columns_in_order = df_temp.columns.tolist()
                     df_temp = df_temp.reindex(columns=columns_in_order)
                     dfs_para_juntar.append(df_temp)
+
+            if not dfs_para_juntar:
+                print("Nenhum registro foi gerado para o processo final.")
+                return pd.DataFrame()
+
             df_final = pd.concat(dfs_para_juntar, axis=0, ignore_index=True, sort=False)
             print(f"Sucesso! Total de linhas: {len(df_final)}")
 
