@@ -19,6 +19,8 @@ class AmigozEmprestimoMapper(Bank):
         df_bank["Prazo"] = df_bank["Prazo"].astype(str) + "-" + df_bank["Prazo"].astype(str)
         df_work["Produto"] = df_work["Produto"].str.strip()
         df_bank = df_bank[df_bank["Status"] != "Bloqueado"]
+        df_work = df_work[df_work["Operação"] != "CARTÃO"]
+        df_work = df_work[df_work["Operação"] != "SAQUE COMPL."]
 
         df_result = pd.merge(
             df_bank,
@@ -51,8 +53,6 @@ class AmigozEmprestimoMapper(Bank):
             percent_work = convertValues(row["% Comissão"])
 
             if round(percent, 2) != percent_work:
-                print(percent)
-                print(percent_work)
                 list_to_close_and_open.append(row)
 
         return list_of_open_tables, list_of_close_tables, list_to_close_and_open
@@ -203,7 +203,7 @@ class AmigozEmprestimoMapper(Bank):
         df = pd.DataFrame(list_of_convert_rows)
 
         df = df.drop(['Nome Tabela', 'Convênio_x', 'Produto_x', 'Taxa %', 'Prazo', 'À vista',
-       'Diferido', 'Data Atualização', 'Status', '_merge'], axis=1)
+        'Diferido', 'Data Atualização', 'Status', '%Bônus', '_merge'], axis=1)
 
         df.columns = df.columns.str.replace('_y', '')
 
@@ -216,7 +216,7 @@ class AmigozEmprestimoMapper(Bank):
 
         for row in list_of_close_open:
 
-            percent = convertValues(row["% Comissao"])
+            percent = convertValues(row["À vista"])
 
             row_close = row.copy()
 
@@ -232,8 +232,8 @@ class AmigozEmprestimoMapper(Bank):
             grades = grade.get(operation, "")
 
             row_open["Término"] = ''
-            row_open["Vigência_y"] = datetime.now().strftime("%d/%m/%Y")
-            row_open["ID_y"] = ''
+            row_open["Vigência"] = datetime.now().strftime("%d/%m/%Y")
+            row_open["ID"] = ''
             row_open["% Comissão"] = percent
             row_open["Operação"] = operation
             row_open["% Mínima"] = percent * grades["min"]
@@ -246,10 +246,12 @@ class AmigozEmprestimoMapper(Bank):
         df = pd.DataFrame(list_of_convert_close_rows)
         df2 = pd.DataFrame(list_of_convert_open_rows)
 
+        print(df2.columns)
+
 
         colunas_para_dropar = [
             'Nome Tabela', 'Convênio_x', 'Produto_x', 'Taxa %', 'Prazo', 'À vista',
-            'Diferido', 'Data Atualização', 'Status', '_merge'
+            'Diferido', 'Data Atualização', 'Status', '%Bônus', '_merge'
         ]
 
 
@@ -275,6 +277,7 @@ class AmigozEmprestimoMapper(Bank):
         model["% TAC"] = "0,000000"
         model["Val. Teto TAC"] = "0,000000"
         model["Faixa Val. Contrato"] = "0,00-100.000,00-LÍQUIDO"
+        model["Faixa Val. Seguro"] = "0,00-1,00"
         model["Venda Digital"] = "SIM"
         model["Visualização Restrita"] = "NÃO"
 
