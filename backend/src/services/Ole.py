@@ -66,10 +66,14 @@ class OleMapper(Bank):
 
             list_of_open_tables.append(row)
 
-        df_matches["percent_converted"] = df_matches["percentual_comissao_a_vista"].apply(convertValues)
-        df_matches["percent_work_converted"] = df_matches["% Comissão"].apply(convertValues)
+        df_matches.loc[:, "percent_converted"] = df_matches[
+            "percentual_comissao_a_vista"
+        ].apply(convertValues)
+        df_matches.loc[:, "percent_work_converted"] = df_matches["% Comissão"].apply(
+            convertValues
+        )
 
-        df_matches["Diferido"] = df_matches["percentual_comissao_diferido"]
+        df_matches.loc[:, "Diferido"] = df_matches["percentual_comissao_diferido"]
 
         for index, row in df_matches.iterrows():
 
