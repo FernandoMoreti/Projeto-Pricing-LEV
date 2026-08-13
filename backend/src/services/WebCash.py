@@ -20,6 +20,9 @@ class WebCashMapper(Bank):
         df_bank["TABELA"] = df_bank["TABELA"].astype(str).str.strip()
         df_bank["PRODUTO"] = df_bank["PRODUTO"].astype(str).str.strip()
 
+        df_bank = df_bank[df_bank["SITUAÇÃO"] != "SUSPENSO"]
+        df_bank = df_bank[df_bank["SITUAÇÃO"] != "INATIVO"]
+
         valores_vazios = ["nan", "none", "", "nat", "<na>"]
 
         df_bank["product"] = df_bank.apply(
@@ -27,21 +30,37 @@ class WebCashMapper(Bank):
                 f"{row['CONVÊNIO']} - {row['TABELA']} - {row['PRODUTO']}"
                 if str(row["TABELA"]).strip().lower() not in valores_vazios 
                 and str(row["PRODUTO"]).strip().lower() not in valores_vazios
-                else row["CONVÊNIO"]
+                and str(row["CONVÊNIO"]).strip().lower() not in valores_vazios
+                else f"{row['SIGLA']} - {row['TABELA']} - {row["PRODUTO"]}"
+                if str(row["CONVÊNIO"]).strip().lower() in valores_vazios
+                else f"{row["CONVÊNIO"]}"
             ),
             axis=1
         )
 
+        listOfRows = []
+
+        for index, row in df_bank.iterrows():
+            if pd.notna(row["COMISSÃO \nSEM SEGURO"]):
+                rowSeguro = row.copy()
+                rowSeguro["COMISSAO REAL"] = rowSeguro["COMISSÃO \nCOM SEGURO"]
+                rowSeguro["FAIXA SEG"] = "2,00-100.000,00"
+                listOfRows.append(rowSeguro)
+
+            row["COMISSAO REAL"] = row["COMISSÃO \nSEM SEGURO"]
+            row["FAIXA SEG"] = "0,00-1,00"
+            listOfRows.append(row)
+
+        df_bank = pd.DataFrame(listOfRows)
+
         df_bank["Prazo"] = df_bank["PARCELAS"].astype(str) + "-" + df_bank["PARCELAS"].astype(str)
         df_work["Produto"] = df_work["Produto"].str.strip()
-
-        df_bank = df_bank[df_bank["SITUAÇÃO"] != "SUSPENSO"]
 
         df_result = pd.merge(
             df_bank,
             df_work,
-            left_on=["product", "Prazo"],
-            right_on=["Produto", "Parc. Atual"],
+            left_on=["product", "Prazo", "FAIXA SEG"],
+            right_on=["Produto", "Parc. Atual", "Faixa Val. Seguro"],
             how="outer",
             indicator=True
         )
@@ -63,7 +82,7 @@ class WebCashMapper(Bank):
 
         for index, row in df_matches.iterrows():
 
-            percent = round(convertValues(row["COMISSÃO"] * 100), 2)
+            percent = round(convertValues(row["COMISSAO REAL"] * 100), 2)
             percent_work = convertValues(row["% Comissão"])
 
             if percent != percent_work:
@@ -110,7 +129,7 @@ class WebCashMapper(Bank):
 
     def get_convenio(self, product):
         categorias = {
-            "GOV-": ["GOV", "GOV_", "GOV.", "IGEPREV", "MINISTERIO", "ESTADO"],
+            "GOV-": ["GOV", "GOV_", "GOV.", "IGEPREV", "MINISTERIO", "ESTADO", "LEGISLATIVA", "PM"],
             "FEDERAL SIAPE": ["SIAPE", "SIA"],
             "TJ | ": ["TJ ", "TJ_", "TJ.", "TRT", "TRIBUNAL"],
             "PREF. ": ["PREF", "PREV", "PREF_", "PREF.", "IPREM", "RCC", "IPAM", "IPREF", "COMISSIONADOS", "PREVIJUNO"],
@@ -174,7 +193,7 @@ class WebCashMapper(Bank):
             family = family_product[agreement]
             group = group_convenio[family]
 
-            percent = round(convertValues(row["COMISSÃO"] * 100))
+            percent = round(convertValues(row["COMISSAO REAL"] * 100), 2)
 
             operation = self.getOperation(row["PRODUTO"])
 
@@ -192,6 +211,7 @@ class WebCashMapper(Bank):
             new_row["% Intermediária"] = percent * grades["med"]
             new_row["% Máxima"] = percent * grades["max"]
             new_row["% Comissão"] = percent
+            new_row["Faixa Val. Seguro"] = row["FAIXA SEG"]
             new_row["Vigência"] = datetime.now().strftime("%d/%m/%Y")
             new_row["Complemento"] = f"TX {(row['TAXA'] * 100):.2f}%"
             new_row["Atualizações"] = "INCLUSAO"
@@ -229,7 +249,7 @@ class WebCashMapper(Bank):
 
         for row in list_of_close_open:
 
-            percent = round(convertValues(row["COMISSÃO"] * 100))
+            percent = round(convertValues(row["COMISSAO REAL"] * 100), 2)
 
             row_close = row.copy()
 
@@ -251,6 +271,7 @@ class WebCashMapper(Bank):
             row_open["% Mínima"] = percent * grades["min"]
             row_open["% Intermediária"] = percent * grades["med"]
             row_open["% Máxima"] = percent * grades["max"]
+            row_open["Faixa Val. Seguro"] = row["FAIXA SEG"]
             row_open["Atualizações"] = "ALTERAÇÃO"
 
             list_of_convert_open_rows.append(row_open)
@@ -283,7 +304,6 @@ class WebCashMapper(Bank):
         model["% TAC"] = "0,000000"
         model["Val. Teto TAC"] = "0,000000"
         model["Faixa Val. Contrato"] = "0,00-100.000,00-LÍQUIDO"
-        model["Faixa Val. Seguro"] = "0,00-0,00"
         model["Venda Digital"] = "SIM"
         model["Visualização Restrita"] = "SIM"
 

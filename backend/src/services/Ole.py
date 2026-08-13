@@ -47,24 +47,20 @@ class OleMapper(Bank):
             indicator=True
         )
 
+        df_matches = df_result[df_result["_merge"] == "both"]
         df_open = df_result[df_result["_merge"] == "left_only"]
         list_of_close_tables = df_result[df_result["_merge"] == "right_only"]
         list_to_close_and_open = []
         list_of_open_tables = []
 
-        df_matches = df_result[df_result["_merge"] == "both"]
-
         if not df_matches.empty:
             print(f"Encontrados {len(df_matches)} correspondências!")
 
-        for index, row in df_open.iterrows():
-
-            if row["produto_regra"] == "Unificado" or row["produto_regra"] == "Ret Port":
-                continue
-
-            row["Diferido"] = row["percentual_comissao_diferido"]
-
-            list_of_open_tables.append(row)
+        if not df_open.empty:
+            print(f"Encontrados {len(df_open)} aberturas pendentes.")
+            mask_produto = df_open["produto_regra"].isin(["Unificado", "Ret Port"])
+            df_open = df_open[~mask_produto].copy()
+            df_open["Diferido"] = df_open["percentual_comissao_diferido"]
 
         df_matches.loc[:, "percent_converted"] = df_matches[
             "percentual_comissao_a_vista"
@@ -77,10 +73,11 @@ class OleMapper(Bank):
 
         for index, row in df_matches.iterrows():
 
-            percent_bank = row["percent_converted"]
+            percent_bank = row["percent_converted"] / 10
             percent_work = row["percent_work_converted"]
 
             diferido_bank = row["Diferido"]
+
             if pd.isna(row["DIFERIMENTO"]):
                 diferido_work = 0.0
             else:
@@ -88,8 +85,10 @@ class OleMapper(Bank):
 
             if percent_bank != percent_work:
                 list_to_close_and_open.append(row)
-            elif diferido_bank != float(diferido_work):
+            elif diferido_bank != diferido_work:
                 list_to_close_and_open.append(row)
+
+        list_of_open_tables = [row for _, row in df_open.iterrows()]
 
         return list_of_open_tables, list_of_close_tables, list_to_close_and_open
 
@@ -226,7 +225,7 @@ class OleMapper(Bank):
 
             family = family_product[agreement]
             group = group_convenio[family]
-            percent = convertValues(row["percentual_comissao_a_vista"])
+            percent = convertValues(row["percentual_comissao_a_vista"]) / 10
             seguro = self.get_seguro(row["descricao_regra"])
 
             codigo_str = str(row["codigo_regra"]).strip()
@@ -300,7 +299,7 @@ class OleMapper(Bank):
 
         for row in list_of_close_open:
 
-            percent = convertValues(row["percentual_comissao_a_vista"])
+            percent = convertValues(row["percentual_comissao_a_vista"]) / 10
 
             row_close = row.copy()
 
