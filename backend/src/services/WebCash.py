@@ -31,9 +31,9 @@ class WebCashMapper(Bank):
                 if str(row["TABELA"]).strip().lower() not in valores_vazios 
                 and str(row["PRODUTO"]).strip().lower() not in valores_vazios
                 and str(row["CONVÊNIO"]).strip().lower() not in valores_vazios
-                else f"{row['SIGLA']} - {row['TABELA']} - {row["PRODUTO"]}"
+                else f"{row['SIGLA']} - {row['TABELA']} - {row['PRODUTO']}"
                 if str(row["CONVÊNIO"]).strip().lower() in valores_vazios
-                else f"{row["CONVÊNIO"]}"
+                else f"{row['CONVÊNIO']}"
             ),
             axis=1
         )
