@@ -38,6 +38,8 @@ class OleMapper(Bank):
 
     def compare_archive(self, df_work, df_bank):
 
+        df_bank = df_bank[df_bank["canal_regra"] != "Escritórios"]
+
         df_result = pd.merge(
             df_bank,
             df_work,
@@ -73,7 +75,7 @@ class OleMapper(Bank):
 
         for index, row in df_matches.iterrows():
 
-            percent_bank = row["percent_converted"] / 10
+            percent_bank = row["percent_converted"]
             percent_work = row["percent_work_converted"]
 
             diferido_bank = row["Diferido"]
@@ -225,7 +227,7 @@ class OleMapper(Bank):
 
             family = family_product[agreement]
             group = group_convenio[family]
-            percent = convertValues(row["percentual_comissao_a_vista"]) / 10
+            percent = convertValues(row["percentual_comissao_a_vista"])
             seguro = self.get_seguro(row["descricao_regra"])
 
             codigo_str = str(row["codigo_regra"]).strip()
@@ -299,7 +301,7 @@ class OleMapper(Bank):
 
         for row in list_of_close_open:
 
-            percent = convertValues(row["percentual_comissao_a_vista"]) / 10
+            percent = convertValues(row["percentual_comissao_a_vista"])
 
             row_close = row.copy()
 
@@ -398,7 +400,6 @@ class OleMapper(Bank):
 
             print("Processo concluído!")
             df_final = self.paint_row(df_final, "Convênio")
-
             return df_final
 
         except Exception as e:

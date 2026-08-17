@@ -38,6 +38,8 @@ class SantanderMapper(Bank):
 
     def compare_archive(self, df_work, df_bank):
 
+        df_bank = df_bank[df_bank["canal_regra"] != "Escritórios"]
+
         df_result = pd.merge(
             df_bank,
             df_work,
@@ -47,29 +49,29 @@ class SantanderMapper(Bank):
             indicator=True
         )
 
+        df_matches = df_result[df_result["_merge"] == "both"]
         df_open = df_result[df_result["_merge"] == "left_only"]
         list_of_close_tables = df_result[df_result["_merge"] == "right_only"]
         list_to_close_and_open = []
         list_of_open_tables = []
 
-        df_matches = df_result[df_result["_merge"] == "both"]
-
         if not df_matches.empty:
             print(f"Encontrados {len(df_matches)} correspondências!")
 
-        for index, row in df_open.iterrows():
+        if not df_open.empty:
+            print(f"Encontrados {len(df_open)} aberturas pendentes.")
+            mask_produto = df_open["produto_regra"].isin(["Unificado", "Ret Port"])
+            df_open = df_open[~mask_produto].copy()
+            df_open["Diferido"] = df_open["percentual_comissao_diferido"]
 
-            if row["produto_regra"] == "Unificado" or row["produto_regra"] == "Ret Port":
-                continue
+        df_matches.loc[:, "percent_converted"] = df_matches[
+            "percentual_comissao_a_vista"
+        ].apply(convertValues)
+        df_matches.loc[:, "percent_work_converted"] = df_matches["% Comissão"].apply(
+            convertValues
+        )
 
-            row["Diferido"] = row["percentual_comissao_diferido"]
-
-            list_of_open_tables.append(row)
-
-        df_matches["percent_converted"] = df_matches["percentual_comissao_a_vista"].apply(convertValues)
-        df_matches["percent_work_converted"] = df_matches["% Comissão"].apply(convertValues)
-
-        df_matches["Diferido"] = df_matches["percentual_comissao_diferido"]
+        df_matches.loc[:, "Diferido"] = df_matches["percentual_comissao_diferido"]
 
         for index, row in df_matches.iterrows():
 
@@ -77,6 +79,7 @@ class SantanderMapper(Bank):
             percent_work = row["percent_work_converted"]
 
             diferido_bank = row["Diferido"]
+
             if pd.isna(row["DIFERIMENTO"]):
                 diferido_work = 0.0
             else:
@@ -84,8 +87,10 @@ class SantanderMapper(Bank):
 
             if percent_bank != percent_work:
                 list_to_close_and_open.append(row)
-            elif diferido_bank != float(diferido_work):
+            elif diferido_bank != diferido_work:
                 list_to_close_and_open.append(row)
+
+        list_of_open_tables = [row for _, row in df_open.iterrows()]
 
         return list_of_open_tables, list_of_close_tables, list_to_close_and_open
 
