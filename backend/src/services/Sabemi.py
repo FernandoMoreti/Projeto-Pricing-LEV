@@ -47,7 +47,7 @@ class SabemiMapper(Bank):
 
             if nome_da_aba.upper() == "FUTURO":
                 df['base'] = df['family']
-                df['family'] = "VALOR_QUE_VOCE_QUER"
+                df['family'] = ""
 
             colunas_desejadas = ['Aba Origem', 'Taxa', 'Id da tabela', 'comissao', 'taxa', 'nome tabela', 'com', 'family', 'base']
 
@@ -95,7 +95,7 @@ class SabemiMapper(Bank):
         df_bank = df_bank[df_bank["nome tabela"] != "Operação e Prazo"]
         df_bank = df_bank.dropna(subset=["nome tabela"])
 
-        df_bank["Prazo"] = df_bank["nome tabela"].astype(str).str.split(" ").str[0].str.replace("X", "") + "-" + df_bank["nome tabela"].astype(str).str.split(" ").str[0].str.replace("X", "")
+        df_bank["Prazo"] = df_bank["nome tabela"].astype(str).str.strip().str.split(" ").str[0].str.replace("X", "").str.replace("x", "") + "-" + df_bank["nome tabela"].astype(str).str.strip().str.split(" ").str[0].str.replace("X", "").str.replace("x", "")
 
         df_work["Produto"] = df_work["Produto"].str.strip()
 
@@ -244,6 +244,9 @@ class SabemiMapper(Bank):
                 taxa_formatada = f"{(taxa_numerica * 100):.2f}".replace('.', ',')
             except (ValueError, TypeError):
                 taxa_formatada = "0,00"
+
+            if row["base"] == "LIQUIDO":
+                row["base"] = "LIQUÍDO"
 
             new_row = model.copy()
 
