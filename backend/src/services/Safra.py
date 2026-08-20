@@ -338,21 +338,26 @@ class SafraMapper(Bank):
             if len(list_of_open_tables) > 0:
                 print(f"Foram encontradas {len(list_of_open_tables)} tabelas para abrir.")
                 df_open = self.create_open_tables(list_of_open_tables, model)
+                columns_in_order = df_open.columns.tolist()
             if len(list_of_close_tables) > 0:
                 print(f"Foram encontradas {len(list_of_close_tables)} tabelas para fechar.")
                 df_close = self.create_close_tables(list_of_close_tables)
+                columns_in_order = df_close.columns.tolist()
             if len(list_to_close_and_open) > 0:
                 print(f"Foram encontradas {len(list_to_close_and_open)} tabelas para fechar e abrir.")
                 df_close2, df_open2 = self.create_close_open_tables(list_to_close_and_open)
+                columns_in_order = df_close2.columns.tolist()
 
             print("Iniciando processo de junção dos arquivos...")
-            dfs_para_juntar = [df for df in [df_close, df_close2, df_open, df_open2] if df is not None and not df.empty]
-            if dfs_para_juntar:
-                df_final = pd.concat(dfs_para_juntar, axis=0, ignore_index=True, sort=False)
-                print(f"Sucesso! Total de linhas: {len(df_final)}")
-            else:
-                print("Nenhum dado encontrado para juntar.")
-                df_final = pd.DataFrame()
+
+            dfs_para_juntar = []
+
+            for df in [df_close, df_close2, df_open, df_open2]:
+                if df is not None and not df.empty:
+                    df_temp = df.copy()
+                    df_temp = df_temp.reindex(columns=columns_in_order)
+                    dfs_para_juntar.append(df_temp)
+            df_final = pd.concat(dfs_para_juntar, axis=0, ignore_index=True, sort=False)
             print("Processo de junção finalizado!")
 
             print("Processo concluído!")

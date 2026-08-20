@@ -401,15 +401,17 @@ class AmigozMapper(Bank):
             if len(list_of_open_tables) > 0:
                 print(f"Foram encontradas {len(list_of_open_tables)} tabelas para abrir.")
                 df_open = self.create_open_tables(list_of_open_tables, model)
+                columns_in_order = df_open.columns.tolist()
             if len(list_of_close_tables) > 0:
                 print(f"Foram encontradas {len(list_of_close_tables)} tabelas para fechar.")
                 df_close = self.create_close_tables(list_of_close_tables)
+                columns_in_order = df_close.columns.tolist()
             if len(list_to_close_and_open) > 0:
                 print(f"Foram encontradas {len(list_to_close_and_open)} tabelas para fechar e abrir.")
                 df_close2, df_open2 = self.create_close_open_tables(list_to_close_and_open)
+                columns_in_order = df_close2.columns.tolist()
 
             print("Iniciando processo de junção dos arquivos...")
-            columns_in_order = df_open.columns.tolist()
 
             dfs_para_juntar = []
 
